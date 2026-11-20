@@ -32,7 +32,9 @@ low / high = the lowest / highest credible independent source. Every row has at 
   VSE report p. 4–5). Two independent methods give the same value: VSE hourly calculation 0.090 and FOEN database 0.089.
 - **Range:** low 0.057 is the very clean year 2024 (good hydro); high 0.098 is UNIGE's hourly import-tracing method
   (2017–2021 average), which shows that the conventional annual method tends to underestimate imports.
-  Monthly values swing much more (≈ 70 g in May to ≈ 164 g in November, Stadt Zürich / treeze 2018–2022; not yet checked in the original – to verify in V4) – relevant for V4 time-shifting.
+  Monthly values swing much more. Our own hourly data for the baseline year (V4) gives a monthly mean of 26 g in Jun vs 98 g in Jan,
+  2–4× apart. The absolute level is lower than VSE; use it for the shape only (see [V4-market-based-and-hourly.md](V4-market-based-and-hourly.md)).
+  The Stadt Zürich / treeze range (70–164 g) was not checked and is no longer used.
 
 ## Germany
 - **Mid 0.344** – Umweltbundesamt (national agency), CO2 per consumed kWh in 2025 (estimate; 2024 = 0.353, 2023 = 0.379).
@@ -63,4 +65,4 @@ low / high = the lowest / highest credible independent source. Every row has at 
 4. Umweltbundesamt, *CO2-Emissionen pro Kilowattstunde Strom 2025* – https://www.umweltbundesamt.de/themen/co2-emissionen-pro-kilowattstunde-strom-2025-nur (checked 20.11.2026)
 5. Ember yearly electricity data via Our World in Data – https://ourworldindata.org/grapher/carbon-intensity-electricity (downloaded 20.11.2026)
 6. EPA Ireland, *State of the Environment Report 2024* (SEAI data) – https://epawebapp.epa.ie/ebooks/soe2024/324/
-7. Stadt Zürich / treeze, *Ökobilanz monatliche Strombereitstellung* (2025) – https://www.stadt-zuerich.ch/content/dam/web/de/aktuell/publikationen/2025/studien-netto-null/oekobilanz-monatliche-strombereitstellung-studie.pdf
+7. (not used any more – unchecked) Stadt Zürich / treeze, *Ökobilanz monatliche Strombereitstellung* (2025)

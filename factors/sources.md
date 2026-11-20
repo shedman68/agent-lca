@@ -72,6 +72,22 @@ Author: Vinzenz · 20 Nov 2026 · values in [`factors.csv`](factors.csv) · deta
 
 *Certainty: medium.*
 
+## Bonus: market-based factor and hourly profile (V4)
+
+**Market-based – 0.054 (0.011–0.284), not used for the targets.** This view counts the CO2 the suppliers claim through certificates.
+- **Switzerland has no residual mix**, because every Swiss kWh must carry a guarantee of origin. We therefore use the Swiss supplier mix with guarantees of origin (0.028).
+- **Frankfurt:** Microsoft's externally reviewed European market-based figure (0.063).
+- **Dublin:** Amazon's audited market-to-location ratio (0.044, our derivation).
+- **AI and SaaS:** the location mix, because no supplier data exists.
+
+This gives about 2.0 t CO2 for the baseline year, compared with 6.5 t location-based. The location-based figure stays the official number. Details: [`kb/V4-market-based-and-hourly.md`](kb/V4-market-based-and-hourly.md).
+
+**Hourly profile.** Built from Energy-Charts data for the baseline year, hour by hour, including Swiss imports.
+- **Switzerland:** winter is 2–4× dirtier than summer, and nights (imports) are dirtier than afternoons and evenings.
+- **Germany:** midday solar dominates in summer.
+- **Use:** shape only. The Swiss level is lower than VSE's, so all totals keep the annual factors.
+- **Flexible jobs on Swiss resources** could cut CO2 per kWh by roughly half by moving within their allowed window. This only helps together with auto-pause, and never inside protection windows. Interactive chart: [`kb/V4-hourly-co2.html`](kb/V4-hourly-co2.html).
+
 ## Choices the jury may question
 - **Guarantees of origin.** IT tickets T-1030, T-1181, T-1203 and T-1227 say the hoster's electricity is backed by guarantees of origin, i.e. certificates for renewable power. We do **not** use them for location-based CO2, which would cut the hoster's CO2 by 3–6×. Certificates belong only in the optional market-based view, and only after a human has seen them.
 - **One-off events stay in the baseline.** The AI script loop (T-1212) and the migration data transfer (T-1189) really used energy. They are never counted as recurring savings.
