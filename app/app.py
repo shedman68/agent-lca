@@ -378,6 +378,15 @@ pages = [
     st.Page(page_package, title="Package", icon="🎯", url_path="package"),
     st.Page(page_human, title="Needs a human", icon="🙋", url_path="needs-a-human"),
 ]
+# Optional H5 page (app/assistant.py, PR #12). Shown only once that file is merged; any other import
+# error inside assistant.py is raised, not hidden.
+try:
+    from assistant import render_assistant  # noqa: E402
+except ModuleNotFoundError as e:
+    if e.name != "assistant":
+        raise
+else:
+    pages.append(st.Page(render_assistant, title="Ask the data", icon="💬", url_path="ask"))
 nav = st.navigation(pages)
 with st.sidebar:
     st.caption(f"Numbers: `out/` from `pipeline/pipeline.py` · {CITE}")
