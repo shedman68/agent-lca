@@ -5,8 +5,8 @@ Humans: Rash (lead), Hakim, Vinzenz.
 
 ## The case (sprintd Basel GreenTech, Green AI & Data, partner ALTYCA with Basel 2037)
 A fictitious Basel service SME (~112 employees). Show where cloud, servers, AI and SaaS create cost,
-energy and CO2, and choose safe measures against it. Data: `data/` (clone of
-https://github.com/Fa-Bee/sprintd-basel-green-ai-data). Cite as «Sample data ALTYCA, sprintd Basel 2026».
+energy and CO2, and choose safe measures against it. Data: `data/` (committed copy of
+https://github.com/Fa-Bee/sprintd-basel-green-ai-data, unchanged). Cite as «Sample data ALTYCA, sprintd Basel 2026».
 
 ### Objectives (all four are required)
 1. **Connect** – one overall picture of cloud, servers, AI and SaaS by department and tool.
@@ -53,10 +53,9 @@ Energy and CO2 follow once `factors/factors.csv` is filled in.
 
 ## Workflow
 ```
-bash get_data.sh                                   # clones the case data into data/
 pip install -r requirements.txt
-python pipeline/pipeline.py --data data --out out
-python pipeline/verify_baseline.py --data data --out out
+python3 pipeline/pipeline.py --data data --out out
+python3 pipeline/verify_baseline.py --data data --out out
 ```
 One GitHub issue per task. Branch per person. Small pull requests. Write a three-line note in each PR:
 done · learned · next.

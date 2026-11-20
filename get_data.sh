@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
-# Clones the case data into data/ (kept out of git, see .gitignore)
+# The case data is already committed in data/ (copy of https://github.com/Fa-Bee/sprintd-basel-green-ai-data).
+# Only needed if data/ is missing: fetches a fresh copy.
 set -e
-[ -d data/.git ] && git -C data pull || git clone --depth 1 https://github.com/Fa-Bee/sprintd-basel-green-ai-data data
+if [ -f data/README.md ]; then echo "data/ already present"; exit 0; fi
+git clone --depth 1 https://github.com/Fa-Bee/sprintd-basel-green-ai-data data && rm -rf data/.git
