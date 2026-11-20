@@ -51,7 +51,7 @@ Fill `factors/factors.csv`: value_low, value_mid, value_high, source (link + dat
       EU average (AI providers and SaaS are "EU mixed"). For Switzerland, give both the consumption mix
       (incl. imports) and the production mix and recommend one with a reason. Possible sources: UNIGE
       (hourly CH mix), ENTSO-E, national agencies.
-- [ ] V2 **Energy per unit and PUE** (by Sat 10:00): per vCPU-hour, node-hour (16 vCPU, 64 GB RAM),
+- [x] V2 **Energy per unit and PUE** (by Sat 10:00): per vCPU-hour, node-hour (16 vCPU, 64 GB RAM),
       GPU-hour (300-watt class), GB-day of storage, GB transferred, 1,000 tokens (large vs small model),
       AI subscription message, Power BI capacity-day, CI runner-minute; PUE per provider.
 - [ ] V3 **Write-up** (by Sat 12:00): `factors/sources.md` – one paragraph per factor: why this value,
