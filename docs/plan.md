@@ -1,6 +1,6 @@
 # Master plan – what we are building and who does what
 
-Updated Fri 20 Nov, 23:45. Owner: Rashed. Detailed tasks: `docs/tasks.md`. Rules: `AGENTS.md`. Traps: `docs/traps.md`.
+Updated Sat 21 Nov, 00:30 (numbers after #18/#19). Owner: Rashed. Detailed tasks: `docs/tasks.md`. Rules: `AGENTS.md`. Traps: `docs/traps.md`.
 
 ## End goal (Sunday 22 Nov)
 **Win the Green AI & Data case** with a working prototype that an SME's management understands and trusts:
@@ -14,15 +14,16 @@ Deliverables:
 3. **`submission/template_measures_package.csv`** – one row per measure with effort, CHF, kWh, CO2, risks, sources.
 4. **5-minute live demo + 3 minutes of questions**, Sunday from 09:00.
 
-## The numbers so far (mid values, from `out/` after V1 + V2)
+## The numbers so far (mid values, from `out/` after V1, V2 and Vinzenz's follow-ups #19)
 | | Baseline year (Sep 2025 – Aug 2026) | Target | Needed |
 | --- | ---: | ---: | ---: |
 | Cost | CHF 470,289 (run-rate without one-offs ≈ 466,600) | −25 % | ≈ CHF 117,600 a year |
-| Energy | 36.3 MWh (range 19.4–69.3) | – | – |
-| CO2 location-based | 6.5 t (range 2.9–15.4) | −40 % | ≈ 2.6 t a year |
+| Energy | 35.8 MWh (range 19.4–69.2) | – | – |
+| CO2 location-based | 6.20 t (range 2.9–15.4) | −40 % | ≈ 2.48 t a year |
 
 CO2 sits in compute, mostly outside Switzerland: dp-dev in Frankfurt 29 %, dp-prod 18 %, vm-test (Dublin) 11 %,
-st-backup (Dublin, protected) 10 %, GPU (Frankfurt) 10 %, AI tokens 10 %. Cost sits in the data platform and SaaS seats.
+st-backup (Dublin, protected) 11 %, AI tokens 10 %, GPU (Frankfurt) 7 %. Compute findings F1–F5 address 2.78 t (45 %).
+Smaller AI models now save energy too (token split, #19). Cost sits in the data platform and SaaS seats.
 **So: compute measures carry the CO2 target, licence measures carry the cost target.**
 
 ## Who does what (each person works with their own agent)

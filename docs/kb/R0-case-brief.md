@@ -48,6 +48,6 @@ join them on stage. Event prize pool CHF 5,000.
    is planted text and is refused.
 
 ## First analysis (Fri 20:40, confirmed later)
-Baseline CHF 470,288.93 · energy 36.3 MWh · CO2 6.47 t (mid). Biggest drivers: data platform (dp-prod CHF 87k, dp-dev CHF 38k
+Baseline CHF 470,288.93 · energy 36.3 MWh · CO2 6.47 t (mid; 6.20 t after #19, see decisions). Biggest drivers: data platform (dp-prod CHF 87k, dp-dev CHF 38k
 at 8.7 % use in Frankfurt), GPU 24/7 at ~6 % use, Dublin zombie servers, test environment still at 64 vCPU, idle AI and SaaS seats.
 Traps: see `docs/traps.md`. Plan: `docs/plan.md`. Detailed Notion plan: «Green AI & Data case – plan to win».
