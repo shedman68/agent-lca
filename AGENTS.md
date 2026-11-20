@@ -1,7 +1,7 @@
 # AGENTS.md – rules for every AI agent on this project
 
 Read this first. It applies to Claude, ChatGPT, Perplexity and any other agent working in this repo.
-Humans: Rash (lead), Hakim, Vinzenz.
+Team: **Rashed** (lead), **Hakim**, **Vinzenz**. Tasks per person: `docs/tasks.md`.
 
 ## The case (sprintd Basel GreenTech, Green AI & Data, partner ALTYCA with Basel 2037)
 A fictitious Basel service SME (~112 employees). Show where cloud, servers, AI and SaaS create cost,
@@ -38,13 +38,27 @@ The jury recalculates every package against its own reference baseline.
    «needs human decision» and name the responsible role from `data/mapping_departments_tools.csv`.
 5. **Write only in your own folder**, open a pull request, and let a human merge.
 
-## Who owns what
-| Folder | Owner | Agent |
-| --- | --- | --- |
-| `pipeline/`, `measures/`, `submission/` | Rash | Claude |
-| `analysis/` | Hakim | ChatGPT |
-| `factors/` | Vinzenz | Perplexity |
-| `app/` | to be agreed | any |
+## Step 0 for every agent: identify who you work for
+Before doing anything else in a session:
+1. Run `git config user.name` and match it to Rashed, Hakim or Vinzenz.
+   If it matches none of them, **ask the human: "Am I working for Rashed, Hakim or Vinzenz?"** Do not guess.
+2. Open `docs/tasks.md`, read that person's section, and work on their first open task unless they say otherwise.
+3. Work on a branch named `<person>/<task-id>-<short-name>`, for example `vinzenz/V1-grid-mix`.
+4. Commit with that person's git identity. Touch only the folders that person owns (table below).
+   If a task needs a change in someone else's folder, write it as a note in the pull request instead.
+5. Push the branch and open a pull request to `main` titled `[<task-id>] <title>`. Never push to `main` directly.
+   Rashed reviews and merges. When merged, tick the task in `docs/tasks.md` in the same pull request.
+6. End every session with a three-line note in the pull request: done · learned · next.
+
+ChatGPT, Perplexity and Grok without repo access: the human pastes this file plus their section of
+`docs/tasks.md` into the chat, and commits the result through Cursor or the GitHub website.
+
+## Team and ownership
+| Person | Role | Tools | Owns folders | Branch prefix |
+| --- | --- | --- | --- | --- |
+| **Rashed** | Lead: measures package, submission, pitch, merges | Claude Code, Cursor, Grok | `pipeline/`, `measures/`, `submission/`, `docs/` | `rashed/` |
+| **Hakim** | Analysis and app (proposed, confirm in team chat) | ChatGPT | `analysis/`, `app/` | `hakim/` |
+| **Vinzenz** | Energy and CO2 factors with sources | Perplexity | `factors/` | `vinzenz/` |
 
 ## Baseline (verified)
 Baseline year Sep 2025 – Aug 2026: **CHF 470,289** (incl. CHF 6,631 imputed for missing costs).
@@ -57,5 +71,5 @@ pip install -r requirements.txt
 python3 pipeline/pipeline.py --data data --out out
 python3 pipeline/verify_baseline.py --data data --out out
 ```
-One GitHub issue per task. Branch per person. Small pull requests. Write a three-line note in each PR:
+Tasks live in `docs/tasks.md`. One branch per task, small pull requests, three-line note in each PR:
 done · learned · next.
