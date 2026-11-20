@@ -75,6 +75,11 @@ If your Claude Code has these plugin skills, use them too: `data:explore-data` a
 (Hakim, Rashed – checking numbers), `frontend-design` and `dataviz` (Hakim – the app),
 web search / `deep-research` (Vinzenz – factors). They never override the trap-guard rules.
 
+## Claude Code setup (loads automatically)
+Skills in `.claude/skills/`, reviewer subagent `.claude/agents/trap-reviewer.md` (run it before every PR), deny rules and a
+Stop hook in `.claude/settings.json` (no edits to `data/`, no push to `main`; a turn cannot end unless MATCH and trap guard PASS).
+`/goal` templates per task: `docs/kb/R0-team-setup.md`.
+
 ## Every task output goes into a knowledge base (kb) as Markdown
 - Folder: `analysis/kb/` (Hakim) · `factors/kb/` (Vinzenz) · `docs/kb/` (Rashed). One file per task: `<task-id>-<short-name>.md`.
 - Each file starts with task, author, date, status (draft / final) and sources; every number names its source file and calculation.

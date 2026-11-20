@@ -5,6 +5,7 @@
 
 | Date | Decision | Why | Who | Where |
 | --- | --- | --- | --- | --- |
+| 21.11. 00:15 | Hard rules enforced by Claude Code: deny edits to `data/` and pushes to `main`; Stop hook requires MATCH + trap guard PASS; `trap-reviewer` subagent before every PR | prompts cannot guarantee zero-exception rules | Rashed | this PR |
 | 21.11. 00:00 | `analysis/findings.py` is official step 2 after `pipeline.py`; then verify_baseline and trap_guard. `anthropic` optional; demo runs offline | fast, keeps rule 2 (numbers only via `out/`); offline demo sends no case data anywhere | Rashed | #14, #15 |
 | 21.11. 00:00 | Findings get kWh and CO2 (low/mid/high); the assistant shows CO2 and reads seats from `out/` | needed for R1/R2; closes the review gap on #12 | Rashed | #14, #16 |
 | 20.11. 23:45 | AI API baseline uses the **AI gateway** (CHF 39,444), not the invoices; the +CHF 2,321 (5.9 %) invoice gap is stated in the assumptions template | gateway has department and tool detail; gap is small and disclosed | Rashed | #2 review |
