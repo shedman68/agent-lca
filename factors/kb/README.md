@@ -6,4 +6,5 @@ The machine-readable values stay in `factors/factors.csv` (read by the pipeline)
 
 | File | Task | Status |
 | --- | --- | --- |
-| [V1-bafu-lca-grid-mix.md](V1-bafu-lca-grid-mix.md) | V1 grid mix – FOEN BAFU:2026 LCA data | draft |
+| [V1-grid-mix-factors.md](V1-grid-mix-factors.md) | V1 grid mix – final values, sources, CH recommendation | final for review |
+| [V1-bafu-lca-grid-mix.md](V1-bafu-lca-grid-mix.md) | V1 grid mix – FOEN BAFU:2026 LCA data (background) | done |

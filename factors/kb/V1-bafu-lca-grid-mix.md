@@ -3,7 +3,7 @@
 - **Task:** V1 grid mix, location-based (also input for V3 write-up and V4 market-based factors)
 - **Author:** Vinzenz (with Claude Code)
 - **Date:** 2026-11-20
-- **Status:** draft – values not yet written to `factors/factors.csv`
+- **Status:** done – background research; final values and choices in [V1-grid-mix-factors.md](V1-grid-mix-factors.md)
 
 ## Source
 - FOEN / BAFU, *Life cycle inventory database BAFU:20XY*, version **BAFU:2026 v1**, impact method **IPCC 2021, GWP 100** (kg CO2-eq).

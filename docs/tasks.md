@@ -48,7 +48,7 @@ Tick a box only in the pull request that finishes the task. Times are Europe/Zur
 
 ## Vinzenz – energy and CO2 factors (Perplexity) · folder `factors/`
 Fill `factors/factors.csv`: value_low, value_mid, value_high, source (link + date), notes. No value without a source.
-- [ ] V1 **Grid mix, location-based** (by Sat 10:00): kg CO2/kWh for Switzerland, Germany, Ireland and an
+- [x] V1 **Grid mix, location-based** (by Sat 10:00): kg CO2/kWh for Switzerland, Germany, Ireland and an
       EU average (AI providers and SaaS are "EU mixed"). For Switzerland, give both the consumption mix
       (incl. imports) and the production mix and recommend one with a reason. Possible sources: UNIGE
       (hourly CH mix), ENTSO-E, national agencies.
