@@ -1,6 +1,6 @@
 # Traps in the data
 
-Updated Fri 20 Nov, late, with Hakim's review (`analysis/kb/traps_review.md`, PR #2), every item re-checked
+Updated Fri 20 Nov, late, with Hakim's review (PR #2, #7) and Vinzenz's trap check (PR #8) (`analysis/kb/traps_review.md`, PR #2), every item re-checked
 against the raw rows. **Raw data wins over any list, including this one.** Machine-readable versions:
 `docs/protected.csv`, `docs/one_off_costs.csv`. Hard check: `python3 pipeline/trap_guard.py`.
 
@@ -53,6 +53,10 @@ Recurring run-rate without them: about CHF 466,600. Use it for "savings per year
 - **T-1094** describes dr-failover but its `resource_id` is **vm-test**. Do not let it make vm-test look
   protected all year; only T-1204 (March 2026) protects vm-test.
 - Project IDs in three spellings (P-001, P001, p-001).
+- **dr-failover has no cost line of its own:** it is one of the 16 Dublin test servers billed inside **vm-test**
+  (Hakim, H2). A vm-test measure must keep dr-failover's 4 vCPU running.
+- **AWS Zurich:** `extra/data_center_locations.csv` says AWS Zurich is not used, but `aws_costs.csv` has 1,354
+  Zurich rows (about CHF 20.7k in the baseline). Cost data wins; show it as a contradiction (Vinzenz, V2).
 
 ## 6. Data traps
 Exact duplicates (Azure 7, AWS 5, hoster 3, AI 87) · Draft rows (AI subs 24, SaaS 121) · missing costs ·

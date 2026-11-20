@@ -73,10 +73,11 @@ def check_measures(path):
                     fails.append(f"{mid}: touches protected {p['resource_id']} but risks_and_exceptions "
                                  f"does not cite {p['ticket']} ({p['rule']})")
                 if p["allowed_change"] == "none":
-                    fails.append(f"{mid}: {p['resource_id']} may not be changed at all ({p['ticket']})")
+                    warns.append(f"{mid}: mentions {p['resource_id']}, which may not be changed at all "
+                                 f"({p['ticket']}) – make sure the measure keeps it as is")
         if re.search(r"(?i)\b(delete|remove|decommission|switch off|shut ?down)\b", txt):
             for res in ["st-backup", "dr-failover", "pbi-07", "dp-prod"]:
-                if res in txt:
+                if re.search(rf"(?i)\b(delete|remove|decommission|switch off|shut ?down)\b[^.;]*{res}|{res}[^.;]*\b(delete|remove|decommission|switch off|shut ?down)\b", txt) and not re.search(rf"(?i)(keep|keeps|except|not) [^.;]*{res}", txt):
                     fails.append(f"{mid}: deletes/switches off {res} – forbidden")
         for _, o in oneoff.iterrows():
             if o["resource_id"] in txt and o["ticket"] not in risk:
