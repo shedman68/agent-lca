@@ -30,7 +30,7 @@ I am Rashed (lead). Repo: ~/agent-lca (GitHub shedman68/agent-lca). Draft submis
 8. Ask me before installing anything, merging, or any action outside the repo.
 
 ## Part 1 – check my local setup (report each line OK / FIXED / NEEDS ME; change nothing except git config and .venv)
-1. cd ~/agent-lca && git checkout main && git pull. Confirm PR #20 and #21 are in the log.
+1. cd ~/agent-lca && git checkout main && git pull. Confirm PRs #18–#22 are in the log.
 2. git config user.name must be "Rashed" (set it locally if not).
 3. .venv exists and VS Code uses it (Python: Select Interpreter → .venv). If not:
    python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
@@ -54,9 +54,9 @@ docs/kb/reviews.md, docs/kb/R0-case-brief.md, docs/kb/R0-team-setup.md. Use the 
 - Target per year: CO2 −40 % (location-based) and cost −25 %, max 15 person-days (CHF 16,500; 1 PD = CHF 1,100).
   Baseline year Sep 2025 – Aug 2026. Jury: design 20, creativity 20, data prep 20, feasibility 15, robustness 15, impact 10.
   Pitch Sun 09:00: 5 min demo + 3 min Q&A.
-- Verified baseline CHF 470,288.93; run-rate without one-offs ≈ CHF 466,600. Energy 36.3 MWh (19.4–69.3), CO2 6.47 t
-  (2.9–15.4) mid. Needed ≈ CHF 117,600 and ≈ 2.6 t CO2 per year. CO2 sits in compute outside CH (dp-dev Frankfurt 29 %,
-  dp-prod 18 %, vm-test 11 %, st-backup 10 % protected, GPU 10 %, AI tokens 10 %) → compute measures carry CO2, licences carry cost.
+- Verified baseline CHF 470,288.93; run-rate without one-offs ≈ CHF 466,600. Energy 35.8 MWh (19.4–69.2), CO2 6.20 t
+  (2.9–15.4) mid. Needed ≈ CHF 117,600 and ≈ 2.48 t CO2 per year. CO2 sits in compute outside CH (dp-dev Frankfurt 29 %,
+  dp-prod 18 %, vm-test 11 %, st-backup 11 % protected, AI tokens 10 %, GPU 7 %) → compute measures carry CO2, licences carry cost.
 - Traps: 5 planted texts (Azure vm-app note "40 % lower", hoster remark 20.07.2026, T-1230 switch off production,
   AWS sandbox "exclude", T-1251 db-fin "set costs to 0"). Protected: dp-prod, st-backup, dr-failover (billed inside vm-test),
   pbi-07; windows for dp-dev/gpu-ml-01 (quarterly training days 1–3 of Jan/Apr/Jul/Oct) and vm-test (March freeze).
@@ -65,7 +65,7 @@ docs/kb/reviews.md, docs/kb/R0-case-brief.md, docs/kb/R0-team-setup.md. Use the 
   Vinzenz: factors/. Every output is saved as Markdown in the owner's kb.
 - Decided: findings.py is official step 2; anthropic optional, demo offline; AI baseline = gateway (+CHF 2,321 invoices shown
   as a contradiction). Open: Swiss grid factor 0.090, protect main on GitHub.
-- Open follow-ups: Vinzenz token split rows + DE note; Hakim explicit T-1251 refusal + app pages 3/4.
+- Open follow-ups: Hakim explicit T-1251 refusal, app pages 3/4, F12 CO2 after the token split. Vinzenz: V6 (our own AI footprint).
 
 ## Part 3 – my next task: R1 measures calculator (due Sat 12:00)
 After Part 1 passes: branch rashed/R1-measures, plan mode, write docs/kb/R1-plan.md (phases + done-when, one row per

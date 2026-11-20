@@ -5,6 +5,7 @@
 
 | Date | Decision | Why | Who | Where |
 | --- | --- | --- | --- | --- |
+| 21.11. 00:30 | Accept Vinzenz's follow-ups: all grid mids life-cycle (DE 0.344 → 0.330), GPU mid 0.18 → 0.13 from measured use, token split used for AI. CO2 baseline now **6.20 t** mid (was 6.47 t); −40 % target ≈ 2.48 t | consistent system boundary; GPU factor matches the data; smaller-model measure becomes measurable | Rashed | #19 |
 | 21.11. 00:15 | Hard rules enforced by Claude Code: deny edits to `data/` and pushes to `main`; Stop hook requires MATCH + trap guard PASS; `trap-reviewer` subagent before every PR | prompts cannot guarantee zero-exception rules | Rashed | this PR |
 | 21.11. 00:00 | `analysis/findings.py` is official step 2 after `pipeline.py`; then verify_baseline and trap_guard. `anthropic` optional; demo runs offline | fast, keeps rule 2 (numbers only via `out/`); offline demo sends no case data anywhere | Rashed | #14, #15 |
 | 21.11. 00:00 | Findings get kWh and CO2 (low/mid/high); the assistant shows CO2 and reads seats from `out/` | needed for R1/R2; closes the review gap on #12 | Rashed | #14, #16 |
