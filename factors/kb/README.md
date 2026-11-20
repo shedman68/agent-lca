@@ -6,6 +6,7 @@ The machine-readable values stay in `factors/factors.csv` (read by the pipeline)
 
 | File | Task | Status |
 | --- | --- | --- |
+| [../sources.md](../sources.md) | V3 write-up for the jury: one paragraph per factor, sensitivity, PUE trust | final for review |
 | [trap-check-V1-V2.md](trap-check-V1-V2.md) | Trap audit of V1 + V2 (manipulative text, one-offs, GOs, duplicates) | done |
 | [V2-energy-per-unit-pue.md](V2-energy-per-unit-pue.md) | V2 energy per unit and PUE – values, derivations, sources | final for review |
 | [V1-grid-mix-factors.md](V1-grid-mix-factors.md) | V1 grid mix – final values, sources, CH recommendation | final for review |
