@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(./data/**)",
+      "Write(./data/**)",
+      "Bash(git push origin main*)",
+      "Bash(git push origin HEAD:main*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ],
+    "ask": [
+      "Bash(gh pr merge*)",
+      "Bash(git reset --hard*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check.sh\"" }
+        ]
+      }
+    ]
+  }
+}

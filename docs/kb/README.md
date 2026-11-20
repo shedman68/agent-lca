@@ -8,7 +8,9 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | --- | --- | --- |
 | [decisions.md](decisions.md) | Decision log for the whole team (newest on top) | living |
 | [reviews.md](reviews.md) | Pull request reviews and open follow-ups per person | living |
+| [R0-case-brief.md](R0-case-brief.md) | R0 case, jury, schedule, rights, example answers, first analysis | final |
 | [R0-baseline.md](R0-baseline.md) | R0 data cleaning, verified baseline, trap guard | done |
+| [R0-team-setup.md](R0-team-setup.md) | R0 team workflow, local setup, Claude Code setup (skills, reviewer, hooks, /goal) | final |
 | R1-measures.md | R1 measures calculator | open |
 | R2-package.md | R2 chosen package vs target and budget | open |
 | R4-needs-a-human.md | R4 «needs a human» list | open |
