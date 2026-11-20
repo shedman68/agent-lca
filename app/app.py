@@ -101,7 +101,7 @@ def page_findings() -> None:
         st.info("Findings are not merged yet (task H2, `analysis/kb/findings.md`). "
                 "This page fills itself once that file exists. Nothing is shown until then, "
                 "so no number appears here that hasn't been checked against `out/`.", icon="⏳")
-        st.markdown("**Expected findings:** dp-dev at ~9 % use · GPU idle outside quarterly training · "
+        st.markdown("**Topics planned for H2:** dp-dev utilisation · GPU idle outside quarterly training · "
                     "Dublin zombie servers · idle AI seats · SaaS seat gaps.")
         return
     parts = re.split(r"(?m)^## ", md)
@@ -117,13 +117,28 @@ def page_findings() -> None:
 
 # =============================================================================== 3 Package
 def _protection_hits(text: str) -> list[str]:
-    hits = []
+    """Protection rules a measure touches, matched on resource_id and on the resource's names in words."""
     low = text.lower()
+
+    def has(k: str) -> bool:
+        return re.search(rf"(?<![\w-]){re.escape(k.lower())}(?![\w-])", low) is not None
+
+    hits = []
     for p in register.PROTECTED:
-        keys = {p["resource"], p["cost_resource"]} - {None}
-        if any(re.search(rf"\b{re.escape(k)}\b", low) for k in keys):
+        keys = ({p["resource"], p["cost_resource"]} - {None}) | set(p.get("aliases", []))
+        if any(has(k) for k in keys):
             hits.append(f'{p["resource"]} ({p["tickets"]})')
+    for rule, keys in register.ALSO_RESPECT_KEYS.items():
+        if any(has(k) for k in keys):
+            hits.append(rule)
     return hits
+
+
+def _signed(reduction_pct: float) -> str:
+    """A reduction shows as −x %; a package that adds cost or CO2 shows as +x %, never as 0 %."""
+    if abs(reduction_pct) < 0.05:
+        return "0 %"
+    return f"−{reduction_pct:.1f} %" if reduction_pct > 0 else f"+{-reduction_pct:.1f} %"
 
 
 def page_package() -> None:
@@ -165,11 +180,11 @@ def page_package() -> None:
 
     rows = [
         {"name": "CO2 reduction", "value": co2_pct or 0.0, "target": 40, "max": 60,
-         "value_txt": "pending" if co2_pct is None else (f"−{co2_pct:.1f} %" if co2_pct > 0 else "0 %"), "target_txt": "−40 %",
+         "value_txt": "pending" if co2_pct is None else _signed(co2_pct), "target_txt": "−40 %",
          "status": "pending" if co2_pct is None else st_min(co2_pct, 40),
          "note": "baseline CO2 pending (factors)" if t["co2_kg"] is None else f"{co2_saved / 1000:,.1f} t of {t['co2_kg'] / 1000:,.1f} t"},
         {"name": "Cost reduction", "value": cost_pct, "target": 25, "max": 40,
-         "value_txt": f"−{cost_pct:.1f} %" if cost_pct > 0 else "0 %", "target_txt": "−25 %", "status": st_min(cost_pct, 25),
+         "value_txt": _signed(cost_pct), "target_txt": "−25 %", "status": st_min(cost_pct, 25),
          "note": f"{chf(cost_saved)} of {chf(t['cost_chf'])}"},
         {"name": "Effort", "value": pd_used, "target": 15, "max": 20,
          "value_txt": f"{pd_used:.1f} PD", "target_txt": "≤ 15 PD",
@@ -182,6 +197,11 @@ def page_package() -> None:
 
 
 # =============================================================================== 4 Needs a human
+def _clean_log_text(text: str) -> str:
+    """Display only: the pipeline log prints numpy reprs such as '[np.float64(21.0)]'; show '21.0'."""
+    return re.sub(r"\[?np\.float64\(([\d.]+)\)\]?", r"\1", str(text))
+
+
 def _contradictions(ql: pd.DataFrame | None) -> list[tuple[str, str, str, str]]:
     ai = data.kb_check("AI gateway vs provider invoices, all providers")
     pr = data.kb_check("provider_monthly_report vs azure+aws+hoster (12 baseline months)")
@@ -197,8 +217,8 @@ def _contradictions(ql: pd.DataFrame | None) -> list[tuple[str, str, str, str]]:
         cards.append(("Provider report is above our Azure + AWS + hoster total",
                       f"Report {chf(pr['pipeline'])} vs our total {chf(pr['independent'])}: "
                       f"**{chf(pr['diff'])} higher ({pr['diff'] / pr['independent']:.1%})** over the baseline year; "
-                      "month by month it swings from −3.0 % to +4.7 %, with March 2026 at +13.9 % "
-                      "(`analysis/kb/reconciliation.md`).",
+                      f"KB status: *{pr['status']}* ({pr['note']}), but month by month it swings strongly "
+                      "(see `analysis/kb/reconciliation.md`).",
                       "Not a reason to change the baseline (separate summary of unknown scope). Ask what the report includes.",
                       "Head of IT"))
     cards.append(("T-1094 is about dr-failover but filed under vm-test",
@@ -210,7 +230,7 @@ def _contradictions(ql: pd.DataFrame | None) -> list[tuple[str, str, str, str]]:
         cp = ql[ql["check"].eq("price vs README")]
         if not cp.empty:
             cards.append(("Copilot price differs from the README",
-                          "The README mentions a Copilot promotion (USD 18) from 1 Jul 2026; the data bills USD 21. Not corrected.",
+                          f"{_clean_log_text(cp.iloc[0]['decision'])} (`out/quality_log.csv`).",
                           "Check the contract: is the promotion real and does it apply?", "Head of IT"))
     return cards
 
@@ -247,9 +267,11 @@ def page_human() -> None:
                     hit = ql[ql["detail"].fillna("").str.contains(t["quality_log_detail"], regex=False)
                              | ql["check"].fillna("").str.contains(t["quality_log_detail"], regex=False)]
                     if not hit.empty:
-                        st.markdown(f"**Pipeline:** {hit.iloc[0]['decision']} (`out/quality_log.csv`)")
-                elif not t["quality_log_detail"]:
-                    st.markdown("⚠️ **Pipeline:** not logged in `out/quality_log.csv` yet")
+                        n = hit.iloc[0]["rows"]
+                        rows_txt = "" if pd.isna(n) else f" · {int(n)} row{'s' if int(n) != 1 else ''}"
+                        st.markdown(f"**Pipeline:** {hit.iloc[0]['decision']}{rows_txt} (`out/quality_log.csv`)")
+                    else:
+                        st.markdown("⚠️ **Pipeline:** not logged in `out/quality_log.csv` yet (note for R4)")
                 st.markdown(f"👤 **Responsible:** {t['role']}")
 
     # ---- protected resources

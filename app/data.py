@@ -66,7 +66,10 @@ def facts() -> pd.DataFrame:
         .set_index("resource_id")["tool"].to_dict()
     )
     names.update(CANONICAL_TOOL)
-    f["tool_canonical"] = f["resource_id"].map(names)
+    f["resource_id"] = f["resource_id"].fillna("unknown")
+    f["tool_canonical"] = f["resource_id"].map(names).fillna(f["resource_id"])
+    f["dept_allocated"] = f["dept_allocated"].fillna("Unassigned")
+    f["country_label"] = f["country_label"].fillna("Unknown")
     return f
 
 
@@ -88,25 +91,30 @@ def baseline_totals() -> dict:
     return t
 
 
+def _one_role(r: pd.Series) -> str:
+    r = r.dropna().unique()
+    return "unknown" if len(r) == 0 else (str(r[0]) if len(r) == 1 else "several (per tool)")
+
+
 def by_dimension(dim: str) -> pd.DataFrame:
     """dim in {'department', 'resource', 'country', 'source'} -> CHF per group, largest first."""
     f = facts()
     if dim == "department":
-        g = f.groupby("dept_allocated")["cost_chf_alloc"].sum().rename("cost_chf").reset_index()
+        g = f.groupby("dept_allocated", dropna=False)["cost_chf_alloc"].sum().rename("cost_chf").reset_index()
         g = g.rename(columns={"dept_allocated": "label"})
     elif dim == "resource":
-        g = f.groupby(["resource_id", "tool_canonical"]).agg(
+        g = f.groupby(["resource_id", "tool_canonical"], dropna=False).agg(
             cost_chf=("cost_chf_alloc", "sum"),
             tool_spellings=("tool", "nunique"),
             source=("source_label", "first"),
-            responsible_role=("responsible_role", lambda r: r.iloc[0] if r.nunique() == 1 else "several (per tool)"),
+            responsible_role=("responsible_role", _one_role),
         ).reset_index()
         g["label"] = g["tool_canonical"] + " (" + g["resource_id"] + ")"
     elif dim == "country":
-        g = f.groupby("country_label")["cost_chf_alloc"].sum().rename("cost_chf").reset_index()
+        g = f.groupby("country_label", dropna=False)["cost_chf_alloc"].sum().rename("cost_chf").reset_index()
         g = g.rename(columns={"country_label": "label"})
     elif dim == "source":
-        g = f.groupby("source_label")["cost_chf_alloc"].sum().rename("cost_chf").reset_index()
+        g = f.groupby("source_label", dropna=False)["cost_chf_alloc"].sum().rename("cost_chf").reset_index()
         g = g.rename(columns={"source_label": "label"})
     else:
         raise ValueError(dim)
@@ -126,7 +134,8 @@ def resource_cost(resource_id: str) -> tuple[float | None, str | None]:
     s = f[f["resource_id"] == resource_id]
     if s.empty:
         return None, None
-    return float(s["cost_chf_alloc"].sum()), str(s["responsible_role"].mode().iloc[0])
+    roles = s["responsible_role"].dropna().mode()
+    return float(s["cost_chf_alloc"].sum()), (None if roles.empty else str(roles.iloc[0]))
 
 
 @st.cache_data(show_spinner=False)
