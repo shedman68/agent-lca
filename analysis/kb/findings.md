@@ -3,12 +3,30 @@
 All numbers come from `python analysis/findings.py --data data --out out`, which writes
 `out/findings.csv` (read by the app) and the committed copy [findings_numbers.csv](findings_numbers.csv).
 Costs come from `out/fact_costs.csv` (baseline CHF 470,288.93, confirmed in [reconciliation.md](reconciliation.md)).
-Usage evidence comes from `data/`, because the pipeline does not export it yet.
+Usage evidence comes from `data/`, because the pipeline does not export it. `findings.py` is the
+**official step 2 after `pipeline.py`** (Rashed, issue #14; `AGENTS.md` Workflow).
 
 **"Addressable" = baseline cost of the idle or unused part. It is not a saving.** Effort, savings,
 kWh and CO2 are calculated in `measures/` (R1/R2). The findings overlap (F1/F3, F6/F9, F7/F10),
-so **never add the addressable values up**. Energy and CO2 follow once the V1/V2 factors are merged.
-Status follows the output contract: CANDIDATE (no protection rule) · HUMAN_REVIEW (decision needed) · BLOCKED (protected).
+so **never add the addressable values up**. Status follows the output contract: CANDIDATE (no
+protection rule) · HUMAN_REVIEW (decision needed) · BLOCKED (protected).
+
+**Energy and CO2 (location-based):** from `kwh_*` / `co2_kg_*` in `out/fact_costs.csv` (factors from
+`factors/factors.csv`, V1/V2). Addressable kWh/CO2 = resource energy × the same share as the addressable
+CHF. Exceptions are set to 0 with a reason in column `energy_note`:
+- **Idle AI seats send no messages.** AI subscription energy is counted per message, so cutting idle seats saves CHF, not CO2.
+- **Price changes save no energy** (F9, F10, F15).
+- **SaaS energy is excluded** (no `saas_licence_month` factor).
+- **F12:** `factors.csv` has one token factor for all model sizes, so a smaller model saves no energy in this method.
+
+## CO2: where the −40 % can come from
+- Baseline: **6,469 kg CO2** (range 2,905–15,412), **36,296 kWh**.
+- The compute findings **F1–F5 together address 3,025 kg = 46.8 % of all CO2** (range 1,592–6,618 kg). They are
+  on different resources, so F1–F5 can be added; F4 and F5 are different servers inside vm-test.
+- **dp-dev (F1) alone is 19.7 %**, because it runs on the German grid (0.344 kg/kWh vs 0.090 in CH). A move to
+  Switzerland (T-1074, "technically possible") is a further CO2 lever on what remains.
+- dp-prod has the most idle hours (F2) but sits on the low-carbon Swiss grid: 7.3 % of CO2.
+- Seats, SaaS and the model switch bring CHF but **no CO2** in this method. The CO2 target needs the compute measures.
 
 ## Overall picture
 | Source | CHF | Share |
@@ -28,26 +46,26 @@ Status follows the output contract: CANDIDATE (no protection rule) · HUMAN_REVI
 tool names ("Data Platform Prod" / "Data platform production"). Group by `resource_id`, not by tool.
 
 ## Summary
-| ID | Finding | Cost CHF | Addressable CHF | Status |
-| --- | --- | ---: | ---: | --- |
-| F1 | dp-dev runs 24/7, used 8.7 % | 38,282 | 26,316 | HUMAN_REVIEW |
-| F2 | dp-prod full size in evenings/weekends | 87,260 | 36,408 | HUMAN_REVIEW |
-| F3 | GPU server on all year for 12 training days | 11,238 | 10,863 | HUMAN_REVIEW |
-| F4 | 3 zombie servers in Dublin | 4,628 | 4,628 | CANDIDATE |
-| F5 | Test environment still 64 vCPU after project end | 24,616 | 18,512 | HUMAN_REVIEW |
-| F6 | ChatGPT Team 86 % seats unused | 5,482 | 4,707 | CANDIDATE |
-| F7 | Copilot 41 % seats unused | 22,181 | 9,021 | CANDIDATE |
-| F8 | Claude Team 15 % seats unused | 8,104 | 1,233 | HUMAN_REVIEW |
-| F9 | Claude/ChatGPT monthly instead of annual billing | 13,586 | 1,529 | HUMAN_REVIEW |
-| F10 | Copilot USD 21 vs. USD 18 promotion | 3,398 | 485 | HUMAN_REVIEW |
-| F11 | SaaS licences without users | 114,158 | 43,244 | CANDIDATE |
-| F12 | Large model for marketing classification, no caching | 11,537 | 4,595 | CANDIDATE |
-| F13 | 365-day log retention | 13,721 | 8,566 | HUMAN_REVIEW |
-| F14 | 25 Power BI reports refresh without readers | 23,753 | (load only) | HUMAN_REVIEW |
-| F15 | AWS support plan | 10,788 | (decision) | HUMAN_REVIEW |
-| F16 | 223 tables unread for a year | 6,234 | 1,230 | HUMAN_REVIEW |
-| F17 | Nightly builds with no changes | 5,474 | 88 | CANDIDATE |
-| P1–P3 | Looks idle, protected: st-backup, dr-failover, pbi-07 | | 0 | BLOCKED |
+| ID | Finding | Cost CHF | Addressable CHF | Addressable CO2 kg (low – mid – high) | Share of total CO2 | Status |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| F1 | dp-dev runs 24/7, used 8.7 % | 38,282 | 26,316 | 719 – **1,273** – 2,446 | 19.7 % | HUMAN_REVIEW |
+| F2 | dp-prod full size in evenings/weekends | 87,260 | 36,408 | 176 – **473** – 790 | 7.3 % | HUMAN_REVIEW |
+| F3 | GPU server on all year for 12 training days | 11,238 | 10,863 | 314 – **626** – 2,138 | 9.7 % | HUMAN_REVIEW |
+| F4 | 3 zombie servers in Dublin | 4,628 | 4,628 | 76 – **131** – 249 | 2.0 % | CANDIDATE |
+| F5 | Test environment still 64 vCPU after project end | 24,616 | 18,512 | 306 – **523** – 995 | 8.1 % | HUMAN_REVIEW |
+| F6 | ChatGPT Team 86 % seats unused | 5,482 | 4,707 | 0 | 0.0 % | CANDIDATE |
+| F7 | Copilot 41 % seats unused | 22,181 | 9,021 | 0 | 0.0 % | CANDIDATE |
+| F8 | Claude Team 15 % seats unused | 8,104 | 1,233 | 0 | 0.0 % | HUMAN_REVIEW |
+| F9 | Claude/ChatGPT monthly instead of annual billing | 13,586 | 1,529 | 0 | 0.0 % | HUMAN_REVIEW |
+| F10 | Copilot USD 21 vs. USD 18 promotion | 3,398 | 485 | 0 | 0.0 % | HUMAN_REVIEW |
+| F11 | SaaS licences without users | 114,158 | 43,244 | 0 | 0.0 % | CANDIDATE |
+| F12 | Large model for marketing classification, no caching | 11,537 | 4,595 | 0 | 0.0 % | CANDIDATE |
+| F13 | 365-day log retention | 13,721 | 8,566 | 37 – **120** – 269 | 1.9 % | HUMAN_REVIEW |
+| F14 | 25 Power BI reports refresh without readers | 23,753 | (load only) | (not claimed) | | HUMAN_REVIEW |
+| F15 | AWS support plan | 10,788 | (decision) | 0 | 0.0 % | HUMAN_REVIEW |
+| F16 | 223 tables unread for a year | 6,234 | 1,230 | 5 – **17** – 39 | 0.3 % | HUMAN_REVIEW |
+| F17 | Nightly builds with no changes | 5,474 | 88 | 0 – **0** – 1 | 0.0 % | CANDIDATE |
+| P1–P3 | Looks idle, protected: st-backup, dr-failover, pbi-07 | | 0 | | | BLOCKED |
 
 ---
 
