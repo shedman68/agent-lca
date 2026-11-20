@@ -1,0 +1,10 @@
+job,resource,grid,window,runs,duration_h,current_start,best_start_typical,g_per_kwh_now,g_per_kwh_best,reduction_pct,note
+Archiving,st-archive,CH,flexible: within the month,22.0,2.97,04:00,16:00,57.0,29.3,48.5,
+Catalogue scan,dp-prod,CH,flexible: within the week,93.0,0.6,05:00,21:00,59.1,27.4,53.6,
+Cost export,dp-prod,CH,flexible: within 24 h,659.0,0.1,06:00,21:00,45.8,27.4,40.1,
+Data cleansing,dp-prod,CH,flexible: within the week,95.0,2.02,03:00,16:00,64.4,29.3,54.5,
+Dev smoke test,dp-dev,DE,flexible: working day 08:00 to 18:00,456.0,0.3,10:00,13:00,283.7,251.7,11.3,
+Embedding update,dp-dev,DE,flexible: within 24 h,455.0,0.8,12:00,13:00,253.1,251.7,0.6,
+Log rotation,logs,CH,flexible: within 24 h,664.0,0.2,04:00,21:00,66.1,27.4,58.5,
+Quarterly model training,dp-dev,DE,flexible: first week of the quarter,,,,,,,,excluded: protected window T-1053 (human decision)
+Test data refresh,dp-dev,DE,flexible: before the next working day,93.0,1.49,17:00,17:00,378.6,356.0,6.0,

@@ -58,7 +58,7 @@ Fill `factors/factors.csv`: value_low, value_mid, value_high, source (link + dat
       AI subscription message, Power BI capacity-day, CI runner-minute; PUE per provider.
 - [x] V3 **Write-up** (by Sat 12:00): `factors/sources.md` – one paragraph per factor: why this value,
       how certain, what the range means. This is what the jury checks.
-- [ ] V4 Bonus (by Sat 18:00): market-based factors (guarantees of origin) and the hourly CO2 profile for
+- [x] V4 Bonus (by Sat 18:00): market-based factors (guarantees of origin) and the hourly CO2 profile for
       Switzerland and Germany, for shifting flexible jobs in time (`data/extra/data_platform_jobs.csv`).
 - [x] V5 Prepare two jury questions and answers on the factors (for example: why this Swiss mix?).
 - [ ] V6 Bonus (by Sat 18:00): estimate the energy and CO2 of **our own AI use** during the sprint (the case presentation asks

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hourly CO2 of electricity – Switzerland and Germany (Sep 2025 – Aug 2026)</title>
+<style>
+.viz-root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --border: rgba(11,11,11,0.10); --good-text: #006300;
+  --ramp: "#cde2fb,#b7d3f6,#9ec5f4,#86b6ef,#6da7ec,#5598e7,#3987e5,#2a78d6,#256abf,#1c5cab,#184f95,#104281,#0d366b";
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --border: rgba(255,255,255,0.10); --good-text: #0ca30c;
+    --ramp: "#0d366b,#104281,#184f95,#1c5cab,#256abf,#2a78d6,#3987e5,#5598e7,#6da7ec,#86b6ef,#9ec5f4,#b7d3f6,#cde2fb";
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --border: rgba(255,255,255,0.10); --good-text: #0ca30c;
+  --ramp: "#0d366b,#104281,#184f95,#1c5cab,#256abf,#2a78d6,#3987e5,#5598e7,#6da7ec,#86b6ef,#9ec5f4,#b7d3f6,#cde2fb";
+}
+body { margin: 0; }
+.viz-root { background: var(--page); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 24px; min-height: 100vh; box-sizing: border-box; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+.sub { color: var(--text-secondary); font-size: 14px; margin: 0 0 20px; max-width: 880px; line-height: 1.45; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 16px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.card h2 { font-size: 15px; margin: 0 0 2px; }
+.card .note { color: var(--text-secondary); font-size: 13px; margin: 0 0 12px; }
+svg text { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.cell:focus { outline: 2px solid var(--text-primary); outline-offset: -1px; }
+.legend { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+.legend .bar { height: 10px; width: 180px; border-radius: 4px; }
+.tip { position: fixed; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; font-size: 12px; color: var(--text-secondary); box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: none; }
+.tip strong { display: block; color: var(--text-primary); font-size: 14px; }
+table { border-collapse: collapse; font-size: 13px; width: 100%; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+th { color: var(--text-secondary); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.good { color: var(--good-text); font-weight: 600; }
+details { margin-top: 16px; }
+summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+.wide { grid-column: 1 / -1; }
+.caveat { font-size: 13px; color: var(--text-secondary); line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <h1>When is electricity cleanest? Hourly CO2, baseline year Sep 2025 – Aug 2026</h1>
+  <p class="sub">Average g CO2-eq per kWh for each month and hour of the day (local time).
+    Switzerland is the <b>consumption mix including imports</b>, the same basis as our grid factor. Germany is the generation mix.
+    Source: Energy-Charts API (Fraunhofer ISE), our calculation. Values are indicative and are not used in the baseline CO2, which uses annual factors.</p>
+  <div class="cards">
+    <div class="card"><h2>Switzerland (Zurich) – dp-prod, logs, archive</h2>
+      <p class="note" id="ch-note"></p><div id="ch"></div></div>
+    <div class="card"><h2>Germany (Frankfurt) – dp-dev</h2>
+      <p class="note" id="de-note"></p><div id="de"></div></div>
+    <div class="card wide"><h2>Flexible jobs: same work, lower CO2 by moving the start within the allowed window</h2>
+      <p class="note">Average CO2 per kWh during the job, now vs the best start hour inside the job's own window. Fixed and protected jobs are not moved.</p>
+      <table id="jobs"><thead><tr><th>Job</th><th>Resource</th><th>Allowed window</th><th class="num">Now starts</th>
+        <th class="num">Best start</th><th class="num">g/kWh now</th><th class="num">g/kWh best</th><th class="num">Change</th></tr></thead><tbody></tbody></table>
+      <p class="caveat" id="excluded"></p>
+      <p class="caveat"><b>Caveat:</b> moving a job only saves CO2 if the cluster actually uses less power when the job is not running
+        (auto-scaling or pause). dp-prod and dp-dev currently run around the clock, so the saving only becomes real together with a schedule or auto-pause measure.</p>
+      <p class="caveat"><b>Protection windows:</b> on dp-prod, jobs keep their current start on the last 3 working days of each month and at year-end close
+        (finance closing, T-1029), so nothing runs alongside the month-end close. dp-dev keeps quarterly training free on days 1–3 of Jan, Apr, Jul and Oct (T-1053).
+        "Best start" is the most frequent best hour across months; the CO2 change uses the best hour of each month.</p>
+    </div>
+  </div>
+  <details><summary>Table view: all hourly values (g CO2-eq/kWh)</summary><div id="table"></div></details>
+  <div class="tip" id="tip" role="status" aria-live="polite"></div>
+</div>
+<script>
+const D = {"months": ["Sep 2025", "Oct 2025", "Nov 2025", "Dec 2025", "Jan 2026", "Feb 2026", "Mar 2026", "Apr 2026", "May 2026", "Jun 2026", "Jul 2026", "Aug 2026"], "ch": [[44.3, 46.5, 47.4, 46.0, 45.2, 37.8, 23.1, 19.7, 21.9, 29.5, 36.0, 38.4, 40.4, 42.0, 43.1, 41.0, 35.6, 25.2, 16.6, 12.9, 13.0, 22.3, 32.4, 41.4], [85.2, 86.0, 86.4, 82.4, 77.4, 63.9, 43.5, 36.0, 37.5, 43.2, 49.1, 52.4, 53.9, 52.4, 49.1, 42.9, 33.8, 26.5, 22.9, 24.6, 33.1, 49.5, 64.5, 79.2], [95.4, 95.7, 96.6, 95.2, 94.2, 88.0, 59.7, 48.9, 49.9, 52.1, 56.2, 58.6, 57.9, 55.0, 48.6, 38.2, 30.0, 26.9, 31.0, 34.8, 43.2, 65.7, 82.1, 95.7], [92.2, 94.3, 95.4, 95.3, 92.7, 86.6, 67.9, 57.8, 54.6, 56.1, 59.5, 59.5, 60.5, 58.6, 52.9, 46.0, 41.1, 39.7, 42.5, 47.9, 55.0, 67.5, 80.6, 90.7], [134.5, 136.9, 134.3, 128.8, 124.9, 120.1, 103.2, 83.2, 75.5, 74.7, 80.8, 80.9, 86.2, 86.0, 86.6, 77.4, 68.9, 62.3, 65.2, 78.0, 93.5, 110.6, 127.2, 135.8], [105.0, 106.6, 106.0, 104.6, 103.0, 98.7, 74.1, 55.5, 54.0, 54.6, 57.6, 60.8, 62.0, 59.5, 60.7, 57.1, 48.8, 38.5, 38.1, 47.0, 62.8, 83.4, 96.1, 100.2], [91.9, 98.0, 101.4, 100.3, 97.4, 83.1, 58.3, 54.7, 59.7, 61.6, 58.2, 56.4, 57.1, 57.0, 58.8, 66.0, 67.8, 50.4, 38.7, 37.1, 52.4, 67.8, 81.9, 90.4], [36.7, 40.9, 42.6, 40.4, 36.3, 29.2, 25.2, 25.7, 32.5, 38.7, 37.7, 37.0, 36.8, 36.5, 36.8, 36.3, 35.5, 34.2, 29.0, 21.0, 19.1, 23.5, 29.3, 32.1], [20.9, 23.0, 25.4, 26.1, 25.6, 23.5, 21.7, 25.0, 29.4, 32.6, 34.5, 35.4, 35.8, 36.0, 36.6, 36.0, 35.5, 32.6, 25.7, 18.5, 14.6, 14.4, 15.6, 17.2], [19.0, 22.1, 24.6, 25.8, 26.2, 23.5, 22.1, 23.2, 26.5, 30.4, 33.0, 34.2, 34.6, 35.2, 35.5, 34.7, 33.5, 29.6, 23.3, 21.0, 19.7, 18.3, 18.4, 18.5], [31.1, 35.3, 36.8, 34.0, 33.3, 27.4, 24.2, 27.7, 34.9, 37.2, 37.2, 36.7, 37.8, 37.9, 37.7, 37.1, 36.3, 34.5, 31.0, 23.9, 19.9, 19.8, 22.9, 30.8], [35.1, 41.1, 42.5, 38.3, 36.7, 27.8, 26.2, 32.2, 36.3, 40.0, 37.8, 37.0, 37.7, 37.9, 38.2, 38.1, 36.5, 31.7, 25.8, 21.5, 17.7, 17.5, 21.1, 27.4]], "de": [[381.4, 379.5, 383.0, 386.6, 393.8, 403.7, 407.8, 391.9, 351.9, 302.5, 255.4, 223.8, 208.0, 206.0, 213.4, 233.0, 275.0, 340.1, 418.4, 453.6, 444.4, 424.6, 410.5, 398.2], [393.6, 389.1, 378.4, 381.0, 380.5, 386.1, 391.0, 394.9, 378.5, 347.6, 313.6, 288.6, 277.2, 278.8, 290.5, 318.1, 359.5, 400.2, 418.8, 415.5, 404.8, 398.6, 399.0, 390.7], [435.9, 432.1, 430.8, 430.6, 434.1, 443.9, 449.7, 453.6, 439.6, 412.4, 391.1, 380.1, 381.4, 399.1, 433.0, 472.2, 486.7, 477.3, 467.6, 463.4, 457.4, 454.1, 455.4, 447.4], [362.9, 355.8, 354.1, 354.5, 358.8, 366.4, 375.4, 390.6, 395.1, 382.3, 364.2, 351.8, 352.8, 366.7, 394.0, 420.6, 420.7, 408.7, 399.9, 392.2, 382.9, 376.5, 377.1, 368.3], [410.9, 406.6, 404.8, 402.5, 404.2, 409.3, 415.5, 423.9, 424.4, 413.3, 394.7, 380.2, 376.1, 383.4, 404.5, 434.8, 448.5, 442.6, 436.8, 432.7, 429.3, 426.3, 429.1, 422.7], [412.4, 413.5, 414.2, 416.7, 419.8, 426.5, 432.7, 434.9, 421.4, 398.3, 376.6, 360.4, 352.6, 355.0, 367.0, 390.0, 421.8, 436.9, 429.1, 420.1, 414.1, 409.1, 410.1, 406.3], [477.3, 479.3, 484.0, 491.6, 496.1, 499.2, 493.3, 457.7, 388.0, 324.1, 274.5, 245.0, 234.0, 239.1, 261.9, 316.4, 401.7, 490.1, 518.4, 507.9, 494.7, 485.9, 486.0, 487.9], [430.1, 432.9, 435.2, 438.6, 442.1, 443.9, 436.9, 400.2, 335.9, 269.9, 219.5, 194.1, 184.0, 182.6, 187.8, 202.3, 229.1, 276.0, 356.9, 430.6, 448.6, 436.7, 428.5, 423.2], [494.0, 495.2, 497.4, 500.8, 502.2, 495.7, 454.0, 378.8, 295.5, 232.7, 195.8, 177.8, 170.0, 169.3, 175.1, 187.0, 215.2, 271.8, 355.8, 441.5, 499.6, 511.0, 505.2, 501.4], [474.9, 469.8, 469.2, 468.3, 468.8, 455.1, 413.6, 354.2, 289.4, 237.6, 199.3, 173.9, 161.8, 158.8, 161.4, 173.0, 202.0, 252.7, 322.3, 401.2, 464.5, 487.2, 487.1, 481.1], [476.3, 481.1, 485.9, 491.1, 493.8, 483.3, 446.6, 387.3, 314.3, 249.0, 203.6, 176.8, 163.4, 158.2, 159.8, 169.0, 191.2, 233.6, 298.1, 374.1, 441.1, 467.6, 474.3, 473.9], [477.3, 478.1, 480.0, 482.0, 483.9, 480.8, 460.6, 412.1, 337.4, 265.9, 215.6, 187.7, 176.0, 173.9, 176.4, 187.3, 218.8, 274.8, 360.0, 446.9, 490.3, 486.7, 475.6, 468.2]], "ch_mean": 50.4, "de_mean": 377.1, "jobs": [{"job": "Log rotation", "resource": "logs", "grid": "CH", "window": "flexible: within 24 h", "runs": 664.0, "duration_h": 0.2, "current_start": "04:00", "best_start_typical": "21:00", "g_per_kwh_now": 66.1, "g_per_kwh_best": 27.4, "reduction_pct": 58.5, "note": NaN}, {"job": "Data cleansing", "resource": "dp-prod", "grid": "CH", "window": "flexible: within the week", "runs": 95.0, "duration_h": 2.02, "current_start": "03:00", "best_start_typical": "16:00", "g_per_kwh_now": 64.4, "g_per_kwh_best": 29.3, "reduction_pct": 54.5, "note": NaN}, {"job": "Catalogue scan", "resource": "dp-prod", "grid": "CH", "window": "flexible: within the week", "runs": 93.0, "duration_h": 0.6, "current_start": "05:00", "best_start_typical": "21:00", "g_per_kwh_now": 59.1, "g_per_kwh_best": 27.4, "reduction_pct": 53.6, "note": NaN}, {"job": "Archiving", "resource": "st-archive", "grid": "CH", "window": "flexible: within the month", "runs": 22.0, "duration_h": 2.97, "current_start": "04:00", "best_start_typical": "16:00", "g_per_kwh_now": 57.0, "g_per_kwh_best": 29.3, "reduction_pct": 48.5, "note": NaN}, {"job": "Cost export", "resource": "dp-prod", "grid": "CH", "window": "flexible: within 24 h", "runs": 659.0, "duration_h": 0.1, "current_start": "06:00", "best_start_typical": "21:00", "g_per_kwh_now": 45.8, "g_per_kwh_best": 27.4, "reduction_pct": 40.1, "note": NaN}, {"job": "Dev smoke test", "resource": "dp-dev", "grid": "DE", "window": "flexible: working day 08:00 to 18:00", "runs": 456.0, "duration_h": 0.3, "current_start": "10:00", "best_start_typical": "13:00", "g_per_kwh_now": 283.7, "g_per_kwh_best": 251.7, "reduction_pct": 11.3, "note": NaN}, {"job": "Test data refresh", "resource": "dp-dev", "grid": "DE", "window": "flexible: before the next working day", "runs": 93.0, "duration_h": 1.49, "current_start": "17:00", "best_start_typical": "17:00", "g_per_kwh_now": 378.6, "g_per_kwh_best": 356.0, "reduction_pct": 6.0, "note": NaN}, {"job": "Embedding update", "resource": "dp-dev", "grid": "DE", "window": "flexible: within 24 h", "runs": 455.0, "duration_h": 0.8, "current_start": "12:00", "best_start_typical": "13:00", "g_per_kwh_now": 253.1, "g_per_kwh_best": 251.7, "reduction_pct": 0.6, "note": NaN}], "excluded": [{"job": "Quarterly model training", "resource": "dp-dev", "note": "excluded: protected window T-1053 (human decision)"}]};
+const root = document.querySelector('.viz-root');
+function ramp() { return getComputedStyle(root).getPropertyValue('--ramp').replace(/["\s]/g, '').split(','); }
+function hex2rgb(h) { return [1,3,5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+function colorAt(t, r) {
+  const x = Math.max(0, Math.min(1, t)) * (r.length - 1), i = Math.floor(x), f = x - i;
+  const a = hex2rgb(r[i]), b = hex2rgb(r[Math.min(i + 1, r.length - 1)]);
+  return 'rgb(' + a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(',') + ')';
+}
+const tip = document.getElementById('tip');
+function showTip(ev, value, label) {
+  tip.textContent = '';
+  const s = document.createElement('strong'); s.textContent = value + ' g/kWh'; tip.appendChild(s);
+  tip.appendChild(document.createTextNode(label));
+  tip.style.display = 'block';
+  const r = ev.target.getBoundingClientRect();
+  const x = ev.clientX || (r.left + r.width / 2), y = ev.clientY || r.top;
+  tip.style.left = Math.min(x + 12, window.innerWidth - 200) + 'px'; tip.style.top = (y + 12) + 'px';
+}
+function hideTip() { tip.style.display = 'none'; }
+const NS = 'http://www.w3.org/2000/svg';
+function heat(id, g, country) {
+  const el = document.getElementById(id); el.textContent = '';
+  const vals = g.flat().filter(v => v !== null), lo = Math.min(...vals), hi = Math.max(...vals), r = ramp();
+  const cw = 18, ch = 18, gap = 2, left = 64, top = 4, W = left + 24 * (cw + gap) + 16, H = top + 12 * (ch + gap) + 20;
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('width', '100%');
+  svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', country + ' hourly CO2 heatmap, ' + lo + ' to ' + hi + ' g per kWh');
+  g.forEach((row, mi) => {
+    const t = document.createElementNS(NS, 'text'); t.setAttribute('x', left - 8); t.setAttribute('y', top + mi * (ch + gap) + 13);
+    t.setAttribute('text-anchor', 'end'); t.textContent = D.months[mi]; svg.appendChild(t);
+    row.forEach((v, h) => {
+      const c = document.createElementNS(NS, 'rect');
+      c.setAttribute('x', left + h * (cw + gap)); c.setAttribute('y', top + mi * (ch + gap));
+      c.setAttribute('width', cw); c.setAttribute('height', ch); c.setAttribute('rx', 2);
+      c.setAttribute('fill', v === null ? 'none' : colorAt((v - lo) / (hi - lo), r));
+      c.setAttribute('class', 'cell'); c.setAttribute('tabindex', '0');
+      const label = country + ' · ' + D.months[mi] + ' · ' + String(h).padStart(2, '0') + ':00–' + String(h + 1).padStart(2, '0') + ':00';
+      c.setAttribute('aria-label', label + ': ' + v + ' g per kWh');
+      c.addEventListener('pointermove', e => showTip(e, v, label)); c.addEventListener('pointerleave', hideTip);
+      c.addEventListener('focus', e => showTip(e, v, label)); c.addEventListener('blur', hideTip);
+      svg.appendChild(c);
+    });
+  });
+  [0, 6, 12, 18, 23].forEach(h => {
+    const t = document.createElementNS(NS, 'text'); t.setAttribute('x', left + h * (cw + gap) + cw / 2);
+    t.setAttribute('y', H - 4); t.setAttribute('text-anchor', 'middle'); t.textContent = String(h).padStart(2, '0') + ':00'; svg.appendChild(t);
+  });
+  el.appendChild(svg);
+  const lg = document.createElement('div'); lg.className = 'legend';
+  const a = document.createElement('span'); a.textContent = Math.round(lo) + ' g/kWh';
+  const bar = document.createElement('span'); bar.className = 'bar';
+  bar.style.background = 'linear-gradient(90deg,' + r.join(',') + ')';
+  const b = document.createElement('span'); b.textContent = Math.round(hi) + ' g/kWh';
+  lg.append(a, bar, b); el.appendChild(lg);
+  return [lo, hi];
+}
+function render() {
+  const [cl, chh] = heat('ch', D.ch, 'Switzerland'); const [dl, dh] = heat('de', D.de, 'Germany');
+  document.getElementById('ch-note').textContent = 'Range ' + Math.round(cl) + '–' + Math.round(chh) + ' g/kWh, mean ' + Math.round(D.ch_mean) + '. Colour scale below the chart.';
+  document.getElementById('de-note').textContent = 'Range ' + Math.round(dl) + '–' + Math.round(dh) + ' g/kWh, mean ' + Math.round(D.de_mean) + '. Own scale; Germany is about 4x Switzerland.';
+}
+render();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+const tb = document.querySelector('#jobs tbody');
+D.jobs.forEach(j => {
+  const tr = document.createElement('tr');
+  const cells = [j.job, j.resource + ' (' + j.grid + ')', j.window.replace('flexible: ', ''), j.current_start, j.best_start_typical,
+    j.g_per_kwh_now, j.g_per_kwh_best, '−' + j.reduction_pct + ' %'];
+  cells.forEach((v, i) => { const td = document.createElement('td'); td.textContent = v; if (i >= 3) td.className = 'num'; if (i === 7) td.classList.add('good'); tr.appendChild(td); });
+  tb.appendChild(tr);
+});
+document.getElementById('excluded').textContent = D.excluded.length ? 'Not moved: ' + D.excluded.map(e => e.job + ' on ' + e.resource + ' – ' + e.note).join('; ') + '.' : '';
+const tw = document.getElementById('table');
+[['Switzerland (consumption mix)', D.ch], ['Germany', D.de]].forEach(([name, g]) => {
+  const h = document.createElement('h3'); h.textContent = name; h.style.fontSize = '14px'; tw.appendChild(h);
+  const t = document.createElement('table'); const hr = document.createElement('tr');
+  ['Month'].concat([...Array(24).keys()].map(x => String(x).padStart(2, '0'))).forEach((x, i) => { const th = document.createElement('th'); th.textContent = x; if (i) th.className = 'num'; hr.appendChild(th); });
+  t.appendChild(hr);
+  g.forEach((row, mi) => { const tr = document.createElement('tr'); const td0 = document.createElement('td'); td0.textContent = D.months[mi]; tr.appendChild(td0);
+    row.forEach(v => { const td = document.createElement('td'); td.className = 'num'; td.textContent = v === null ? '–' : Math.round(v); tr.appendChild(td); }); t.appendChild(tr); });
+  tw.appendChild(t);
+});
+</script>
+</body>
+</html>
