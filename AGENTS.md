@@ -88,7 +88,10 @@ Stop hook in `.claude/settings.json` (no edits to `data/`, no push to `main`; a 
 - Decisions go into `docs/kb/decisions.md`, review follow-ups into `docs/kb/reviews.md`. After `git pull`, read the three kb indexes first.
 - **Every output also updates the Notion task board** (https://app.notion.com/p/41e23340962b813b8f16da05f2a90b97): tick what is done, add the PR or kb file, add new
   open items and blockers, and refresh the status line at the top. Do it right after the kb file or PR, not at the end of the day.
-  If your agent has no Notion access, write a line «Board: …» in the PR description and Rashed's agent updates the board.
+  If your agent has no Notion access (Hakim, Vinzenz, Grok): append one line per output to `board-notes.md` in your own kb
+  (`analysis/kb/board-notes.md`, `factors/kb/board-notes.md`) and repeat it in the PR description. Format:
+  `Board: <dd.mm. hh:mm> · <person> · <task id> · done | in progress | blocked · <what> · <PR or file> · next: <…> · blocker: <… or none>`
+  Your agent creates the file on first use. Rashed's agent reads these on every review and updates the board.
   The repo stays the source of truth; the board is the summary.
 
 ## Baseline (verified)
