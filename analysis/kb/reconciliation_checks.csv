@@ -1,0 +1,51 @@
+area,check,independent,pipeline,diff,status,note
+1 totals,azure: without imputed,197376.28,197376.28,-0.0,same,
+1 totals,azure: imputed only,4260.18,4260.18,0.0,same,
+1 totals,azure: total,201636.46,201636.46,-0.0,same,
+1 totals,aws: without imputed,58259.16,58259.16,0.0,same,
+1 totals,aws: imputed only,2014.57,2014.57,0.0,same,
+1 totals,aws: total,60273.73,60273.73,0.0,same,
+1 totals,hoster: without imputed,18652.88,18652.88,-0.0,same,
+1 totals,hoster: imputed only,356.16,356.16,0.0,same,
+1 totals,hoster: total,19009.04,19009.04,-0.0,same,
+1 totals,ai_usage: without imputed,39444.06,39444.06,-0.0,same,
+1 totals,ai_usage: imputed only,0.0,0.0,0.0,same,
+1 totals,ai_usage: total,39444.06,39444.06,-0.0,same,
+1 totals,ai_subscriptions: without imputed,35767.78,35767.78,-0.0,same,
+1 totals,ai_subscriptions: imputed only,0.0,0.0,0.0,same,
+1 totals,ai_subscriptions: total,35767.78,35767.78,-0.0,same,
+1 totals,saas: without imputed,114157.87,114157.87,0.0,same,
+1 totals,saas: imputed only,0.0,0.0,0.0,same,
+1 totals,saas: total,114157.87,114157.87,0.0,same,
+1 totals,BASELINE TOTAL Sep 2025 - Aug 2026,470288.93,470288.93,-0.0,same,"AGENTS.md states CHF 470,289"
+2 monthly,source x month cells differing by > CHF 1 (of 72),0.0,0.0,0.0,same,
+2 monthly,months in baseline per source,12.0,12.0,0.0,same,
+3 allocation,allocated total = fact total (baseline),470288.93,470288.93,0.0,same,
+3 allocation,CHF with no department,0.0,0.0,0.0,same,
+3 allocation,CHF with no tool,0.0,0.0,0.0,same,
+3 allocation,CHF with no country,0.0,0.0,0.0,same,
+3 allocation,"baseline rows: fact vs allocated (1:1, no join multiplication)",35871.0,35871.0,0.0,same,
+3 allocation,baseline rows split across departments,0.0,0.0,0.0,same,
+4 cross-source,provider_monthly_report vs azure+aws+hoster (12 baseline months),280919.23,285820.0,4900.77,same,report is a separate summary; within 2 % counts as same
+4 cross-source,AI gateway (in baseline) vs provider invoice: Anthropic,16885.79,17800.66,914.87,different,invoice = what was actually paid
+4 cross-source,AI gateway (in baseline) vs provider invoice: Azure OpenAI,21981.24,23356.32,1375.07,different,invoice = what was actually paid
+4 cross-source,AI gateway (in baseline) vs provider invoice: OpenAI,577.03,607.7,30.67,different,invoice = what was actually paid
+4 cross-source,"AI gateway vs provider invoices, all providers",39444.06,41764.67,2320.61,different,
+5 traps,baseline is not ~40 % lower than the data (Azure note),470288.93,470288.93,-0.0,same,"a 40 % cut would show as diff of about -188,116"
+5 traps,"db-fin costs are not zero (T-1251), incl. imputed",11933.84,11933.84,0.0,same,
+5 traps,AWS 'exclude test account' rows: CHF in baseline (must stay in),2.11,,,info,16 rows carry the note; included in the matching aws total in section 1
+5 traps,"rows carrying instructions to AIs (Azure note, hoster remark)",2.0,2.0,0.0,same,azure 2026-04 amount 65.07; hoster 2026-07 amount 12.87
+5 traps,SLA credits kept as negative cost (baseline),-3000.0,-3000.0,0.0,same,"3 credits in data, -900 of them dated Aug 2025"
+5 traps,cost after Aug 2026 kept out of the baseline,6434.73,,,info,must not be in the total
+7 one-off,"T-1212 AI script loop, 17-19 Mar 2026: excess over median day",,3309.99,,info,median day 21.05; 3 days 3373.14
+7 one-off,"T-1189 migration egress, Jan 2026: excess over median month",,357.55,,info,
+7 one-off,"AWS Support fee in baseline (recurring, measure candidate for H2)",,10788.46,,info,
+6 hygiene,exact duplicate rows removed: azure,7.0,,,info,
+6 hygiene,exact duplicate rows removed: aws,5.0,,,info,
+6 hygiene,exact duplicate rows removed: hoster,3.0,,,info,
+6 hygiene,exact duplicate rows removed: ai_usage,87.0,,,info,
+6 hygiene,exact duplicate rows removed: ai_subscriptions,0.0,,,info,
+6 hygiene,exact duplicate rows removed: saas,0.0,,,info,
+6 hygiene,draft rows dropped: ai_subscriptions,24.0,24.0,0.0,same,pipeline column = drafts that have a Final twin
+6 hygiene,draft rows dropped: saas,121.0,121.0,0.0,same,pipeline column = drafts that have a Final twin
+6 hygiene,missing costs that could not be imputed,0.0,0.0,0.0,same,
