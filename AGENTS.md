@@ -86,6 +86,10 @@ Stop hook in `.claude/settings.json` (no edits to `data/`, no push to `main`; a 
 - Add a row to the folder's `README.md` index in the same pull request. Code and machine-readable files stay where they are
   (`out/`, `factors/factors.csv`, `measures/measures.csv`); the kb file explains them.
 - Decisions go into `docs/kb/decisions.md`, review follow-ups into `docs/kb/reviews.md`. After `git pull`, read the three kb indexes first.
+- **Every output also updates the Notion task board** (https://app.notion.com/p/41e23340962b813b8f16da05f2a90b97): tick what is done, add the PR or kb file, add new
+  open items and blockers, and refresh the status line at the top. Do it right after the kb file or PR, not at the end of the day.
+  If your agent has no Notion access, write a line «Board: …» in the PR description and Rashed's agent updates the board.
+  The repo stays the source of truth; the board is the summary.
 
 ## Baseline (verified)
 Baseline year Sep 2025 – Aug 2026: **CHF 470,289** (incl. CHF 6,631 imputed for missing costs).
