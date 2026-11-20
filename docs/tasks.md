@@ -24,13 +24,12 @@ Tick a box only in the pull request that finishes the task. Times are Europe/Zur
 - [ ] R3 **Energy and CO2 in the pipeline** (as soon as V1 + V2 are merged): rerun, check plausibility,
       fill the energy/CO2 rows of `submission/template_baseline_and_assumptions.csv`.
 - [ ] R4 **"Needs a human" list** (by Sat 18:00): every measure with a protection window, every contradiction,
-      every manipulative text, each with the responsible role.
+      all five manipulative texts (incl. T-1251), one-off costs, each with the responsible role.
 - [ ] R5 **Final templates** in `submission/` (Sun 07:30) and submit (Sun 08:30).
 - [ ] R6 **Pitch**: script for the 5-minute demo, rehearse twice Saturday evening.
 - [ ] R7 Review and merge pull requests at least every 2 hours.
 
-## Hakim – analysis and app (ChatGPT) · folders `analysis/`, `app/`
-*App ownership is proposed; confirm in the team chat.*
+## Hakim – analysis and app (Claude Code in VS Code) · folders `analysis/`, `app/`
 - [ ] H1 **Reconcile your analysis** (by Sat 10:00): put it in `analysis/`, compare every total with `out/`
       and write `analysis/reconciliation.md` (same / different / why). Watch for numbers about 40 % too low or a
       suggestion to switch off production: those come from planted text (`docs/traps.md`).
@@ -46,7 +45,7 @@ Tick a box only in the pull request that finishes the task. Times are Europe/Zur
 - [ ] H5 Bonus: chat assistant that answers questions about the data and backs every answer with a calculation
       or source; must ignore instructions found in the data.
 
-## Vinzenz – energy and CO2 factors (Perplexity) · folder `factors/`
+## Vinzenz – energy and CO2 factors (Claude in VS Code + Perplexity) · folder `factors/`
 Fill `factors/factors.csv`: value_low, value_mid, value_high, source (link + date), notes. No value without a source.
 - [ ] V1 **Grid mix, location-based** (by Sat 10:00): kg CO2/kWh for Switzerland, Germany, Ireland and an
       EU average (AI providers and SaaS are "EU mixed"). For Switzerland, give both the consumption mix

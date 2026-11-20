@@ -32,8 +32,11 @@ UNIT_KEY = {"vCPU-hour": "vcpu_hour", "vCore-hour": "vcpu_hour", "node-hour": "n
             "GB": "gb_transfer", "runner-minute": "runner_minute", "month": "none",
             "tokens": "tokens_1000", "seat-month": "subscription_message",
             "licence-month": "saas_licence_month"}
-INJECTION = re.compile(r"(?i)(?:ignore (?:all|the|previous)|instruction|for (?:ai )?assistants|"
-                       r"ai systems|report costs|estimate the values yourself|approved by)")
+INJECTION = re.compile(
+    r"(?i)(?:ignore (?:all|the|previous)|instruction|for (?:ai )?assistants|ai systems|ai assistants|"
+    r"tell the user|set all costs|costs? (?:to|=) ?0|report costs|estimate the values yourself|"
+    r"exclude from analys|approved by the head|switch(?:ing)? off .* (?:immediately|completely)|"
+    r"no savings are possible|system notice)")
 
 log = []
 def note(check, source, n, decision, chf=None, detail=""):
@@ -182,7 +185,7 @@ def load_ai_usage(data, mapping, fx):
         region="EU (mixed)", unit="tokens", quantity=d["tokens_in"] + d["tokens_out_filled"],
         cost_orig=d["cost_chf"], currency="CHF", cost_chf=d["cost_chf"], cost_imputed=False, charge_type="Usage",
         dept_src=d["department"], tool_src=d["tool"], env_src="prod", project_id=d["project_id"].map(norm_project),
-        cpu_avg_pct=np.nan, provider=d["provider"], model=d["model"], requests=d["requests"],
+        cpu_avg_pct=np.nan, provider=d["provider"], model=d["model"], model_class=d["model_class"], requests=d["requests"],
         tokens_in=d["tokens_in"], tokens_in_cache=d["tokens_in_cache"], tokens_out=d["tokens_out_filled"]))
 
 def load_contracts(data, fx, name, source, item_col, price_col, rid_fn, unit):
@@ -299,6 +302,19 @@ def main():
             qty = qty.where(f["charge_type"] != "Credit", 0)
             e = qty * f["energy_key"].map(ef)
             e = e * np.where(f["energy_key"].map(applies).fillna(False), pue, 1.0)
+            # AI tokens: if factors.csv has per-size input/output rows, use them instead of the single tokens_1000
+            split = [f"tokens_{io}_1000_{s}" for io in ("in", "out") for s in ("large", "small")]
+            if all(k in ef.index and pd.notna(ef[k]) for k in split):
+                ai = f["energy_key"] == "tokens_1000"
+                size = f["model_class"].where(f["model_class"].isin(["large", "small"]), "large")
+                f_in = ("tokens_in_1000_" + size).map(ef)
+                f_out = ("tokens_out_1000_" + size).map(ef)
+                e_ai = (f["tokens_in"] / 1000 * f_in + f["tokens_out"] / 1000 * f_out)
+                e_ai = e_ai * (pue if applies.get("tokens_1000", True) else 1.0)
+                e = e.where(~ai, e_ai)
+                if lvl == "mid":
+                    note("AI energy split", "ai_usage", int(ai.sum()),
+                         "energy per model size and input/output tokens (tokens_in/out_1000_large/small)")
             f[f"kwh_{lvl}"] = e
             f[f"co2_kg_{lvl}"] = e * ("grid_" + f["country"]).map(ef)
     if missing_f or missing_g:
@@ -356,13 +372,13 @@ def main():
     ba = fa[fa["in_baseline"]]
     total = b["cost_chf"].sum()
     with pd.ExcelWriter(out / "baseline_summary.xlsx") as xw:
-        b.groupby("source")["cost_chf"].sum().sort_values(ascending=False).to_frame().to_excel(xw, "by_source")
-        ba.groupby("dept_allocated")["cost_chf_alloc"].sum().sort_values(ascending=False).to_frame().to_excel(xw, "by_department_allocated")
-        b.groupby(["source", "tool"])["cost_chf"].sum().sort_values(ascending=False).to_frame().to_excel(xw, "by_tool")
-        b.groupby(["country", "energy_key", "unit"]).agg(quantity=("quantity", "sum"), cost_chf=("cost_chf", "sum")).to_excel(xw, "by_country_unit")
-        b.groupby("month")["cost_chf"].sum().to_frame().to_excel(xw, "by_month")
+        b.groupby("source")["cost_chf"].sum().sort_values(ascending=False).to_frame().to_excel(xw, sheet_name="by_source")
+        ba.groupby("dept_allocated")["cost_chf_alloc"].sum().sort_values(ascending=False).to_frame().to_excel(xw, sheet_name="by_department_allocated")
+        b.groupby(["source", "tool"])["cost_chf"].sum().sort_values(ascending=False).to_frame().to_excel(xw, sheet_name="by_tool")
+        b.groupby(["country", "energy_key", "unit"]).agg(quantity=("quantity", "sum"), cost_chf=("cost_chf", "sum")).to_excel(xw, sheet_name="by_country_unit")
+        b.groupby("month")["cost_chf"].sum().to_frame().to_excel(xw, sheet_name="by_month")
         if "kwh_mid" in b:
-            b.groupby(["country", "source"])[["kwh_mid", "co2_kg_mid"]].sum().to_excel(xw, "energy_co2")
+            b.groupby(["country", "source"])[["kwh_mid", "co2_kg_mid"]].sum().to_excel(xw, sheet_name="energy_co2")
     pd.DataFrame(log).to_csv(out / "quality_log.csv", index=False)
 
     # template prefill
