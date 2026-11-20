@@ -13,7 +13,7 @@
 
 ## 1. Market-based factor (bonus template row `grid_mix_market_based`)
 
-**Result: 0.011 / 0.054 / 0.284 kg CO2/kWh.** Indicative market-based CO2 for the baseline year: **≈ 2.0 t** (0.4–10.3), compared with 6.5 t location-based.
+**Result: 0.011 / 0.054 / 0.284 kg CO2/kWh.** Indicative market-based CO2 for the baseline year: **≈ 1.9 t** (0.4–9.9), compared with 6.2 t location-based.
 
 | Location | Share of kWh | Low | Mid | High |
 | --- | --- | --- | --- | --- |

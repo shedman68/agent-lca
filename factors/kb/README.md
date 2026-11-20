@@ -6,6 +6,7 @@ The machine-readable values stay in `factors/factors.csv` (read by the pipeline)
 
 | File | Task | Status |
 | --- | --- | --- |
+| [review-followups-V1-V2.md](review-followups-V1-V2.md) | Review follow-ups: token split, grid system boundary, GPU mid from data | final for review |
 | [V4-market-based-and-hourly.md](V4-market-based-and-hourly.md) | V4 bonus: market-based factor, hourly CO2 CH/DE, job shifting | final for review |
 | [V4-hourly-co2.html](V4-hourly-co2.html) | V4 interactive heatmaps + job table (open in a browser) | final for review |
 | [V5-jury-questions.md](V5-jury-questions.md) | V5 two jury questions + answers (+ follow-ups, backup) | final for review |

@@ -13,7 +13,7 @@
 | --- | --- | --- | --- | --- | --- |
 | `vcpu_hour` | kWh / vCPU-h | 0.0025 | **0.0040** | 0.0056 | medium |
 | `node_hour` (16 vCPU, 64 GB) | kWh / node-h | 0.040 | **0.064** | 0.090 | medium |
-| `gpu_hour` (300 W class + host) | kWh / GPU-h | 0.10 | **0.18** | 0.45 | low–medium |
+| `gpu_hour` (300 W class + host) | kWh / GPU-h | 0.10 | **0.13** | 0.45 | medium (mid from data) |
 | `gb_storage_day` (incl. replication) | kWh / GB-day | 0.000047 | **0.00009** | 0.00017 | medium–low |
 | `bi_capacity_day` (Power BI P1/F64) | kWh / day | 0.48 | **0.77** | 1.08 | low (derived) |
 | `runner_minute` (2 vCPU) | kWh / min | 0.000083 | **0.00013** | 0.00030 | medium–low (derived) |
@@ -23,14 +23,15 @@
 | `pue_default` | ratio | 1.14 | **1.21** | 1.32 | medium |
 | `saas_licence_month` | – | – | – | – | **excluded** (no credible source; vendors publish nothing per licence) |
 
-## Effect on the baseline (pipeline run 2026-11-20, `verify_baseline.py` = MATCH)
+## Effect on the baseline (pipeline run 2026-11-21 after the review follow-ups, `verify_baseline.py` = MATCH)
 
 | | Low | Mid | High |
 | --- | --- | --- | --- |
-| Energy, baseline year | 19.4 MWh | **36.3 MWh** | 69.3 MWh |
-| CO2 location-based | 2.9 t | **6.5 t** | 15.4 t |
+| Energy, baseline year | 19.4 MWh | **35.8 MWh** | 69.2 MWh |
+| CO2 location-based | 2.9 t | **6.2 t** | 15.4 t |
 
-Largest CO2 drivers (mid): node-hours 2.99 t (46 %) · storage 1.10 t · vCPU-hours 0.95 t · GPU 0.65 t · AI tokens 0.63 t.
+Largest CO2 drivers (mid): node-hours 2.91 t (47 %) · storage 1.10 t · vCPU-hours 0.95 t · AI tokens 0.63 t · GPU 0.45 t.
+Changes since 20.11. (36.3 MWh, 6.47 t): the GPU mid comes from data (0.18 → 0.13), and the Germany grid is life-cycle (0.344 → 0.330).
 These numbers come from `out/fact_costs.csv`; the official figures are whatever the pipeline produces after merge.
 
 ## Why these values
@@ -40,8 +41,9 @@ These numbers come from `out/fact_costs.csv`; the official figures are whatever 
   and the Cloud Carbon Footprint (CCF) coefficients (Azure 0.78–3.76 W per vCPU, memory 0.392 W/GB).
 - **Range = utilisation:** low 10 %, mid 30 %, high 50 % CPU. Our servers run at ~9 % (dp-dev) to ~50 %, so the range covers the fleet.
 - **Node-hour** = 16 × vCPU-hour; Boavizta's direct 16 vCPU / 64 GB results give the same numbers.
-- **GPU:** A100 PCIe 300 W TDP (NVIDIA), idle 46 W (CCF), host = Azure NC24ads_A100_v4 (24 vCPU, 220 GiB). Mid assumes ~20 % average GPU use,
-  because the GPU idles outside the quarterly training; high = full training load. Host share is our derivation.
+- **GPU:** A100 PCIe 300 W TDP (NVIDIA), idle 46 W (CCF), host = Azure NC24ads_A100_v4 (24 vCPU, 220 GiB). The mid comes from data (review #8): weekly
+  `gpu_avg_pct` in `server_metrics_weekly.csv` averages 9.2 % (5–7 % outside the 4 training weeks at ~43 %).
+  Power model: GPU 46 + u × 254 W, host 55 + u × 95 W, which gives a 133 W mean = 0.13 kWh/h. It was 0.18 at an assumed 20 %. High = full training load. Host share is our derivation.
 - **Runner-minute** and **Power BI capacity-day** have no direct source; derived from vCPU-hour (2-vCPU GitHub runner; 8 v-cores for P1/F64 per Microsoft Learn).
 
 ### Storage and network
@@ -54,8 +56,9 @@ These numbers come from `out/fact_costs.csv`; the official figures are whatever 
 - **No provider publishes energy per token.** Values come from Epoch AI (2025), Jegham et al. "How Hungry is AI?" (2025), ML.ENERGY (2026) and Google's measured
   0.24 Wh per median Gemini prompt (2025).
 - **Weighted with our own data:** input:output = **5.6 : 1** and **97 %** of tokens are on large models (`ai_usage.csv`). Output tokens cost ~6× more than input.
-- **Small models use ~4–5× less energy per token.** With a single `tokens_1000` key the pipeline cannot show the saving of "smaller model + caching" (measure 6).
-  Suggestion for Rashed: add `tokens_1000_large` / `tokens_1000_small` keys (large: input 0.0001, output 0.0006; small: input 0.00002, output 0.00015 kWh per 1k, mid).
+- **Small models use ~4–5× less energy per token.** Added on 21.11. (review #8): `tokens_in_1000_large`, `tokens_out_1000_large`, `tokens_in_1000_small` and
+  `tokens_out_1000_small` in `factors.csv`, each with low/mid/high and sources. Mid values: large input 0.0001, output 0.0006; small input 0.00002, output 0.00015 kWh per 1k.
+  The pipeline keeps the blended `tokens_1000`; the split is for the measures calculator ("smaller model + caching").
 - **Subscription message:** low = Google's measured median prompt without overhead (0.22 Wh); mid = typical enterprise message (~2k context + 500 output tokens = 0.5 Wh);
   high = long-context / document-grounded use (Copilot) ~3 Wh.
 

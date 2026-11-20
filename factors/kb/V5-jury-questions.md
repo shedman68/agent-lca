@@ -34,7 +34,7 @@
 > We don't trust any single number, so every factor has a low, mid and high value and at least two independent sources.
 > For servers, two independent methods agree within about 30 percent: the Boavizta model, which we ran live for the actual Azure and AWS machine types, and the Cloud Carbon Footprint coefficients.
 > For AI, we used four studies from 2025 and 2026, including Google's measured 0.24 watt-hours per prompt, and weighted them with our own data: 97 percent of our tokens go to large models.
-> The result is 36 MWh and 6.5 tonnes of CO2 in the mid case, with a range of 2.9 to 15 tonnes.
+> The result is 36 MWh and 6.2 tonnes of CO2 in the mid case, with a range of 2.9 to 15 tonnes.
 
 **If pushed on which uncertainty matters most:**
 > We tested each factor on its own. AI tokens and the data-platform nodes each move the total by about 20 percent. The grid mix of Germany moves it by 10 percent.
