@@ -1,0 +1,10 @@
+check,mean_abs_diff_chf,mean_diff_pct
+provider_monthly_report vs azure,5544.0,24.8
+provider_monthly_report vs aws,17196.0,79.3
+provider_monthly_report vs azure+aws,1263.0,4.0
+provider_monthly_report vs azure+aws+hoster,902.0,-1.9
+"AI gateway vs invoice (Anthropic), baseline year",76.0,5.1
+"AI gateway vs invoice (Azure OpenAI), baseline year",115.0,5.9
+"AI gateway vs invoice (OpenAI), baseline year",3.0,4.9
+node-hours: monitoring vs Azure invoice (dp-dev),,1.1
+node-hours: monitoring vs Azure invoice (dp-prod),,0.7
