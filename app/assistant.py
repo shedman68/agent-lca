@@ -80,15 +80,25 @@ def baseline_overview() -> dict:
     f = _facts()
     tot = f.cost_chf.sum()
     by = lambda c: {str(k): round(v, 2) for k, v in f.groupby(c, dropna=False).cost_chf.sum().sort_values(ascending=False).items()}
-    return {
+    res = {
         "answer": f"The baseline year (Sep 2025 to Aug 2026) costs CHF {tot:,.2f}.",
         "numbers": {"total_chf": round(tot, 2), "imputed_chf": round(f[f.cost_imputed.astype(bool)].cost_chf.sum(), 2),
                     "by_source": by("source"), "by_department": by("department"), "by_country": by("country")},
         "calculation": "Sum of cost_chf over all baseline rows (duplicates and drafts removed, FX per month, "
                        "missing costs imputed and flagged). Independently reconciled to the franc (analysis/kb/reconciliation.md).",
         "sources": ["out/fact_costs.csv", "analysis/kb/reconciliation.md"],
-        "energy_co2": "available" if _has_energy() else "pending: factors/factors.csv not yet merged (V1/V2)",
     }
+    if _has_energy():
+        co2 = {l: f[f"co2_kg_{l}"].sum() for l in ("low", "mid", "high")}
+        res["answer"] += (f" Energy {f.kwh_mid.sum():,.0f} kWh and {co2['mid']:,.0f} kg CO2 per year "
+                          f"(location-based, range {co2['low']:,.0f}–{co2['high']:,.0f} kg).")
+        res["numbers"]["by_country_co2_kg"] = {str(k): round(v, 1) for k, v in
+                                               f.groupby("country").co2_kg_mid.sum().sort_values(ascending=False).items()}
+        res["calculation"] += " Energy and CO2: quantity x energy factor x PUE x grid factor of the row's country (factors/factors.csv)."
+        res["sources"].append("factors/factors.csv")
+    else:
+        res["energy_co2"] = "pending: factors/factors.csv not yet merged (V1/V2)"
+    return res
 
 
 def resource_cost(resource_id: str) -> dict:
@@ -112,31 +122,35 @@ def resource_cost(resource_id: str) -> dict:
 
 def idle_ai_seats(month: str = "2026-08") -> dict:
     """AI subscription seats purchased vs. active in a month, per product, with the monthly CHF cost of idle seats."""
-    s = _data("ai_subscriptions.csv")
-    s = s[s.contract_status.eq("Final") & s.month.str[:7].eq(month)]
+    f = _facts()
+    s = f[f.source.eq("ai_subscriptions") & f.month.astype(str).str[:7].eq(month)]
     if s.empty:
-        return {"answer": f"No final AI subscription rows for {month}."}
+        return {"answer": f"No AI subscription rows for {month} in the baseline year (Sep 2025 to Aug 2026)."}
     rows, tot = [], 0.0
-    for p, g in s.groupby("product"):
-        bought, active = int(g.licences_purchased.sum()), int(g.licences_active_30d.sum())
-        cur, price = g.currency.iloc[0], float(g.price_per_seat.iloc[0])
-        fx = _fx(month, cur)
-        idle_chf = (bought - active) * price * fx
+    for p, g in s.groupby("tool"):
+        bought, active = int(g.quantity.sum()), int(g.seats_active.sum())
+        chf_per_seat = g.cost_chf.sum() / g.quantity.sum()          # pipeline's CHF (FX of the month applied)
+        idle_chf = (bought - active) * chf_per_seat
         tot += idle_chf
         rows.append({"product": p, "purchased": bought, "active_30d": active, "idle": bought - active,
-                     "price": f"{cur} {price:g}/seat", "fx_to_chf": fx, "idle_cost_chf_per_month": round(idle_chf, 2),
-                     "by_cost_centre": {int(c): f"{a}/{q}" for c, q, a in
-                                        g[["cost_center", "licences_purchased", "licences_active_30d"]].itertuples(index=False)}})
+                     "price": f"{g.currency.iloc[0]} {g.price_per_seat.iloc[0]:g}/seat",
+                     "chf_per_seat": round(chf_per_seat, 4), "idle_cost_chf_per_month": round(idle_chf, 2),
+                     "contract_end": g.contract_end.iloc[0], "notice_days": int(g.notice_period_days.iloc[0]),
+                     "by_cost_centre": {int(c): f"{a:.0f}/{q:.0f}" for c, q, a in
+                                        g[["cost_center", "quantity", "seats_active"]].itertuples(index=False)}})
     idle = sum(r["idle"] for r in rows)
     return {
         "answer": f"In {month}, {idle} AI seats were paid but not active; they cost CHF {tot:,.2f} per month.",
         "numbers": {"per_product": rows, "idle_seats": idle, "idle_cost_chf_per_month": round(tot, 2)},
-        "calculation": "Per product: (licences_purchased - licences_active_30d) x price_per_seat x FX rate of the month "
-                       "(exchange_rates.csv). Only rows with contract_status = Final (drafts removed).",
+        "calculation": "Per product: (seats purchased - seats active 30 d) x CHF per seat, where CHF per seat = "
+                       "cost_chf / seats purchased from the pipeline (price_per_seat x FX rate of the month from "
+                       "exchange_rates.csv; draft rows removed, duplicates removed).",
         "rules": ["T-1128: licences are ordered per department, not per person: reduce per cost centre",
-                  "Contracts are monthly with 30 days notice (see contract_end per product)"],
+                  "Contracts are monthly with 30 days notice (see contract_end per product)",
+                  "Idle seats send no messages, so cutting them saves CHF but no CO2 (energy is counted per message)"],
         "responsible": "Head of Finance (owner of the AI subscriptions)",
-        "sources": ["data/ai_subscriptions.csv", "data/exchange_rates.csv", "data/it_tickets.csv T-1128"],
+        "sources": ["out/fact_costs.csv (source ai_subscriptions; from data/ai_subscriptions.csv and "
+                    "data/exchange_rates.csv)", "data/it_tickets.csv T-1128"],
     }
 
 
@@ -173,10 +187,18 @@ def gpu_on_demand() -> dict:
                     "data/it_tickets.csv T-1035, T-1101", "data/extra/projects.csv"],
     }
     if _has_energy():
-        out["numbers"]["co2_kg_mid"] = round(c.co2_kg_mid.sum(), 1)
-        out["numbers"]["kwh_mid"] = round(c.kwh_mid.sum(), 1)
-        out["numbers"]["co2_kg_addressable_mid"] = round(c.co2_kg_mid.sum() * (1 - need / hours_year), 1)
-        out["calculation"] += " CO2 the same way from co2_kg_mid (location-based, Germany grid, factors.csv)."
+        sh = 1 - need / hours_year
+        lv = {l: (c[f"kwh_{l}"].sum() * sh, c[f"co2_kg_{l}"].sum() * sh) for l in ("low", "mid", "high")}
+        tot_co2 = f.co2_kg_mid.sum()
+        out["numbers"] |= {"kwh_mid": round(c.kwh_mid.sum(), 1), "co2_kg_mid": round(c.co2_kg_mid.sum(), 1),
+                           "addressable_kwh_low_mid_high": [round(v[0], 1) for v in lv.values()],
+                           "addressable_co2_kg_low_mid_high": [round(v[1], 1) for v in lv.values()],
+                           "addressable_co2_share_of_total_pct": round(lv["mid"][1] / tot_co2 * 100, 1)}
+        out["answer"] += (f" In energy that is about {lv['mid'][0]:,.0f} kWh and {lv['mid'][1]:,.0f} kg CO2 per year "
+                          f"(location-based, range {lv['low'][1]:,.0f}–{lv['high'][1]:,.0f} kg), "
+                          f"{lv['mid'][1] / tot_co2:.1%} of the company's CO2.")
+        out["calculation"] += (" kWh and CO2 with the same share from kwh_* / co2_kg_* (GPU-hours x energy per GPU-hour x "
+                               "PUE x German grid factor, factors/factors.csv; low/mid/high).")
     else:
         out["energy_co2"] = ("pending: energy per GPU-hour and the German grid factor come from factors/factors.csv "
                              "(Vinzenz, V1/V2). Once merged, kWh and CO2 follow with the same share.")
@@ -327,7 +349,9 @@ def to_markdown(res: dict) -> str:
             if isinstance(v, list) and v and isinstance(v[0], dict) and k != "fixed_and_flexible_jobs":
                 md.append(f"_{k.replace('_', ' ')}_\n\n" + _md_table(pd.DataFrame(v).drop(columns=drop, errors="ignore")))
             elif isinstance(v, dict) and k.startswith("by_") and k != "by_month":
-                md.append(f"_{k.replace('_', ' ')} (CHF)_\n\n" + _md_table(pd.DataFrame(list(v.items()), columns=[k[3:], "chf"])))
+                unit = "kg CO2" if "co2" in k else "CHF"
+                md.append(f"_{k.replace('_', ' ')} ({unit})_\n\n"
+                          + _md_table(pd.DataFrame(list(v.items()), columns=[k[3:].replace("_co2_kg", ""), unit])))
     if "manipulation_ignored" in res:
         mi = res["manipulation_ignored"]
         md.append(f"⛔ Ignored planted text {mi['ticket']}: “{mi['what_it_tries']}”. {mi['handling']}")

@@ -281,8 +281,61 @@ for fid, title, rid, rule in [
     add(fid, title, rid, cc_, "low usage", None, "BLOCKED", rule, "not a measure", "docs/traps.md; data/it_tickets.csv")
 
 df = pd.DataFrame(F)
+
+# ---------- energy and CO2 (location-based) per finding, from kwh_* / co2_kg_* in out/fact_costs.csv ----------
+# Addressable energy = resource energy x the same share as the addressable CHF (cost scales with the billed
+# quantity that drives energy). Exceptions where CHF and energy diverge are set explicitly (energy_note).
+LV = ("low", "mid", "high")
+HAS_E = all(f"co2_kg_{l}" in b for l in LV) and b.co2_kg_mid.notna().any()
+ENERGY = {  # finding -> (resource_ids whose energy counts, mode)
+    "F1": (["dp-dev"], "share"), "F2": (["dp-prod"], "share"), "F3": (["gpu-ml"], "share"),
+    "F4": (["vm-test"], "share_of:vm-test"), "F5": (["vm-test"], "share_of:vm-test"),
+    "F6": (["sub-chatgpt"], "zero:idle seats send no messages, and AI subscription energy is counted per message"),
+    "F7": (["sub-copilot"], "zero:idle seats send no messages, and AI subscription energy is counted per message"),
+    "F8": (["sub-claude"], "zero:idle seats send no messages, and AI subscription energy is counted per message"),
+    "F9": (["sub-claude", "sub-chatgpt"], "zero:price change only, same usage"),
+    "F10": (["sub-copilot"], "zero:price change only, same usage"),
+    "F11": ([], "zero:SaaS energy excluded (no saas_licence_month factor in factors.csv)"),
+    "F12": (["ai-marketing"], "zero:factors.csv has one tokens_1000 factor for all model sizes, so a smaller model "
+                              "saves no energy in this method (in reality it likely does: unquantified)"),
+    "F13": (["logs"], "share"), "F14": (["pbi-kap"], "none:no CHF claimed, capacity energy does not fall linearly"),
+    "F15": (["support"], "zero:support fee has no energy"), "F16": (["dp-storage"], "share"),
+    "F17": (["cicd"], "share"),
+    "P1": (["st-backup"], "none:protected"), "P2": ([], "none:protected"), "P3": ([], "none:protected"),
+}
+for l in LV:
+    df[f"resource_kwh_{l}"] = None
+    df[f"resource_co2_kg_{l}"] = None
+    df[f"addressable_kwh_{l}"] = None
+    df[f"addressable_co2_kg_{l}"] = None
+df["energy_note"] = None
+if HAS_E:
+    for i, r in df.iterrows():
+        rids, mode = ENERGY[r.finding_id]
+        rows = b[b.resource_id.isin(rids)]
+        for l in LV:
+            df.at[i, f"resource_kwh_{l}"] = round(rows[f"kwh_{l}"].sum(), 1) if rids else None
+            df.at[i, f"resource_co2_kg_{l}"] = round(rows[f"co2_kg_{l}"].sum(), 1) if rids else None
+        if mode.startswith("share"):
+            base = cost(mode.split(":")[1]) if ":" in mode else r.cost_chf
+            share = r.addressable_chf / base
+            for l in LV:
+                df.at[i, f"addressable_kwh_{l}"] = round(rows[f"kwh_{l}"].sum() * share, 1)
+                df.at[i, f"addressable_co2_kg_{l}"] = round(rows[f"co2_kg_{l}"].sum() * share, 1)
+            df.at[i, "energy_note"] = f"same share as CHF ({share:.1%} of the resource's energy)"
+        else:
+            kind, note = mode.split(":", 1)
+            if kind == "zero":
+                for l in LV:
+                    df.at[i, f"addressable_kwh_{l}"] = 0.0
+                    df.at[i, f"addressable_co2_kg_{l}"] = 0.0
+            df.at[i, "energy_note"] = note
+    TOTAL_CO2 = b.co2_kg_mid.sum()
+    df["addressable_co2_share_of_total_pct"] = (pd.to_numeric(df.addressable_co2_kg_mid) / TOTAL_CO2 * 100).round(1)
+
 df.to_csv(a.out / "findings.csv", index=False)
 df.to_csv(Path(__file__).parent / "kb" / "findings_numbers.csv", index=False)
-pd.set_option("display.width", 220, "display.max_colwidth", 60)
-print(df[["finding_id", "resource", "cost_chf", "share_of_total_pct", "addressable_chf", "status"]].to_string(index=False))
-print("total baseline", round(TOTAL, 2))
+pd.set_option("display.width", 240, "display.max_colwidth", 60)
+cols = ["finding_id", "resource", "cost_chf", "addressable_chf", "addressable_kwh_mid", "addressable_co2_kg_mid", "status"]
+print(df[cols].to_string(index=False))
+print("total baseline", round(TOTAL, 2), "| CO2 kg mid", round(b.co2_kg_mid.sum(), 1) if HAS_E else "pending")
