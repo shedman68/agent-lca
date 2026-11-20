@@ -59,4 +59,4 @@ Fill `factors/factors.csv`: value_low, value_mid, value_high, source (link + dat
       how certain, what the range means. This is what the jury checks.
 - [ ] V4 Bonus (by Sat 18:00): market-based factors (guarantees of origin) and the hourly CO2 profile for
       Switzerland and Germany, for shifting flexible jobs in time (`data/extra/data_platform_jobs.csv`).
-- [ ] V5 Prepare two jury questions and answers on the factors (for example: why this Swiss mix?).
+- [x] V5 Prepare two jury questions and answers on the factors (for example: why this Swiss mix?).
