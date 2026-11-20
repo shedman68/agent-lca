@@ -11,7 +11,7 @@
 | Key | Region | Low | **Mid** | High | Used for |
 | --- | --- | --- | --- | --- | --- |
 | `grid_CH` | Switzerland, consumption mix | 0.057 | **0.090** | 0.098 | Hoster, on-prem servers in CH |
-| `grid_DE` | Germany | 0.330 | **0.344** | 0.431 | Azure / AWS Frankfurt region |
+| `grid_DE` | Germany | 0.329 | **0.330** | 0.431 | Azure / AWS Frankfurt region |
 | `grid_IE` | Ireland | 0.255 | **0.257** | 0.320 | Dublin region (incl. zombie servers) |
 | `grid_EU` | Europe, mixed | 0.210 | **0.272** | 0.319 | AI providers and SaaS ("EU mixed") |
 
@@ -37,10 +37,11 @@ low / high = the lowest / highest credible independent source. Every row has at 
   The Stadt Zürich / treeze range (70–164 g) was not checked and is no longer used.
 
 ## Germany
-- **Mid 0.344** – Umweltbundesamt (national agency), CO2 per consumed kWh in 2025 (estimate; 2024 = 0.353, 2023 = 0.379).
-- **Low 0.330** – Ember 2025 life-cycle value (via Our World in Data).
+- **Update 21.11.2026 (review #5):** aligned to life-cycle, so all grid mids share one system boundary. The mid was UBA 0.344 (direct CO2 only).
+- **Mid 0.330** – Ember 2025 life-cycle value (via Our World in Data); the same source and basis as the Ireland mid.
+- **Low 0.329** – Electricity Maps, Grid Review 2025 Germany, consumption-based 328.9 g (snippet only).
 - **High 0.431** – FOEN BAFU:2026 life-cycle consumption mix at medium voltage (includes upstream chain and grid; older reference year).
-- Caveat: UBA counts direct CO2 only. A full life-cycle value would be roughly 10 % higher – covered by the high value.
+- **Cross-check only:** Umweltbundesamt 0.344 per consumed kWh in 2025 (2024 = 0.353, 2023 = 0.379), direct CO2 only.
 
 ## Ireland
 - **Mid 0.257** – Ember 2025 life-cycle (most recent annual value found).
