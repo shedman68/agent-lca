@@ -1,0 +1,9 @@
+resource_id,rule,allowed_change,window,ticket,responsible_role
+dp-prod,Finance closing needs the production platform,schedule only outside the window; never switch off completely,last 3 working days of each month until ~04:00,T-1029,see mapping
+dp-dev,Quarterly model training needs the cluster continuously,pause allowed only with automatic start before the window,days 1-3 of Jan Apr Jul Oct,T-1053,Head of IT
+gpu-ml,Quarterly training uses the GPU server with dp-dev,on-demand allowed only with automatic start before the window,days 1-3 of Jan Apr Jul Oct,T-1101,see mapping
+gpu-ml-01,Same server as gpu-ml (server inventory name),on-demand allowed only with automatic start before the window,days 1-3 of Jan Apr Jul Oct,T-1101,see mapping
+st-backup,10-year legal retention; deletion already rejected,no deletion; cheaper storage tier only with human sign-off,always,T-1039;T-1195,Head of IT
+dr-failover,Emergency fallback must run even if idle (management requirement),none,always,T-1094,Management
+vm-test,Release freeze and acceptance test,schedules allowed outside March 2026,2026-03-01 to 2026-03-31,T-1204,Head of IT
+pbi-07,Internal audit needs the legacy receivables report in the closing month,none,closing month,T-1167,see mapping

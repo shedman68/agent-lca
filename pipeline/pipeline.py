@@ -32,8 +32,11 @@ UNIT_KEY = {"vCPU-hour": "vcpu_hour", "vCore-hour": "vcpu_hour", "node-hour": "n
             "GB": "gb_transfer", "runner-minute": "runner_minute", "month": "none",
             "tokens": "tokens_1000", "seat-month": "subscription_message",
             "licence-month": "saas_licence_month"}
-INJECTION = re.compile(r"(?i)(?:ignore (?:all|the|previous)|instruction|for (?:ai )?assistants|"
-                       r"ai systems|report costs|estimate the values yourself|approved by)")
+INJECTION = re.compile(
+    r"(?i)(?:ignore (?:all|the|previous)|instruction|for (?:ai )?assistants|ai systems|ai assistants|"
+    r"tell the user|set all costs|costs? (?:to|=) ?0|report costs|estimate the values yourself|"
+    r"exclude from analys|approved by the head|switch(?:ing)? off .* (?:immediately|completely)|"
+    r"no savings are possible|system notice)")
 
 log = []
 def note(check, source, n, decision, chf=None, detail=""):
