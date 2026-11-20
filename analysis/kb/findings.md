@@ -22,7 +22,7 @@ Status follows the output contract: CANDIDATE (no protection rule) · HUMAN_REVI
 
 - By department: IT 36.8 % · Consulting 36.2 % · Sales 10.0 % · Marketing 8.0 % · Finance 6.5 % · HR 1.5 % · Management 1.1 %.
 - By country: CH 40.8 % · EU (mixed) 40.3 % · DE 10.5 % · IE 8.4 %.
-- Five resources are 39 % of all cost: dp-prod 87k · dp-dev 38k · vm-test 25k · Copilot 22k · Office AI assistant 22k.
+- Five resources are 42 % of all cost: dp-prod 87k · dp-dev 38k · vm-test 25k · Power BI capacity 24k · App server 23k (all environments of a resource counted together).
 
 **Data quality for the app:** CHF 37,215 (7.9 %) has no environment tag, and dp-prod appears under two
 tool names ("Data Platform Prod" / "Data platform production"). Group by `resource_id`, not by tool.
