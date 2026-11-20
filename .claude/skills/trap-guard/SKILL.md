@@ -35,6 +35,9 @@ python3 pipeline/trap_guard.py --data data --out out [--measures measures/measur
 Put the two result lines in the pull request description. Never weaken `trap_guard.py` or the lists in
 `docs/` to make a check pass; if you think a rule is wrong, ask Rashed.
 
+## Save your output
+Write the task's result as Markdown in your kb folder (`analysis/kb/`, `factors/kb/`, `docs/kb/`) and add it to the folder's `README.md` index (AGENTS.md).
+
 ## Self-check (answer before finishing)
 - Did any number I wrote come from a text field rather than a cost/quantity column?
 - Does anything I recommend touch a resource in `docs/protected.csv`? Did I cite its ticket?

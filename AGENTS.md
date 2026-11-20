@@ -75,6 +75,13 @@ If your Claude Code has these plugin skills, use them too: `data:explore-data` a
 (Hakim, Rashed – checking numbers), `frontend-design` and `dataviz` (Hakim – the app),
 web search / `deep-research` (Vinzenz – factors). They never override the trap-guard rules.
 
+## Every task output goes into a knowledge base (kb) as Markdown
+- Folder: `analysis/kb/` (Hakim) · `factors/kb/` (Vinzenz) · `docs/kb/` (Rashed). One file per task: `<task-id>-<short-name>.md`.
+- Each file starts with task, author, date, status (draft / final) and sources; every number names its source file and calculation.
+- Add a row to the folder's `README.md` index in the same pull request. Code and machine-readable files stay where they are
+  (`out/`, `factors/factors.csv`, `measures/measures.csv`); the kb file explains them.
+- Decisions go into `docs/kb/decisions.md`, review follow-ups into `docs/kb/reviews.md`. After `git pull`, read the three kb indexes first.
+
 ## Baseline (verified)
 Baseline year Sep 2025 – Aug 2026: **CHF 470,289** (incl. CHF 6,631 imputed for missing costs).
 Azure 201,636 · SaaS 114,158 · AWS 60,274 · AI API 39,444 · AI subscriptions 35,768 · hoster 19,009.
