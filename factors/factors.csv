@@ -1,0 +1,16 @@
+key,template_parameter,unit,value_low,value_mid,value_high,applies_pue,source,notes
+grid_CH,grid_mix_location_based_switzerland,kg CO2 per kWh,,,,,,"Decide and justify: consumption mix incl. imports vs production mix (README). Hourly CH data: UNIGE"
+grid_DE,grid_mix_location_based_germany,kg CO2 per kWh,,,,,,Annual average for the baseline year; ENTSO-E or national agency
+grid_IE,grid_mix_location_based_ireland,kg CO2 per kWh,,,,,,Annual average for the baseline year; ENTSO-E or national agency
+grid_EU,(no template row),kg CO2 per kWh,,,,,,"AI providers and SaaS are 'EU (mixed)': state which average you use"
+pue_default,pue,ratio,,,,,,"Applied to rows where applies_pue = yes. Note per provider if you differentiate"
+vcpu_hour,energy_per_vcpu_hour,kWh per vCPU hour,,,,yes,,Also used for vCore-hours (assumption 1 vCore = 1 vCPU)
+node_hour,energy_per_node_hour,kWh per node hour,,,,yes,,One node = 16 vCPU and 64 GB RAM (data dictionary)
+gpu_hour,energy_per_gpu_hour,kWh per GPU hour,,,,yes,,One GPU of the 300-watt class (data dictionary) plus host share
+gb_storage_day,energy_per_gb_storage_day,kWh per GB-day,,,,yes,,Storage incl. replication; state redundancy assumption
+bi_capacity_day,(no template row),kWh per capacity-day,,,,yes,,Power BI capacity; e.g. express as equivalent vCPU-hours and say so
+runner_minute,(no template row),kWh per runner minute,,,,yes,,CI build runner; e.g. vCPU per runner x energy_per_vcpu_hour / 60
+gb_transfer,(no template row),kWh per GB transferred,,,,no,,Data egress and CDN; network energy intensity
+tokens_1000,energy_per_1000_tokens,kWh per 1000 tokens,,,,yes,,"Input+output tokens; ML.ENERGY leaderboard; consider large vs small model"
+subscription_message,energy_per_subscription_message,kWh per message,,,,yes,,Applied to messages_30d of AI subscriptions
+saas_licence_month,(no template row),kWh per licence-month,,,,no,,Optional; leave empty if SaaS energy is excluded and say so

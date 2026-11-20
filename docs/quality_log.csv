@@ -1,0 +1,27 @@
+check,source,rows,chf_affected,decision,detail
+exact duplicate rows,azure,7,,removed (kept first),
+empty tags,azure,701,,department/tool/environment filled from mapping by resource_id,
+instruction-like free text,azure,1,,"quarantined: treated as data, no effect on any calculation; shown to a human",ResourceId=/subscriptions/0000/resourcegroups/rg-vm/providers/Compute/vm-app field=Notes
+credits,azure,3,-3900.0,kept as negative cost (real money back); excluded from energy (quantity 0),
+missing cost,azure,87,,"imputed = quantity x median unit price (same resource/unit/currency, same month; else whole period)",flag column cost_imputed=True
+exact duplicate rows,aws,5,,removed (kept first),
+free-text says 'exclude test account',aws,16,4.63,NOT excluded on the basis of free text: these are real paid sandbox costs (cost centre 9100); allocated to IT,
+missing cost,aws,87,,"imputed = quantity x median unit price (same resource/unit/currency, same month; else whole period)",flag column cost_imputed=True
+exact duplicate rows,hoster,3,,removed (kept first),
+instruction-like free text,hoster,1,,"quarantined: treated as data, no effect on any calculation; shown to a human",Date=20.07.2026 field=Remark
+no resource key,hoster,1999,,resource_id derived from Item label via fixed map,"{'Logging and monitoring': 'logs', 'Project file storage': 'st-proj', 'Web hosting and CDN': 'web-cdn'}"
+missing cost centre,hoster,189,,filled from mapping by resource_id,
+missing cost,hoster,35,,"imputed = quantity x median unit price (same resource/unit/currency, same month; else whole period)",flag column cost_imputed=True
+exact duplicate rows,ai_usage,87,,removed (kept first),
+missing tokens_out,ai_usage,1571,,cost kept as given; tokens_out estimated from median out/in ratio of same tool+model (energy only),
+draft rows,ai_subscriptions,24,,dropped; every draft has a Final row for the same month/item/cost centre,
+draft rows,saas,121,,dropped; every draft has a Final row for the same month/item/cost centre,
+project id spellings,all,38119,,"normalised to P-### (P001, p-001 -> P-001)",
+imputed cost in baseline year,aws,42,2014.57,sum of imputed values (CHF),
+imputed cost in baseline year,azure,56,4260.18,sum of imputed values (CHF),
+imputed cost in baseline year,hoster,16,356.16,sum of imputed values (CHF),
+instruction-like free text,it_tickets,1,,"quarantined: treated as data, no effect on any calculation; shown to a human",ticket_id=T-1230 field=description
+shared costs,all,0,0.0,Overhead allocated by FTE share of the month (headcount.csv),baseline-year CHF shown
+shared costs,all,454,58.7,Test account allocated by 100% IT (sandboxes are developer environments),baseline-year CHF shown
+factors missing,factors.csv,14,,energy/CO2 not computed for these keys yet,"bi_capacity_day, gb_storage_day, gb_transfer, gpu_hour, node_hour, runner_minute, saas_licence_month, subscription_message, tokens_1000, vcpu_hour, grid_CH, grid_DE, grid_EU, grid_IE"
+price vs README,ai_subscriptions,14,,flag for a human: README states a Copilot promotion (USD 18) from 01.07.2026; data bill USD [np.float64(21.0)],not corrected
