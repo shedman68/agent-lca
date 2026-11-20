@@ -32,7 +32,7 @@ tool names ("Data Platform Prod" / "Data platform production"). Group by `resour
 | --- | --- | ---: | ---: | --- |
 | F1 | dp-dev runs 24/7, used 8.7 % | 38,282 | 26,316 | HUMAN_REVIEW |
 | F2 | dp-prod full size in evenings/weekends | 87,260 | 36,408 | HUMAN_REVIEW |
-| F3 | GPU server on all year for 12 training days | 11,238 | 10,868 | HUMAN_REVIEW |
+| F3 | GPU server on all year for 12 training days | 11,238 | 10,863 | HUMAN_REVIEW |
 | F4 | 3 zombie servers in Dublin | 4,628 | 4,628 | CANDIDATE |
 | F5 | Test environment still 64 vCPU after project end | 24,616 | 18,512 | HUMAN_REVIEW |
 | F6 | ChatGPT Team 86 % seats unused | 5,482 | 4,707 | CANDIDATE |
@@ -79,7 +79,7 @@ tool names ("Data Platform Prod" / "Data platform production"). Group by `resour
 ## F3 GPU server (gpu-ml-01) runs every hour of the year for 12 training days
 - **Evidence:** GPU 43 % in the 4 training weeks, 6.4 % in the other 49. Uptime 168 h every week.
   Provisioned in Feb 2025 for the AI pilot P-004, which was completed on 30.06.2025 (T-1035).
-- **Calculation:** CHF 11,238 × (1 − 288 h / 8,760 h) = **CHF 10,868**.
+- **Calculation:** CHF 11,238 × (1 − 288 training h / 8,640 billed GPU-hours) = **CHF 10,863**.
 - **Protection:** T-1101. The quarterly training uses the GPU together with dp-dev, so plan it with F1.
 - **Files:** out/fact_costs.csv, data/server_metrics_weekly.csv, data/it_tickets.csv, data/extra/projects.csv.
 

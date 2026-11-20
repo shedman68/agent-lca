@@ -110,13 +110,14 @@ ws = pd.to_datetime(g.week_start)
 g["train"] = [any(((w + pd.Timedelta(days=k)).month in (1, 4, 7, 10)) and (w + pd.Timedelta(days=k)).day <= 3
                   for k in range(7)) for w in ws]
 c = cost("gpu-ml")
-need = 12 * 24 / (24 * len(cal))
+billed_h = b[b.resource_id.eq("gpu-ml")].quantity.sum()   # GPU-hours actually billed
+need = 12 * 24 / billed_h
 add("F3", "GPU server runs every hour of the year for 12 training days", "gpu-ml (gpu-ml-01)", c,
     f"GPU {g[g.train].gpu_avg_pct.mean():.0f} % in {g.train.sum()} training weeks, "
     f"{g[~g.train].gpu_avg_pct.mean():.1f} % in the other {(~g.train).sum()}; uptime {g.uptime_h.mean():.0f} h/week; "
     "provisioned for the AI pilot P-004, completed 30.06.2025",
     c * (1 - need), "HUMAN_REVIEW", "T-1101: quarterly training days 1-3 Jan/Apr/Jul/Oct use the GPU with dp-dev",
-    f"addressable = cost x (1 - 12 training days x 24 h / {24 * len(cal):,} h)",
+    f"addressable = cost x (1 - 12 training days x 24 h / {billed_h:,.0f} billed GPU-hours)",
     "out/fact_costs.csv; data/server_metrics_weekly.csv; data/it_tickets.csv T-1035, T-1101; data/extra/projects.csv")
 
 # F4 vm-test: 16 Dublin servers incl. 3 zombies and dr-failover
