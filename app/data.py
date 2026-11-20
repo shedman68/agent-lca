@@ -1,4 +1,5 @@
-"""Data layer for the app. Reads only out/ (pipeline output) and analysis/kb/ (Hakim's knowledge base).
+"""Data layer for the app. Reads out/ (pipeline output), analysis/kb/ (Hakim's knowledge base) and
+measures/measures.csv (the package, computed from out/ by measures/measures.py).
 
 Every number shown in the app comes from here, so it stays reproducible from `pipeline/pipeline.py`
 (AGENTS.md rule 2). Nothing in this module reads data/ directly.
@@ -13,6 +14,7 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "out"
 KB = ROOT / "analysis" / "kb"
+MEASURES = ROOT / "measures"
 
 BASELINE_LABEL = "Sep 2025 – Aug 2026"
 PD_CHF = 1_100  # AGENTS.md: 1 PD = CHF 1,100
@@ -161,22 +163,39 @@ def kb_check(check: str) -> pd.Series | None:
     return None if hit.empty else hit.iloc[0]
 
 
+@st.cache_data(show_spinner=False)
+def findings_table() -> tuple[pd.DataFrame | None, str | None]:
+    """Structured H2 findings: out/findings.csv (written by analysis/findings.py), else the committed
+    copy analysis/kb/findings_numbers.csv. Returns (table, path shown in the app)."""
+    for path, label in ((OUT / "findings.csv", "out/findings.csv"), (KB / "findings_numbers.csv", "analysis/kb/findings_numbers.csv")):
+        f = _read(path)
+        if f is not None and not f.empty:
+            for c in ("cost_chf", "share_of_total_pct", "addressable_chf"):
+                f[c] = pd.to_numeric(f[c], errors="coerce")
+            return f, label
+    return None, None
+
+
 def findings_markdown() -> str | None:
     p = KB / "findings.md"
     return p.read_text(encoding="utf-8") if p.exists() else None
 
 
 @st.cache_data(show_spinner=False)
-def measures() -> pd.DataFrame | None:
+def measures() -> tuple[pd.DataFrame | None, str | None]:
     """Measures package in the template format (submission/template_measures_package.csv columns).
 
-    Expected at out/measures.csv (written by measures/measures.py, task R1/R2). None until then.
+    Read from out/measures.csv if the pipeline copies it there, else measures/measures.csv, where
+    measures/measures.py writes it (measures/README.md, tasks R1/R2). Returns (table, path) or (None, None).
     """
-    m = _read(OUT / "measures.csv")
-    if m is None:
-        return None
+    for path, label in ((OUT / "measures.csv", "out/measures.csv"), (MEASURES / "measures.csv", "measures/measures.csv")):
+        m = _read(path)
+        if m is not None:
+            break
+    else:
+        return None, None
     m = m[~m["measure_id"].astype(str).str.startswith("Example")].copy()
     for c in ("effort_person_days", "savings_cost_chf_per_year", "savings_energy_kwh_per_year", "savings_co2_kg_location_based"):
         if c in m:
             m[c] = pd.to_numeric(m[c], errors="coerce").fillna(0.0)
-    return m
+    return m, label

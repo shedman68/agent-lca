@@ -93,8 +93,60 @@ def page_overview() -> None:
 
 
 # =============================================================================== 2 Findings
+FINDING_STATUS = {  # status never colour-only: badge = icon + label
+    "CANDIDATE": ("Candidate", ":material/check_circle:", "blue"),
+    "HUMAN_REVIEW": ("Needs human review", ":material/rate_review:", "orange"),
+    "BLOCKED": ("Protected: keep", ":material/block:", "red"),
+}
+
+
+def _findings_structured(f: pd.DataFrame, source: str) -> None:
+    st.caption(f"Top drivers and waste (task H2). Source: `{source}`, computed by `analysis/findings.py` from `out/`. "
+               "«Idle or unused» is the baseline cost of the unused part: **not a saving claim**. "
+               "Savings and effort are decided in the package.")
+    counts = f["status"].value_counts()
+    cols = st.columns(len(FINDING_STATUS))
+    for col, (key, (label, _, _)) in zip(cols, FINDING_STATUS.items()):
+        col.metric(label, int(counts.get(key, 0)))
+
+    pick = st.pills("Show", [v[0] for v in FINDING_STATUS.values()], selection_mode="multi",
+                    default=[v[0] for v in FINDING_STATUS.values()])
+    keep = [k for k, v in FINDING_STATUS.items() if v[0] in (pick or [])]
+    sel = f[f["status"].isin(keep)].copy()
+    if sel.empty:
+        st.info("No finding matches this filter.")
+        return
+
+    bars = sel.dropna(subset=["addressable_chf"]).sort_values("addressable_chf", ascending=False)
+    if not bars.empty:
+        st.subheader("Idle or unused cost per finding")
+        bars = bars.assign(label=bars["finding_id"] + " · " + bars["resource"].astype(str),
+                           share=bars["addressable_chf"] / data.baseline_totals()["cost_chf"])
+        st.altair_chart(charts.ranked_bars(bars, value="addressable_chf"), width="stretch", theme=None)
+        st.caption("Findings can overlap (for example AI seats by tool and by department), so the bars are not summed.")
+
+    for _, r in sel.iterrows():
+        label, icon, color = FINDING_STATUS.get(r["status"], (str(r["status"]), ":material/help:", "gray"))
+        with st.container(border=True):
+            st.markdown(f"**{r['finding_id']} · {r['title']}**")
+            st.badge(label, icon=icon, color=color)
+            a, b, c = st.columns(3)
+            share = "" if pd.isna(r["share_of_total_pct"]) else f" ({r['share_of_total_pct']:.1f} % of total)"
+            a.metric(f"Baseline cost{share}", chf(r["cost_chf"]))
+            b.metric("Idle or unused", chf(r["addressable_chf"]))
+            c.markdown(f"**Resource**  \n`{r['resource']}`")
+            st.markdown(f"**Evidence:** {r['evidence']}  \n**Calculation:** {r['calculation']}  \n"
+                        f"**Protection rule:** {r['protection_rule']}  \n**Sources:** `{r['sources']}`")
+
+    table_view(sel, "Table view: all findings shown")
+
+
 def page_findings() -> None:
     st.title("Findings")
+    f, source = data.findings_table()
+    if f is not None:
+        _findings_structured(f, source)
+        return
     st.caption("Top drivers and waste. Source: `analysis/kb/findings.md` (task H2); every number reproducible from `out/`.")
     md = data.findings_markdown()
     if md is None:
@@ -146,12 +198,12 @@ def page_package() -> None:
     st.caption("Targets per year: CO2 −40 % (location-based) · cost −25 % · effort at most 15 person-days "
                f"(CHF {15 * data.PD_CHF:,}; 1 PD = CHF {data.PD_CHF:,}).")
     t = data.baseline_totals()
-    m = data.measures()
+    m, m_source = data.measures()
 
     if m is None or m.empty:
-        st.info("The package is not calculated yet (tasks R1/R2). The app reads it from `out/measures.csv` "
-                "in the format of `submission/template_measures_package.csv`. The target bar below shows the "
-                "required values until then.", icon="⏳")
+        st.info("The package is not calculated yet (tasks R1/R2). The app reads it from `measures/measures.csv` "
+                "(or `out/measures.csv`) in the format of `submission/template_measures_package.csv`. "
+                "The target bar below shows the required values until then.", icon="⏳")
         sel = pd.DataFrame(columns=["measure_id", "effort_person_days", "savings_cost_chf_per_year", "savings_co2_kg_location_based"])
     else:
         m = m.copy()
@@ -159,8 +211,8 @@ def page_package() -> None:
             lambda s: ", ".join(_protection_hits(s)))
         m.insert(0, "include", True)
         st.subheader("Choose measures")
-        st.caption("Untick a measure to see its effect on the targets. Measures touching a protected resource "
-                   "are listed with their rule; they need human sign-off (see «Needs a human»).")
+        st.caption(f"Source: `{m_source}`. Untick a measure to see its effect on the targets. Measures touching a "
+                   "protected resource are listed with their rule; they need human sign-off (see «Needs a human»).")
         cols = ["include", "measure_id", "description", "resource_or_source", "protection", "effort_person_days",
                 "savings_cost_chf_per_year", "savings_energy_kwh_per_year", "savings_co2_kg_location_based",
                 "risks_and_exceptions"]
