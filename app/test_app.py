@@ -16,8 +16,14 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# R9: the six old pages live inside the five story pages. Old names open the page that now holds them.
+OLD_TO_STORY = {"findings": "where-you-stand", "package": "your-plan", "needs-a-human": "behind-the-numbers",
+                "ask": "stay-on-track", "next-year": "behind-the-numbers"}
+
+
 def _open(at, url_path: str):
     """Open a st.navigation page registered as a callable (no separate script file)."""
+    url_path = OLD_TO_STORY.get(url_path, url_path)
     for page_hash, info in at._registered_pages.items():
         if info.get("url_pathname") == url_path:
             at._page_hash = page_hash
@@ -248,12 +254,12 @@ class PageTests(unittest.TestCase):
     def test_overview_loads(self):
         page = _open(self.at, "")
         self.assertFalse(page.exception, page.exception)
-        self.assertIn("Overall picture", [t.value for t in page.title])
+        self.assertIn("About AgentLCA", [t.value for t in page.title])
 
     def test_package_loads(self):
         page = _open(self.at, "package")
         self.assertFalse(page.exception, page.exception)
-        self.assertIn("Measures package", [t.value for t in page.title])
+        self.assertIn("Your plan", [t.value for t in page.title])
 
     def test_reset_restores_the_chosen_package(self):
         page = _open(self.at, "package")
@@ -288,10 +294,15 @@ class PageTests(unittest.TestCase):
         self.assertFalse(human.exception, human.exception)
         ask = _open(human, "ask")
         self.assertFalse(ask.exception, ask.exception)
-        self.assertIn("Ask the data", [t.value for t in ask.title])
+        self.assertIn("Stay on track", [t.value for t in ask.title])
         nxt = _open(ask, "next-year")
         self.assertFalse(nxt.exception, nxt.exception)
-        self.assertIn("Next year", [t.value for t in nxt.title])
+        self.assertIn("Behind the numbers", [t.value for t in nxt.title])
+        # the overall picture and all findings sit behind the details switch on page 1
+        stand = _open(nxt, "where-you-stand")
+        stand = stand.toggle(key="stand_details").set_value(True).run()
+        self.assertFalse(stand.exception, stand.exception)
+        self.assertIn("Overall picture", [t.label for t in stand.tabs])
 
 
 class MisalignedOutTests(unittest.TestCase):
@@ -377,7 +388,7 @@ def _swap_bytes(path: Path, new: bytes | None, *, hide: bool = False):
 
 
 def _pages(at):
-    for url in ("", "findings", "package", "needs-a-human", "ask", "next-year"):
+    for url in ("", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
         at = _open(at, url)
         if at.exception:
             return at, url
@@ -417,7 +428,7 @@ class RobustnessTests(unittest.TestCase):
         blank_low["co2_kg_low"] = pd.NA
         blank_low["kwh_low"] = pd.NA
         with _swap_bytes(path, blank_low.to_csv(index=False).encode()):
-            at = self._app()
+            at = _open(self._app(), "your-plan")  # R9: the factor switch lives on "Your plan"
             self.assertFalse(at.exception, at.exception)
             low = at.segmented_control(key="factor_level_label").set_value("Low factors").run()
             self.assertFalse(low.exception, low.exception)
@@ -445,7 +456,7 @@ class RobustnessTests(unittest.TestCase):
             self.assertEqual(mode, "offline")
             page = _open(self._app(), "ask")
             self.assertFalse(page.exception, page.exception)
-            self.assertIn("Ask the data", [t.value for t in page.title])
+            self.assertIn("Stay on track", [t.value for t in page.title])
         finally:
             path.write_bytes(original)
 
@@ -519,9 +530,9 @@ class I18nTests(unittest.TestCase):
         de.session_state["lang_de"] = True
         de = de.run()
         self.assertFalse(de.exception, de.exception)
-        self.assertIn("Gesamtbild", [t.value for t in de.title])
-        titles = {"findings": "Befunde", "package": "Massnahmenpaket", "needs-a-human": "Braucht einen Menschen",
-                  "ask": "Frag die Daten", "next-year": "Nächstes Jahr"}
+        self.assertIn("Über AgentLCA", [t.value for t in de.title])
+        titles = {"where-you-stand": "Wo Sie stehen", "your-plan": "Ihr Plan", "stay-on-track": "Auf Kurs bleiben",
+                  "behind-the-numbers": "Hinter den Zahlen"}
         for url, title in titles.items():
             page = _open(de, url)
             self.assertFalse(page.exception, (url, page.exception))
@@ -572,3 +583,53 @@ class FormatTests(unittest.TestCase):
         self.assertIn(signed_pct(summary["co2_pct_high"]), line)
         self.assertIn(f"{float(summary['effort_pd']):.1f} person-days", line)
         self.assertNotRegex(line, r"-\d")
+
+
+class StoryTests(unittest.TestCase):
+    """R9: five story pages, story bar with Back / Next, T-1251 one-click refusal, nothing typed in."""
+
+    def _app(self):
+        from streamlit.testing.v1 import AppTest
+
+        return AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+
+    def test_five_pages_in_story_order(self):
+        at = self._app()
+        urls = [i.get("url_pathname") for i in at._registered_pages.values()]
+        self.assertEqual(urls, ["", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"])
+        for url, title in [("", "About AgentLCA"), ("where-you-stand", "Where you stand"), ("your-plan", "Your plan"),
+                           ("stay-on-track", "Stay on track"), ("behind-the-numbers", "Behind the numbers")]:
+            page = _open(at, url)
+            self.assertFalse(page.exception, (url, page.exception))
+            self.assertIn(title, [t.value for t in page.title])
+
+    def test_story_buttons(self):
+        page = _open(self._app(), "your-plan")
+        labels = [b.label for b in page.button]
+        self.assertIn("← Where you stand", labels)
+        self.assertIn("Stay on track →", labels)
+
+    def test_t1251_one_click_is_refused(self):
+        page = _open(self._app(), "stay-on-track")
+        btn = next(b for b in page.button if b.label.startswith("T-1251"))
+        page = btn.click().run()
+        self.assertFalse(page.exception, page.exception)
+        shown = " ".join(m.value for m in page.markdown)
+        self.assertIn("Refused.", shown)
+        self.assertIn("not an instruction", shown)
+
+    def test_hotspot_share_line_comes_from_measures(self):
+        """The 'three places' share is computed from measures/measures.csv, not typed."""
+        import pandas as pd
+
+        rows = pd.read_csv(ROOT / "measures" / "measures.csv")
+        res = rows["resource_or_source"].astype(str)
+        kg = rows["savings_co2_kg_location_based"]
+        chf = rows["savings_cost_chf_per_year"]
+        co2_share = kg[res.isin(["dp-dev", "dp-prod"])].sum() / kg.sum()
+        seats = res.str.startswith("sub-") | res.str.startswith("saas")
+        chf_share = chf[res.isin(["dp-dev", "dp-prod"]) | seats].sum() / chf.sum()
+        page = _open(self._app(), "where-you-stand")
+        shown = " ".join(c.value for c in page.caption)
+        self.assertIn(f"{co2_share:.0%} of the plan's CO2 cut", shown)
+        self.assertIn(f"{chf_share:.0%} of its francs", shown)
