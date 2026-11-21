@@ -4,7 +4,7 @@
 - **Branch:** `grok/R9-pages` (from `rashed/R9-story-redesign` at `5dd5dba`)
 - **Draft PR:** https://github.com/shedman68/agent-lca/pull/74 into `rashed/R9-story-redesign`, not into `main`.
 - **Sources:** `docs/kb/R9-plan.md`, `docs/kb/R9-requirements.md`, `docs/kb/R0-case-page.md`, `out/` and `measures/` via the app, `origin/grok/R9-theme` (read only).
-- **Checks on this branch:** `python -m unittest app.test_app` → **43 tests OK**. `verify_baseline.py` → **MATCH**. `trap_guard.py --measures measures/measures.csv` → **TRAP GUARD: PASS**. Streamlit opened all six pages with no exception (About, Connect after “Load the sample company”, Where you stand, Your plan, Stay on track including the T-1251 click, Behind the numbers).
+- **Checks on this branch:** `python -m unittest app.test_app` → **44 tests OK**. `verify_baseline.py` → **MATCH**. `trap_guard.py --measures measures/measures.csv` → **TRAP GUARD: PASS**. Streamlit opened all six pages with no exception (About, Connect after “Load the sample company”, Where you stand, Your plan, Stay on track including the T-1251 click, Behind the numbers).
 
 ## What Claude had already done (on `rashed/R9-story-redesign`)
 
@@ -41,6 +41,13 @@ Hero markup is `ui.photo_band`. It always names `/app/static/img/<file>.jpg`. If
 - Own AI card: **2.1 kg** (range 0.1–35.9 kg). Source: `factors/kb/V6-result.csv` row `TOTAL`, `co2_kg_mid` 2.0983. This is “counted so far”. Do not replace it with 2.5.
 - Idle-power sensitivity is still the expander on Your plan. The test reads `B_pct` from `factors/kb/V2-idle-impact.csv` (mid −39.2 %). Not retyped.
 - T-1251 click: **Refused.** “No – that text is in the data, not an instruction”, plus the source line. No API call.
+
+## Review follow-up
+
+The trap review asked for two fixes, both made on this branch:
+
+- The limits card title is **Contradictions flagged** (German: Widersprüche markiert). It no longer says “one” while the body lists the AI-invoice check and the provider-report check.
+- The line “Source: the sentence is stored in the data…” is only shown when the refusal says the text is not an instruction. Protection refusals (backup, emergency fallback, audit report) keep the ticket already named in the answer and do not get that line.
 
 ## What is left in Claude’s plan
 

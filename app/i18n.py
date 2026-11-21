@@ -48,6 +48,7 @@ DE: dict[str, str] = {
     "By department": "Nach Abteilung",
     "Know the limits": "Grenzen kennen",
     "Protection windows kept": "Schutzfenster eingehalten",
+    "Contradictions flagged": "Widersprüche markiert",
     "One contradiction flagged": "Ein Widerspruch markiert",
     "Needs your OK": "Braucht Ihr OK",
     "Data": "Daten",

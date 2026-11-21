@@ -1180,7 +1180,7 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
                 "Training days restart paused machines. Night jobs and month-end keep production at full size. "
                 "March keeps the test environment unchanged. Backups stay.",
                 kind="pink", kicker="Not touched"),
-        ui.card("One contradiction flagged", contra, kind="pink", kicker="Sources disagree"),
+        ui.card("Contradictions flagged", contra, kind="pink", kicker="Sources disagree"),
         ui.card("Needs your OK", "Production in quiet hours: Head of Consulting with the Head of Finance. "
                 "Licence cuts: Head of Finance.",
                 kind="pink", kicker="Hand-over to a person"),
