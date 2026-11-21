@@ -6,7 +6,7 @@ The machine-readable values stay in `factors/factors.csv` (read by the pipeline)
 
 | File | Task | Status |
 | --- | --- | --- |
-| [V6-our-ai-footprint.md](V6-our-ai-footprint.md) | V6 energy and CO2 of our own AI use (tokens in [V6-tokens.csv](V6-tokens.csv)) | draft – 3 of 4 token totals missing |
+| [V6-our-ai-footprint.md](V6-our-ai-footprint.md) | V6 energy and CO2 of our own AI use (tokens in [V6-tokens.csv](V6-tokens.csv), result [V6-result.csv](V6-result.csv)) | draft – Rashed and Grok missing |
 | [template-factor-check.md](template-factor-check.md) | Check of the factor rows in the submission template (PR #29) | done |
 | [V2-idle-factors.md](V2-idle-factors.md) | V2b idle-power factors (node, GPU) + package impact ([V2-idle-impact.csv](V2-idle-impact.csv)) | draft for review |
 | [review-followups-V1-V2.md](review-followups-V1-V2.md) | Review follow-ups: token split, grid system boundary, GPU mid from data | final for review |
