@@ -24,6 +24,7 @@ import i18n  # noqa: E402
 import register  # noqa: E402
 import theme  # noqa: E402  (global look: Grok)
 import ui  # noqa: E402  (page components)
+import visuals  # noqa: E402  (drawn SVG visuals)
 from contextlib import nullcontext  # noqa: E402
 
 st.set_page_config(page_title="GreenOps Basel", page_icon="🌿", layout="wide")
@@ -973,12 +974,16 @@ def page_about() -> None:
     if not out_ready():
         return
     s = data.package_summary()
-    ui.hero("", "Everything has a <em>lifecycle.</em>")
+    left, right = st.columns([1.15, 1])
+    with left:
+        ui.hero("", "Everything has a <em>lifecycle.</em>")
+        st.html('<p class="gx-sub">We measure the use phase of cloud, servers, AI and SaaS. Next: the full lifecycle.</p>')
+    with right:
+        ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
     ui.grid([
-        ui.card("Agent", "People and AI agents side by side. Specialist bots do the counting; humans make the decisions.",
+        ui.card("Agent", "Bots do the counting. People make the decisions.",
                 kicker="Why the name"),
-        ui.card("LCA", "Life-cycle assessment. We came together through LCA in pharma; now we assess an SME's digital "
-                "footprint.", kicker="Why the name"),
+        ui.card("LCA", "Life-cycle assessment, our craft from pharma.", kicker="Why the name"),
     ])
     if s is not None:
         ui.kpis([
@@ -1021,8 +1026,7 @@ def page_connect() -> None:
     _story_top(1)
     st.title("Connect")
     ui.hero("", "An IT manager loads her company's exports. <em>The tool does the rest.</em>")
-    ui.explain("Exports:", "the files your providers already give you: cloud invoices, server lists, the AI gateway, "
-               "licence lists, IT tickets.")
+    ui.explain("Exports:", "the files your providers already give you.")
     up = st.file_uploader("Drop your exports here (CSV or JSON lines)", accept_multiple_files=True,
                           type=["csv", "jsonl", "json"], key="connect_upload")
     if up:
@@ -1071,23 +1075,19 @@ def page_stand() -> None:
     ui.hero("",
                f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO2.</em> "
                "Three places hold most of what you can save.")
-    ui.kpis([
-        (_tonnes(e["co2_mid"]), "t CO2", f"Per year, mid factors · range {_tonnes(e['co2_low'])}–{_tonnes(e['co2_high'])} t"),
-        (_kwh_text(e["kwh_mid"]), "kWh", "Electricity per year, mid factors"),
-        (f"{e['cost_chf']:,.0f}", "CHF", "Cost per year: cloud, servers, AI, SaaS"),
-    ])
+    st.html(f'<p class="gx-sub">{_kwh_text(e["kwh_mid"])} kWh of electricity a year. CO2 range '
+            f'{_tonnes(e["co2_low"])}–{_tonnes(e["co2_high"])} t on low and high factors.</p>')
     with st.popover("How this was calculated"):
         st.markdown("Sum of the baseline rows in `out/fact_costs.csv` (Sep 2025 – Aug 2026). Each row: usage × energy "
                     "per unit × data-centre overhead (PUE) × the power mix of the data centre's country. Low, mid and high "
                     "use the factor ranges in `factors/factors.csv`.")
-    ui.explain("CO2, location-based:", "counted with the power mix of the country where the data centre stands. This is "
-               "Scope 3: the electricity flows in Zurich, Frankfurt and Dublin, the decisions are made in Basel.")
+    ctry = data.impact_by("country", "co2", "mid")
+    shares = {str(r["label"]): float(r["share"]) for _, r in ctry.iterrows()}
+    ui._raw(visuals.basel_map(shares, light=bool(st.session_state.get("light_mode", False))))
     ratio = _grid_ratio()
-    if ratio:
-        ui.explain("Why the place matters:", f"a kWh in Frankfurt emits about {ratio:.1f} times the CO2 of a kWh in "
-                   "Zurich, because Germany's power mix has far more coal and gas.")
-    ui.explain("Not everything idle may go:", "some machines look unused but must run, like the emergency fallback, "
-               "or production during the month-end close.")
+    ui.explain("CO2, location-based:", "the power mix where the data centre stands."
+               + (f" Frankfurt emits {ratio:.1f}× Zurich per kWh: more coal and gas." if ratio else ""))
+    ui.explain("Not everything idle may go:", "production and the emergency fallback must keep running.")
     if rows is not None:
         hs = {h["key"]: h for h in _hotspots(rows)}
         pkg_kg = float(pd.to_numeric(rows["savings_co2_kg_location_based"], errors="coerce").fillna(0).sum())
@@ -1159,20 +1159,18 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
             kicker=str(r["measure_id"]), data_title=True))
     ui.grid(cards)
     st.subheader("Know the limits")
-    ui.explain("Why some idle machines must stay on:", "they look unused, but production runs the month-end close and "
-               "night jobs, and the emergency fallback must be ready at any time.")
     ai = data.kb_check("AI gateway vs provider invoices, all providers")
     contra = (f"AI invoices are {chf(ai['diff'])} higher than the AI gateway ({pct_share(ai['diff'] / ai['independent'])}). "
               "Flagged, not hidden: the plan uses the gateway, a person decides." if ai is not None else
               "Sources that disagree are listed in step 5.")
     ui.grid([
         ui.card("Protection windows kept",
-                "Production keeps full size for night jobs and the month-end close. Paused machines start by themselves "
-                "before the quarterly training days. No test change in a release freeze. Backups stay (ten-year retention).",
+                "Production at full size for night jobs and month-end. Paused machines restart before training days. "
+                "Backups stay.",
                 kind="pink", kicker="Not touched"),
         ui.card("One contradiction flagged", contra, kind="pink", kicker="Sources disagree"),
-        ui.card("Needs your OK", "Production in quiet hours: Head of Consulting with the Head of Finance. Licence cuts: "
-                "Head of Finance. Every measure names its owner. Instructions hidden in the data were refused.",
+        ui.card("Needs your OK", "Production in quiet hours: Head of Consulting with the Head of Finance. "
+                "Licence cuts: Head of Finance.",
                 kind="pink", kicker="Hand-over to a person"),
     ])
 
@@ -1184,8 +1182,7 @@ def page_plan() -> None:
     ok = s is not None and all(str(s.get(k, "")).strip() == "True" for k in ("target_co2_ok_mid", "target_cost_ok", "budget_ok"))
     line = "The plan meets all three targets." if ok else "The plan against the targets."
     ui.hero("", f"<em>{line}</em>", "Targeted savings without risk to operations. CO2 first, francs on top.")
-    ui.explain("Low, mid, high:", "every energy factor is an estimate with a range. The plan must pass on all three, "
-               "because the jury may recalculate with any of them.")
+    ui.explain("Low, mid, high:", "every factor is a range. The plan must pass on all three.")
     page_package(embedded=True, middle=_plan_middle)
     ui.bridge("Next: how the tool keeps helping once the plan runs.")
     _story_nav(3)
@@ -1205,10 +1202,8 @@ def page_track() -> None:
         return
     e = data.energy_totals()
     s = data.package_summary()
-    ui.hero("", "Ask the data. <em>It refuses what it must.</em>",
-               "Offline. Every figure in an answer comes from a calculation on the files. Try a planted instruction.")
-    ui.explain("Planted instruction:", "text hidden in the data that tries to command an AI. The tool reads it as data "
-               "and refuses.")
+    ui.hero("", "Ask the data. <em>It refuses what it must.</em>")
+    ui.explain("Planted instruction:", "text in the data that tries to command an AI.")
     examples = assistant.example_questions()
     # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
     # full addressable figure differs from measure M2 on the previous page (M2 counts 75 % of the energy).
@@ -1329,7 +1324,7 @@ for (url, title, _label), fn in zip(STORY, _funcs):
 nav = st.navigation(pages)
 with st.sidebar:
     st.toggle("Story mode", key=ui.STORY_KEY, value=True, help="Progress bar and Back / Next for presenting.")
-    st.toggle("Light mode (projector)", key=theme.LIGHT_KEY, help="Brighter colours for a washed-out projector.")
+    st.toggle("Light mode (projector)", key="light_mode", help="Brighter colours for a washed-out projector.")
     st.toggle("Deutsch", key=i18n.KEY, help="Interface in German. Text from the data and all numbers stay as stored.")
     st.caption(f"Numbers: `out/` from `pipeline/pipeline.py` · {CITE}")
     if st.button("Reload data"):
