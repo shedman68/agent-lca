@@ -983,3 +983,20 @@ class PresenterModeTests(unittest.TestCase):
         self.assertNotIn("story_next", keys)
         html = " ".join(getattr(h.proto, "body", "") for h in at.get("html"))
         self.assertNotIn("opacity:.35", html)
+
+
+class TeamPhotoTests(unittest.TestCase):
+    def test_initials_without_photo_and_image_with_photo(self):
+        import sys
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+        with tempfile.TemporaryDirectory() as d:
+            with mock.patch.object(ui, "TEAM_DIR", Path(d)):
+                self.assertIn('gx-initials" aria-hidden="true">R<', ui._avatar("Rashed"))
+                (Path(d) / "rashed.jpg").write_bytes(b"\xff\xd8\xff\xe0fakejpeg")
+                html = ui._avatar("Rashed")
+                self.assertIn('<img class="gx-avatar" src="data:image/jpeg;base64,', html)
+                self.assertNotIn("gx-initials", html)

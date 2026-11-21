@@ -46,8 +46,23 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin:8px 0 4px;}
+.gx-person{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 12px 20px;
+  background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:18px;}
+.gx-person b{font-size:19px;color:var(--ink,#f2f4f5);margin-top:6px;}
+.gx-person span{font-size:15px;color:var(--muted,#9aa3ad);line-height:1.35;}
+.gx-avatar{width:112px;height:112px;border-radius:50%;object-fit:cover;border:2px solid var(--teal,#00cc99);}
+.gx-initials{display:flex;align-items:center;justify-content:center;background:var(--teal-bg,#0f2a23);color:var(--teal,#00cc99);
+  font-size:38px;font-weight:800;letter-spacing:.02em;}
+.st-key-beat_hook .gx-photo{margin-bottom:0;}
+.st-key-beat_hook,.st-key-beat_team,.st-key-beat_why,.st-key-beat_promise{margin:0 0 12px;}
+.st-key-beat_why .gx-grid{margin:0;}
+@media (max-width:720px){.gx-team{grid-template-columns:1fr;gap:12px;}.gx-person{flex-direction:row;text-align:left;padding:14px 16px;gap:14px;}
+  .gx-person b{margin-top:0;}.gx-avatar{width:64px;height:64px;}.gx-initials{font-size:24px;}
+  .gx-person{display:grid;grid-template-columns:64px 1fr;grid-template-rows:auto auto;column-gap:14px;}
+  .gx-person .gx-avatar{grid-row:1 / span 2;}}
 .gx-hitl{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;border:1px solid var(--pink,#f84aa7);font-size:13px;font-weight:700;letter-spacing:.04em;white-space:nowrap;}
-.gx-team-note{font-size:14px;color:var(--muted,#9aa3ad);margin:4px 0 26px;text-align:center;}
+.gx-team-note{font-size:14px;color:var(--muted,#9aa3ad);margin:10px 0 0;text-align:center;}
 button[data-variant="segmented_control"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border-color:var(--line,#262b33) !important;min-height:44px;}
 button[data-variant="segmented_control"] *{color:inherit !important;}
 button[data-variant="segmented_control"][aria-checked="true"]{background:var(--teal,#00cc99) !important;color:var(--on-teal,#0d0f12) !important;border-color:var(--teal,#00cc99) !important;font-weight:700;}
@@ -86,10 +101,6 @@ button[data-variant="segmented_control"][aria-checked="true"]{background:var(--t
 .gx-card .n span{font-size:15px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:4px;letter-spacing:0;}
 .gx-card .meta{font-size:13.5px;color:var(--muted,#9aa3ad);margin-top:10px;font-weight:600;}
 .gx-card .k{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);font-weight:700;margin:0 0 8px;}
-.gx-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px;margin:6px 0 6px;}
-.gx-team .gx-card{padding:14px 18px;}
-.gx-team .gx-card h4{font-size:17px;margin:0 0 2px;}
-.gx-team .gx-card p{font-size:14.5px;color:var(--muted,#9aa3ad);}
 .gx-card.accent{border-color:var(--teal,#00cc99);}
 .gx-card.pink{border-color:var(--pink,#f84aa7);background:var(--pink-bg,#2a1421);}
 .gx-card.pink h4{color:var(--pink,#f84aa7);}
@@ -201,9 +212,24 @@ def grid(cards: list[str]) -> None:
     _raw(f'<div class="gx-grid">{"".join(cards)}</div>')
 
 
+TEAM_DIR = Path(__file__).resolve().parent / "static" / "team"
+
+
+def _avatar(name: str) -> str:
+    """Round photo from app/static/team/<name>.jpg, inlined. No file: the initials in a circle, never a broken image."""
+    path = TEAM_DIR / f"{name.lower()}.jpg"
+    if path.is_file() and path.stat().st_size < 150_000:
+        b64 = base64.b64encode(path.read_bytes()).decode()
+        return f'<img class="gx-avatar" src="data:image/jpeg;base64,{b64}" alt="{esc(name)}">'
+    initials = "".join(w[0] for w in name.split()[:2]).upper()
+    return f'<div class="gx-avatar gx-initials" aria-hidden="true">{esc(initials)}</div>'
+
+
 def team(members: list[tuple[str, str]]) -> None:
-    """Small equal-weight name cards: name in bold, role underneath. No photos."""
-    _raw(f'<div class="gx-team">{"".join(card(n, r) for n, r in members)}</div>')
+    """Three equal team cards: round photo (or initials), name, role underneath."""
+    cells = "".join(f'<div class="gx-person">{_avatar(n)}<b>{esc(n)}</b><span>{i18n.tr(r)}</span></div>'
+                    for n, r in members)
+    _raw(f'<div class="gx-team">{cells}</div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:
