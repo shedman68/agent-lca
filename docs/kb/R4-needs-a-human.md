@@ -59,6 +59,6 @@ Two contracts are **due 2 Dec** (notice date 2026-12-02): E-signature, unused CH
 ## Decisions the package depends on (Rashed, 21.11. 10:10)
 | Item | Why a human | Decides | Status |
 | --- | --- | --- | --- |
-| M5 dp-prod resized in idle hours (never off) | Without M5 the package gives cost −22.2 % and CO2 −36.1 %: both targets fail. Night jobs 02:00–08:00 and month-end close stay at full size (T-1029). | Head of Consulting with Finance | Kept in the package; sign-off needed before go-live |
+| M5 dp-prod resized in idle hours (never off) | Without M5 the package gives cost −22.4 % and CO2 −36.9 %: both targets fail. That is CHF 134,306 − 29,127 = 105,179 (22.4 % of CHF 470,288.93) and 2,664 − 378 = 2,286 kg (36.9 % of 6,197.5 kg). Night jobs 02:00–08:00 and month-end close stay at full size (T-1029). | Head of Consulting with Finance | Kept in the package; sign-off needed before go-live |
 | dp-prod growth to 24 nodes from 1 Oct 2026 (T-1261) | After the baseline year; changes next year's totals, not the baseline | Head of IT | Shown as a sentence and an up-to-+20 % range on the Next year page |
-| C1 (office assistant on a small model) as CO2 safety margin | Package is exactly −40.0 % on high factors | Rashed, after Vinzenz's idle-power factors (11:00) | Open |
+| C1 (office assistant on a small model) | Quality check per task type. The row is already in `measures/measures.csv`. High factors on the chosen package are −42.2 % (`measures/package_summary.csv`, `co2_pct_high`). | Head of IT | In the package; quality sign-off still needed |

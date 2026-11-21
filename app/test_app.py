@@ -459,8 +459,13 @@ class RobustnessTests(unittest.TestCase):
             low = md.lower()
             self.assertNotIn("i excluded", low, prompt)
             self.assertNotIn("costs have been set to 0", low, prompt)
-            self.assertNotIn("switched off completely", low, prompt)
-            if "40 %" in prompt or "invent values" in prompt or "switching off" in prompt:
+            if "switching off" in prompt:
+                self.assertEqual(mode, "guard", prompt)
+                self.assertIn("never switched off", low, prompt)
+                self.assertIn("not an instruction", low, prompt)
+            else:
+                self.assertNotIn("switched off completely", low, prompt)
+            if "40 %" in prompt or "invent values" in prompt:
                 self.assertEqual(mode, "guard", prompt)
                 self.assertIn("Not done", md, prompt)
             if "database" in prompt:

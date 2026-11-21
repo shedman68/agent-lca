@@ -47,9 +47,9 @@ Source: `out/findings.csv`, row F1, ranked by `addressable_co2_kg_mid`. Addressa
 
 **Click:** **Package**.
 
-**Say:** «The chosen rows are already ticked. CO2 first: minus 42.2 percent, 2,614 kilograms, against a minus 40 percent target. Cost: minus 28.4 percent, 133,427 francs, against minus 25 percent. Effort: 14.0 person-days, 15,400 francs, inside a 15 person-day cap. Energy saved on the mid factor: 12,423 kilowatt-hours.»
+**Say:** «The chosen rows are already ticked. They are M1 to M8 and C1. CO2 first: minus 43.0 percent, 2,664 kilograms, against a minus 40 percent target. Cost: minus 28.6 percent, 134,306 francs, against minus 25 percent. Effort: 14.5 person-days, 15,950 francs, inside a 15 person-day cap. Energy saved on the mid factor: 12,603 kilowatt-hours.»
 
-The three target marks (CO2 −40 %, cost −25 %, 15 person-days) are the case rules printed on the gauges. They are not a measured row in `out/` or `measures/`. Every result just spoken is `measures/package_summary.csv` for the chosen package: `co2_pct_mid` 42.2, `co2_mid` 2,614 kg, `chf_pct` 28.4, `chf` 133,427, `effort_pd` 14.0, `effort_chf` 15,400, `kwh_mid` 12,423. The same file has `target_co2_ok_mid`, `target_cost_ok` and `budget_ok` all true. The page adds the ticked rows in `measures/candidates.csv`; it does not rewrite them.
+The three target marks (CO2 −40 %, cost −25 %, 15 person-days) are the case rules printed on the gauges. They are not a measured row in `out/` or `measures/`. Every result just spoken is `measures/package_summary.csv` for the chosen package: `co2_pct_mid` 43.0, `co2_mid` 2,664 kg, `chf_pct` 28.6, `chf` 134,306, `effort_pd` 14.5, `effort_chf` 15,950, `kwh_mid` 12,603. The same file has `target_co2_ok_mid`, `target_cost_ok` and `budget_ok` all true. The page adds the ticked rows; it does not rewrite `measures/`.
 
 **Click:** **How CO2 was calculated**.
 
@@ -59,13 +59,13 @@ Close the popover.
 
 **Click:** **High factors** (the radio under **What the jury might recalculate**).
 
-**Say:** «On the high factors the CO2 cut is minus 40.0 percent. Still on the line. Low would be minus 49.0 percent.»
+**Say:** «On the high factors the CO2 cut is minus 42.2 percent. Low would be minus 49.6 percent.»
 
-The bold line under the rings changes with the radio. On high factors it reads **6,159 kg CO2**, not 2,614. Cost, person-days and the 12,423 kWh stay put (energy is stored once, at mid). The caption already shows low −49.0 %, mid −42.2 % and high −40.0 % before you click. Do not click Low factors: that would replace the kilogram line with 1,422 kg.
+The bold line under the rings changes with the radio. On high factors it reads **6,496 kg CO2**, not 2,664. Cost, person-days and the 12,603 kWh stay put (energy is stored once, at mid). The caption already shows low −49.6 %, mid −43.0 % and high −42.2 % before you click. Do not click Low factors: that would replace the kilogram line with 1,438 kg.
 
-**Click:** **Mid factors** so the room is back on the mid view. The line returns to 2,614 kg. Do this before you leave the page.
+**Click:** **Mid factors** so the room is back on the mid view. The line returns to 2,664 kg. Do this before you leave the page.
 
-`co2_pct_high` 40.0 and `co2_pct_low` 49.0 are in `measures/package_summary.csv`. The high screen divides 6,159 kg by 15,380 kg. Do not tick C1 or C2.
+`co2_pct_high` 42.2 and `co2_pct_low` 49.6 are in `measures/package_summary.csv`. The high screen divides 6,496 kg by the high baseline, which rounds to 15,380 kg. C1 is already one of the ticked rows. Do not tick C2.
 
 ## 4. A refused edge case — 3:00 to 4:00
 
@@ -93,17 +93,17 @@ The spoken refusal is the sentence the Ask page returns for that prompt: `No –
 
 **Click:** **Next year**. Scroll to **Our own AI use**.
 
-**Say:** «The card shows no kilograms. The file for our own AI use is not in the repo, so we do not invent a figure.»
+**Say:** «This card is the note in the repo. It covers Vinzenz and Hakim only. Rashed and Grok are still missing, so this is not the whole team, and we do not fill them in.»
 
-Read the info line if you want the same words the room sees: `factors/kb/V6-our-ai-footprint.md` is not in the repo yet, and no kilograms are shown. The card is not a blank box. It is an info line with no kWh and no kg.
+Read the result table on the card. Its mid total for those two people is 2.6 kWh and 0.71 kg CO2. The pitch sentence on the same card says about 2.6 kWh and 0.7 kg. Both are in `factors/kb/V6-our-ai-footprint.md`, not in `out/`. Do not add a number for the missing people.
 
-**Say:** «It matters for Basel because the CO2 we do show is location-based: the electricity that is actually consumed, including what is imported. Germany is already 35.9 percent of this firm’s cloud CO2, on the first page. A tool that will not invent a factor will not invent its own footprint either. When the team’s token note is in the repo, this card can show it. Until then it stays without a kilogram.»
+**Say:** «It matters for Basel because the company CO2 we show is location-based: the electricity that is actually consumed, including what is imported. Germany is already 35.9 percent of this firm’s cloud CO2, on the first page.»
 
 Do not look for 35.9 percent on this page. It is the Germany share in the Overall picture sentence.
 
 If someone asks about the growth line above the card, read what is printed and stop: up to +CHF 17,452, +2,519 kWh and +227 kg CO2 a year. That is the dp-prod baseline months in `out/fact_costs.csv` times (24/20 − 1). It is not added to the package. Do not read it in these 30 seconds unless asked.
 
-`data.own_ai_note()` is empty: `factors/kb/V6-our-ai-footprint.md` is not in the repo. No own-use kWh or kg appears in `out/` or `measures/`. The 35.9 percent is the same Germany share as in section 1 (`out/fact_costs.csv`).
+`data.own_ai_note()` reads `factors/kb/V6-our-ai-footprint.md` and the page shows that file. Rashed and Grok have no token row in it. No own-use kWh or kg is in `out/` or `measures/`. The 35.9 percent is the same Germany share as in section 1 (`out/fact_costs.csv`).
 
 ## If the app fails
 
