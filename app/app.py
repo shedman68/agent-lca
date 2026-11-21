@@ -114,7 +114,7 @@ def _hero_html(facts_now: dict, level: str) -> str:
         f'<div><div style="font-size:16px;color:{p["muted"]}">Energy ({level})</div>'
         f'<div style="font-size:28px;font-weight:650">{_kwh_text(facts_now["kwh_level"])} kWh</div>'
         f'<div style="font-size:16px;color:{p["muted"]}">Range {_kwh_text(facts_now["kwh_low"])}–{_kwh_text(facts_now["kwh_high"])} kWh</div></div>'
-        f'<div><div style="font-size:16px;color:{p["muted"]}">Cost, shown second</div>'
+        f'<div><div style="font-size:16px;color:{p["muted"]}">Cost</div>'
         f'<div style="font-size:28px;font-weight:650">{chf(facts_now["cost_chf"])}</div>'
         f'<div style="font-size:16px;color:{p["muted"]}">Same on every factor set</div></div>'
         f'</div></div>'
@@ -123,9 +123,7 @@ def _hero_html(facts_now: dict, level: str) -> str:
 
 def _overview_sentence(facts_now: dict) -> str:
     return (
-        f"Location-based CO2 is {_tonnes(facts_now['co2_level'])} t a year "
-        f"(range {_tonnes(facts_now['co2_low'])}–{_tonnes(facts_now['co2_high'])} t). "
-        f"{facts_now['top_country']} accounts for {facts_now['top_country_share']:.1%} of it, "
+        f"{facts_now['top_country']} accounts for {facts_now['top_country_share']:.1%} of the CO2, "
         f"and {facts_now['top_resource']} is the largest resource at {facts_now['top_resource_share']:.1%}."
     )
 
@@ -133,8 +131,7 @@ def _overview_sentence(facts_now: dict) -> str:
 # =============================================================================== 1 Overall picture
 def page_overview() -> None:
     st.title("Overall picture")
-    st.caption(f"Baseline year {data.BASELINE_LABEL} · location-based CO2 first, cost second · "
-               f"every number from `out/` · {CITE}")
+    st.caption(f"Baseline year {data.BASELINE_LABEL} · every number from `out/` · {CITE}")
     if not out_ready():
         return
     level = factor_level()
@@ -155,7 +152,7 @@ def page_overview() -> None:
         st.info(f"`out/fact_costs.csv` has no {level} energy or CO2. A factor value is missing. "
                 "Nothing is estimated on this page.")
         return
-    st.markdown(f"**{_overview_sentence(facts_now)}**")
+    st.markdown(_overview_sentence(facts_now))
 
     metric = st.segmented_control(
         "The chart shows", ["CO2", "Cost"], default="CO2", key="overview_metric",
@@ -163,10 +160,11 @@ def page_overview() -> None:
     metric_key = "cost" if metric == "Cost" else "co2"
     unit = "CHF" if metric_key == "cost" else "kg"
     axis = "CHF per year" if metric_key == "cost" else f"kg CO2 per year ({level} factors)"
-    st.subheader("By department" + (" · cost, the second view" if metric_key == "cost" else ""))
-    st.caption("One chart. Department uses `dept_allocated` and `alloc_share` from `out/fact_costs_allocated.csv` "
-               "multiplied by the row's CO2 or cost. The test account is folded into IT. "
-               "There is no overhead left to split in the baseline year.")
+    st.subheader("By department" + (" · cost" if metric_key == "cost" else " · CO2"))
+    with st.popover("How departments are split"):
+        st.markdown("Department uses `dept_allocated` and `alloc_share` from `out/fact_costs_allocated.csv` "
+                    "multiplied by the row's CO2 or cost. The test account is folded into IT. "
+                    "There is no overhead left to split in the baseline year.")
     dept = data.impact_by("department", metric_key, level)
     st.altair_chart(charts.ranked_bars(dept, value="amount", unit=unit, axis_title=axis), width="stretch", theme=None)
 
@@ -213,7 +211,7 @@ FINDING_STATUS = {  # status never colour-only: badge = icon + label
 
 
 def _kg(v) -> str:
-    return "–" if v is None or pd.isna(v) else f"{float(v):,.1f} kg"
+    return "–" if v is None or pd.isna(v) else f"{float(v):,.0f} kg"
 
 
 def _kwh(v) -> str:
@@ -237,16 +235,17 @@ def _finding_card(r: pd.Series) -> None:
 
 
 def _findings_structured(f: pd.DataFrame, source: str) -> None:
-    st.caption(f"Ranked by addressable CO2 (location-based, mid factor) in `{source}`, "
-               "written by `analysis/findings.py`. «Idle or unused» is not a saving claim. "
-               "Findings overlap, so they are not added together. The package decides the savings.")
+    st.caption(f"Ranked by addressable CO2 (location-based, mid factors) · `{source}`")
+    with st.popover("How to read this page"):
+        st.markdown("Written by `analysis/findings.py`. «Idle or unused» is not a saving claim. "
+                    "Findings overlap, so they are not added together. The package decides the savings.")
     if f.empty:
         st.info("The findings file has no rows.")
         return
     top, rest = f.head(5), f.iloc[5:]
     lead = top.iloc[0]
-    st.markdown(f"**Largest addressable CO2:** {lead['finding_id']} · {_kg(lead.get('addressable_co2_kg_mid'))} "
-                f"· {chf(lead['addressable_chf'])} · {_kwh(lead.get('addressable_kwh_mid'))}.")
+    st.markdown(f"### Largest: {lead['finding_id']} · {_kg(lead.get('addressable_co2_kg_mid'))} CO2 a year")
+    st.caption(f"{chf(lead['addressable_chf'])} · {_kwh(lead.get('addressable_kwh_mid'))} · {lead['title']}")
     bars = top.dropna(subset=["addressable_co2_kg_mid"]).copy()
     if not bars.empty:
         base_co2 = data.energy_totals()["co2_mid"]
@@ -347,9 +346,8 @@ def _selected_ids(rows: pd.DataFrame) -> set[str]:
 
 def page_package() -> None:
     st.title("Measures package")
-    st.caption(f"Targets per year: CO2 −{CO2_TARGET:.0f} % (location-based) · cost −{COST_TARGET:.0f} % · "
-               f"at most {PD_CAP:.0f} person-days (CHF {PD_CAP * data.PD_CHF:,.0f}; 1 PD = CHF {data.PD_CHF:,.0f}). "
-               "Savings are the rows in `measures/`. This page adds up the ticked rows; it does not rewrite them.")
+    st.caption(f"Case targets per year: CO2 −{CO2_TARGET:.0f} % (location-based) · cost −{COST_TARGET:.0f} % · "
+               f"at most {PD_CAP:.0f} person-days (1 PD = CHF {data.PD_CHF:,.0f}) · rows from `measures/`")
     if not out_ready():
         return
     rows = data.package_rows()
@@ -382,6 +380,8 @@ def page_package() -> None:
                 "center": f"{result['pd']:.1f}", "sub": f"of {PD_CAP:.0f} PD",
                 "caption": "Budget"},
     )
+    passed = sum(s_ == "good" for s_ in (co2_status, cost_status, pd_status))
+    st.html(charts.verdict_html(passed, 3, level.capitalize()))
     st.html(board)
     pcol, ccol, ecol = st.columns(3)
     with pcol.popover("How CO2 was calculated"):
@@ -659,12 +659,39 @@ def page_human() -> None:
 
 
 # =============================================================================== 6 Next year
+TEAM_AI_USERS = ["Rashed", "Hakim", "Vinzenz", "Grok"]  # people whose AI use V6 should count
+
+
 def page_next() -> None:
     st.title("Next year")
-    st.caption("What can be shown from `out/` and from `factors/kb/`, and what cannot. "
-               "Nothing on this page is added to the package.")
+    st.caption("From `out/` and `factors/kb/`. Nothing on this page is added to the package.")
     if not out_ready():
         return
+
+    st.header("Our own AI use")
+    res = data.own_ai_result()
+    total = None if res is None else res[res["person"].astype(str).str.upper().eq("TOTAL")]
+    if total is not None and not total.empty:
+        t = total.iloc[0]
+        counted = [p_ for p_ in res["person"].astype(str) if p_.upper() != "TOTAL"]
+        missing = [p_ for p_ in TEAM_AI_USERS if p_ not in counted]
+        p = charts.pal()
+        st.html(
+            f'<div style="font-family:{charts.FONT_INLINE};color:{p["ink"]}">'
+            f'<div style="font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:{p["muted"]}">'
+            f'Our AI use during the sprint · location-based CO2, mid factors</div>'
+            f'<div style="font-size:64px;font-weight:650;line-height:1">{float(t["co2_kg_mid"]):,.2f} kg</div>'
+            f'<div style="font-size:18px;color:{p["ink2"]};margin-top:6px">Range {float(t["co2_kg_low"]):,.2f}–'
+            f'{float(t["co2_kg_high"]):,.1f} kg · {float(t["kwh_mid"]):,.1f} kWh (mid)</div></div>')
+        st.caption(f"Counted so far: {', '.join(counted)}." + (f" Not counted yet: {', '.join(missing)}." if missing else "")
+                   + " Source: `factors/kb/V6-result.csv` (Vinzenz, V6).")
+    note = data.own_ai_note()
+    if note is None:
+        st.info("`factors/kb/V6-our-ai-footprint.md` is not in the repo yet (Vinzenz, V6). "
+                "No kilograms are shown for the team's own AI use.")
+    else:
+        with st.expander("Method and tokens (V6 note)"):
+            st.markdown(note)
 
     st.header("Production platform, baseline months")
     months = data.dp_prod_months()
@@ -710,15 +737,6 @@ def page_next() -> None:
         st.dataframe(shift, hide_index=True, width="stretch")
         st.caption("Source: `factors/kb/V4-job-shift.csv`. The quarterly model-training row is excluded there "
                    "(protected window T-1053). These reductions are not added to the package savings.")
-
-    st.header("Our own AI use")
-    note = data.own_ai_note()
-    if note is None:
-        st.info("`factors/kb/V6-our-ai-footprint.md` is not in the repo yet (Vinzenz, V6). "
-                "No kilograms are shown for the team's own AI use.")
-    else:
-        st.markdown(note)
-
 
 # =============================================================================== navigation
 pages = [

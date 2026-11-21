@@ -55,7 +55,8 @@ def _style(chart: alt.Chart) -> alt.Chart:
 
 
 def chf_axis(title: str = "CHF per year") -> alt.Axis:
-    return alt.Axis(title=title, format="~s", labelExpr="datum.value == 0 ? '0' : replace(datum.label, 'k', 'K')", tickCount=5)
+    """Axis with plain thousands separators (1,200 not 1.2K), the same format as every label on the page."""
+    return alt.Axis(title=title, format=",.0f", tickCount=5, labelFontSize=14, titleFontSize=15)
 
 
 def _amount_text(v: float, unit: str) -> str:
@@ -86,11 +87,14 @@ def ranked_bars(df: pd.DataFrame, label: str = "label", value: str = "cost_chf",
     order = list(d[label])
     base = alt.Chart(d).encode(y=alt.Y(f"{label}:N", sort=order, title=None, axis=alt.Axis(labelLimit=320, domain=False, ticks=False, labelPadding=8, labelColor=PALETTE[mode()]["ink2"], labelFontSize=16)))
     axis = chf_axis(axis_title or ("CHF per year" if unit == "CHF" else f"{unit} per year"))
+    # Room right of the longest bar so its value label is never clipped.
+    xmax = float(d[value].max()) if len(d) else 0.0
+    scale = alt.Scale(domain=[0, xmax * 1.18], nice=False) if xmax > 0 else alt.Scale(nice=True)
     bars = base.mark_bar(size=18, cornerRadiusEnd=4).encode(
-        x=alt.X(f"{value}:Q", axis=axis, scale=alt.Scale(nice=True)), color=color, tooltip=tips,
+        x=alt.X(f"{value}:Q", axis=axis, scale=scale), color=color, tooltip=tips,
     )
-    # value at the tip: label only the top 3 (selective), rest via axis + tooltip + table
-    top = d.head(3)
+    # value at the tip: every bar when the chart is short (up to 6 rows), else the top 3
+    top = d if len(d) <= 6 else d.head(3)
     text = alt.Chart(top).mark_text(align="left", dx=6, color=p["ink2"], fontSize=16).encode(
         y=alt.Y(f"{label}:N", sort=order), x=f"{value}:Q", text="_chf:N",
     )
@@ -138,26 +142,37 @@ def _ring(pct_fill: float, status: str, center: str, sub: str, size: int, captio
         f'display:flex;align-items:center;justify-content:center;">'
         f'<div style="width:{hole}px;height:{hole}px;border-radius:50%;background:{p["surface"]};'
         f'display:flex;flex-direction:column;align-items:center;justify-content:center;">'
-        f'<div style="font-size:{28 if size > 220 else 22}px;font-weight:650;line-height:1">{center}</div>'
-        f'<div style="font-size:16px;color:{p["muted"]};margin-top:4px">{sub}</div></div></div>'
-        f'<div style="font-size:16px;font-weight:650;margin-top:8px">{caption}</div>'
-        f'<div style="font-size:16px;color:{p["ink2"]}"><span style="display:inline-block;min-width:22px;height:22px;'
-        f'border-radius:11px;background:{state};color:{"#1a1a1a" if status == "warning" else "#ffffff"};'
-        f'text-align:center;line-height:22px;font-size:13px;margin-right:6px">{icon}</span>{label}</div></div>'
+        f'<div style="font-size:{int(size * 0.15)}px;font-weight:700;line-height:1;'
+        f'font-variant-numeric:tabular-nums;letter-spacing:-.02em">{center}</div>'
+        f'<div style="font-size:{max(16, int(size * 0.075))}px;color:{p["ink2"]};margin-top:6px">{sub}</div></div></div>'
+        f'<div style="font-size:24px;font-weight:700;margin-top:12px">{caption}</div>'
+        f'<div style="display:inline-block;margin-top:8px;padding:6px 18px;border-radius:999px;background:{state};'
+        f'color:{"#1a1a1a" if status == "warning" else "#ffffff"};font-size:24px;font-weight:800;letter-spacing:.08em">'
+        f'{icon} {label.upper()}</div></div>'
+    )
+
+
+def verdict_html(passed: int, total: int, level: str) -> str:
+    """One line above the gauges, readable from the back of the room. Text, not colour only."""
+    p = pal()
+    ok = passed == total
+    bg = STATUS["good"] if ok else STATUS["critical"]
+    text = (f"✓ All {total} targets met" if ok else f"✕ {total - passed} of {total} targets missed")
+    return (
+        f'<div style="font-family:{FONT_INLINE};display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;margin:4px 0 10px">'
+        f'<span style="background:{bg};color:#ffffff;border-radius:10px;padding:8px 20px;font-size:30px;font-weight:800">{text}</span>'
+        f'<span style="color:{p["ink2"]};font-size:20px">{level} factors</span></div>'
     )
 
 
 def gauge_board_html(co2: dict, cost: dict, effort: dict) -> str:
-    """CO2 ring first and about twice as wide as the cost and budget rings beside it."""
+    """Three equal rings in one row, CO2 first: each value and PASS/MISS is readable on a projector from 3 m."""
     p = pal()
-    big = _ring(co2["fill"], co2["status"], co2["center"], co2["sub"], 300, co2["caption"])
-    small_cost = _ring(cost["fill"], cost["status"], cost["center"], cost["sub"], 180, cost["caption"])
-    small_effort = _ring(effort["fill"], effort["status"], effort["center"], effort["sub"], 180, effort["caption"])
+    rings = [_ring(g["fill"], g["status"], g["center"], g["sub"], 250, g["caption"]) for g in (co2, cost, effort)]
+    cells = "".join(f'<div style="flex:1 1 260px;display:flex;justify-content:center">{r}</div>' for r in rings)
     return (
-        f'<div style="display:flex;flex-wrap:wrap;align-items:center;gap:28px;font-family:{FONT_INLINE};color:{p["ink"]}">'
-        f'<div style="flex:1.4 1 320px;display:flex;justify-content:center">{big}</div>'
-        f'<div style="flex:1 1 200px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center">{small_cost}{small_effort}</div>'
-        f'</div>'
+        f'<div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:24px;font-family:{FONT_INLINE};'
+        f'color:{p["ink"]}">{cells}</div>'
     )
 
 
