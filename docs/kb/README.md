@@ -19,5 +19,6 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | R2-package.md | R2 chosen package vs target and budget | open |
 | [R4-needs-a-human.md](R4-needs-a-human.md) | R4 needs-a-human list: protection windows, planted text, contradictions, one-offs | draft |
 | R6-pitch.md | R6 pitch script | open |
+| handoff-vscode-to-cloud.md | Handoff VS Code → cloud: R1 decisions, review findings #26/#29, next steps | final |
 
 Other knowledge bases: [analysis/kb](../../analysis/kb/README.md) (Hakim) · [factors/kb](../../factors/kb/README.md) (Vinzenz).
