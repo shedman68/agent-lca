@@ -46,6 +46,11 @@ DE: dict[str, str] = {
     "is the largest resource at": "ist die grösste Ressource mit",
     "The chart shows": "Die Grafik zeigt",
     "By department": "Nach Abteilung",
+    "Know the limits": "Grenzen kennen",
+    "Protection windows kept": "Schutzfenster eingehalten",
+    "One contradiction flagged": "Ein Widerspruch markiert",
+    "Needs your OK": "Braucht Ihr OK",
+    "Data": "Daten",
     "How departments are split": "So werden Abteilungen aufgeteilt",
     "By tool": "Nach Tool",
     "By country": "Nach Land",
@@ -175,6 +180,8 @@ DE: dict[str, str] = {
     "The story in four steps": "Die Geschichte in vier Schritten",
     "What the plan does": "Was der Plan tut",
     "Owner": "Verantwortlich",
+    "By department and tool, CO2 first": "Nach Abteilung und Tool, CO2 zuerst",
+    "By department": "Nach Abteilung",
     "Everything has a <em>lifecycle.</em>": "Alles hat einen <em>Lebenszyklus.</em>",
     "Our story": "Unsere Geschichte",
     "Why the name": "Warum der Name",
@@ -190,7 +197,7 @@ LABEL_ONLY = {" of ", "All ", "Cost", "From ", "Range ", "target ", "Resource ",
               "Effort", "CO2 per year", "CO2 saved", "Cost saved", "Energy saved, mid",
               # R9: short page names, translated only where they are our labels
               "Where you stand", "Your plan", "Stay on track", "Behind the numbers", "Without the plan",
-              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name"}
+              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name", "Data", "Know the limits"}
 _ORDER = sorted(DE, key=len, reverse=True)
 _ORDER_SAFE = [p_ for p_ in _ORDER if p_ not in LABEL_ONLY]
 

@@ -388,7 +388,7 @@ def _swap_bytes(path: Path, new: bytes | None, *, hide: bool = False):
 
 
 def _pages(at):
-    for url in ("", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
+    for url in ("", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
         at = _open(at, url)
         if at.exception:
             return at, url
@@ -596,17 +596,30 @@ class StoryTests(unittest.TestCase):
     def test_five_pages_in_story_order(self):
         at = self._app()
         urls = [i.get("url_pathname") for i in at._registered_pages.values()]
-        self.assertEqual(urls, ["", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"])
-        for url, title in [("", "About AgentLCA"), ("where-you-stand", "Where you stand"), ("your-plan", "Your plan"),
+        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"])
+        for url, title in [("", "About AgentLCA"), ("connect", "Connect"), ("where-you-stand", "Where you stand"),
+                           ("your-plan", "Your plan"),
                            ("stay-on-track", "Stay on track"), ("behind-the-numbers", "Behind the numbers")]:
             page = _open(at, url)
             self.assertFalse(page.exception, (url, page.exception))
             self.assertIn(title, [t.value for t in page.title])
 
+    def test_connect_loads_the_sample_company(self):
+        page = _open(self._app(), "connect")
+        btn = next(b for b in page.button if b.label.startswith("Load the sample company"))
+        page = btn.click().run()
+        self.assertFalse(page.exception, page.exception)
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data as appdata
+        c = appdata.connect_stats()
+        self.assertEqual(c["files"], 28)  # 13 core + 15 extra, as the case page says
+        self.assertEqual(c["currencies"], ["CHF", "EUR", "USD"])
+
     def test_story_buttons(self):
         page = _open(self._app(), "your-plan")
         labels = [b.label for b in page.button]
-        self.assertIn("← Where you stand", labels)
+        self.assertIn("← Where you stand", labels)  # Your plan is step 3
         self.assertIn("Stay on track →", labels)
 
     def test_t1251_one_click_is_refused(self):

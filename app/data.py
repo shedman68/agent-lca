@@ -548,3 +548,21 @@ def one_off_total() -> float | None:
     if frame is None or "extra_cost_chf" not in frame.columns:
         return None
     return float(pd.to_numeric(frame["extra_cost_chf"], errors="coerce").fillna(0).sum())
+
+
+def connect_stats() -> dict:
+    """What the Connect step shows: source files read, currencies converted, rows harmonised, flags raised.
+
+    Counted from data/ (file list only, no free text read here), out/fact_costs.csv and out/quality_log.csv.
+    """
+    core = [p for p in sorted((ROOT / "data").glob("*")) if p.suffix in (".csv", ".jsonl") and not p.name.startswith("template_")]
+    extra = [p for p in sorted((ROOT / "data" / "extra").glob("*")) if p.suffix in (".csv", ".jsonl")]
+    f = facts_unallocated()
+    q = quality_log()
+    flags = int(len(q)) if q is not None else None
+    traps = int(q["check"].astype(str).str.contains("instruction-like|exclude test account", case=False).sum()) if q is not None else None
+    c = contradiction_checks()
+    return {"core": len(core), "extra": len(extra), "files": len(core) + len(extra),
+            "currencies": sorted(f["currency"].dropna().astype(str).unique()) if "currency" in f else [],
+            "rows": int(len(f)), "sources": int(f["source"].nunique()) if "source" in f else None,
+            "flags": flags, "planted": traps, "contradictions": int(len(c)) if c is not None else None}
