@@ -16,7 +16,7 @@ Confirmed to the franc by `pipeline/verify_baseline.py` (different code path) an
 | AI subscriptions | 35,768 |
 | Hoster | 19,009 |
 
-With Vinzenz's factors (V1, V2): energy 36.3 MWh (19.4–69.3), CO2 location-based 6.47 t (2.9–15.4).
+With Vinzenz's factors (V1, V2), summed on the baseline rows of `out/fact_costs.csv` (refreshed 21.11.2026 from that file, one decimal): energy **35,782.8 kWh** (19,365.9–69,223.9), CO2 location-based **6,197.5 kg** (2,899.1–15,379.6). The earlier 36.3 MWh / 6.47 t in this note was the figure from before the factor update. `saas_licence_month` is still empty, so SaaS licences add no kWh.
 
 ## Cleaning decisions
 Details per row in `out/quality_log.csv`; summary in `pipeline/README.md`. Duplicates removed (Azure 7, AWS 5, hoster 3, AI 87),
