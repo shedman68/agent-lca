@@ -739,3 +739,17 @@ class UiDataTextTests(unittest.TestCase):
         self.assertIn("Head of IT", html)
         self.assertIn("Verantwortlich", html)
         self.assertIn("325", html)
+
+
+class R10FormatTests(unittest.TestCase):
+    def test_number_and_unit_are_separated(self):
+        """R10 item 1: '15,950of 16,500 CHF', '1,221kg' – a real space between number and unit."""
+        import re
+        import sys
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+
+        html = ui.card("t", "", "1,221", "kg CO2 a year")
+        self.assertIsNone(re.search(r"\d<span", html), html)
+        self.assertIn("1,221 <span>", html)

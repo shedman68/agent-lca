@@ -145,7 +145,7 @@ def kpis(items: list[tuple[str, str, str]], good: set[int] | None = None) -> Non
     """At most three or four key numbers: (value, unit, label)."""
     good = good or set()
     cells = "".join(
-        f'<div class="gx-kpi{" good" if i in good else ""}"><div class="v">{v}<span class="u">{u}</span></div>'
+        f'<div class="gx-kpi{" good" if i in good else ""}"><div class="v">{v} <span class="u">{u}</span></div>'
         f'<div class="l">{i18n.tr(lbl)}</div></div>' for i, (v, u, lbl) in enumerate(items))
     _raw(f'<div class="gx-kpis">{cells}</div>')
 
@@ -158,7 +158,7 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
     body = esc(body) if data_body else i18n.tr(body, label=False)
     unit, kicker = i18n.tr(unit), i18n.tr(kicker)
     k = f'<p class="k">{kicker}</p>' if kicker else ""
-    n = f'<div class="n">{number}<span>{unit}</span></div>' if number else ""
+    n = f'<div class="n">{number} <span>{unit}</span></div>' if number else ""  # a real space: CSS margins can be overridden
     m = f'<div class="meta">{meta}</div>' if meta else ""
     b = f"<p>{body}</p>" if body else ""
     return f'<div class="gx-card {kind}">{k}<h4>{title}</h4>{b}{n}{m}</div>'
