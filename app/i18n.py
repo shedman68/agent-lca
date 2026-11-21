@@ -150,6 +150,30 @@ DE: dict[str, str] = {
     "Production platform, baseline months": "Produktionsplattform, Basismonate",
     "Carbon-aware job shift": "Klimabewusste Job-Verschiebung",
     "Source:": "Quelle:",
+    # R9 story pages
+    "About AgentLCA": "Über AgentLCA",
+    "0 · About": "0 · Über",
+    "1 · Where you stand": "1 · Wo Sie stehen",
+    "2 · Your plan": "2 · Ihr Plan",
+    "3 · Stay on track": "3 · Auf Kurs bleiben",
+    "4 · Behind the numbers": "4 · Hinter den Zahlen",
+    "Where you stand": "Wo Sie stehen",
+    "Your plan": "Ihr Plan",
+    "Stay on track": "Auf Kurs bleiben",
+    "Behind the numbers": "Hinter den Zahlen",
+    "Story mode": "Story-Modus",
+    "Light mode (projector)": "Heller Modus (Beamer)",
+    "The plan meets all three targets.": "Der Plan erreicht alle drei Ziele.",
+    "Three places hold most of what you can save.": "Drei Stellen bringen den Grossteil der Einsparung.",
+    "What we did not touch, and why": "Was wir nicht anfassen, und warum",
+    "Next: GreenOps agents": "Als Nächstes: GreenOps-Agenten",
+    "Roadmap · not built yet": "Roadmap · noch nicht gebaut",
+    "Next year, with and without the plan": "Nächstes Jahr, mit und ohne Plan",
+    "Without the plan": "Ohne Plan",
+    "With the plan": "Mit Plan",
+    "Who it is for": "Für wen",
+    "The story in four steps": "Die Geschichte in vier Schritten",
+    "What the plan does": "Was der Plan tut",
     "· cost −": "· Kosten −",
     "` from `pipeline": "` aus `pipeline",
 }
@@ -157,7 +181,12 @@ DE: dict[str, str] = {
 # HTML we generate, never in markdown or captions, which can carry evidence or descriptions from the files.
 LABEL_ONLY = {" of ", "All ", "Cost", "From ", "Range ", "target ", "Resource ", "The other ", " findings", "Source:",
               "Budget", "Candidate", "Package", "Findings", "Next year", "Energy (", " factors</div>", "PASS", "MISS",
-              "CLOSE", "Table view", "Baseline year"}
+              "CLOSE", "Table view", "Baseline year",
+              # #65/#68 review: KPI labels that also occur in assistant answers stay out of markdown
+              "Effort", "CO2 per year", "CO2 saved", "Cost saved", "Energy saved, mid",
+              # R9: short page names, translated only where they are our labels
+              "Where you stand", "Your plan", "Stay on track", "Behind the numbers", "Without the plan",
+              "With the plan", "Who it is for", "Story mode", "What the plan does"}
 _ORDER = sorted(DE, key=len, reverse=True)
 _ORDER_SAFE = [p_ for p_ in _ORDER if p_ not in LABEL_ONLY]
 

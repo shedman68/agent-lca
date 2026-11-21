@@ -529,3 +529,14 @@ def finding_cost(finding_id: str) -> float | None:
     if hit.empty or "cost_chf" not in hit.columns or pd.isna(hit.iloc[0]["cost_chf"]):
         return None
     return float(hit.iloc[0]["cost_chf"])
+
+
+def factors_table() -> pd.DataFrame | None:
+    """factors/factors.csv as stored (low / mid / high, source, notes). Read only."""
+    return _read(ROOT / "factors" / "factors.csv")
+
+
+def kb_text(relpath: str) -> str | None:
+    """A kb or submission markdown file, as stored (jury answers, path to operation). None if absent."""
+    path = ROOT / relpath
+    return path.read_text(encoding="utf-8") if path.exists() else None
