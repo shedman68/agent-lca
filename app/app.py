@@ -395,8 +395,11 @@ def page_package() -> None:
                "C2's stored CO2 already assumes M1 stays on; this page does not recalculate it. "
                "A «Yes» in Needs a human means the row asks for a decision. Nothing here switches a protected resource off.")
     if st.button("Reset to the chosen package"):
-        st.session_state.pop("pkg_editor", None)
-        st.session_state.pop("pkg_ids", None)
+        # The editor key includes the factor level (pkg_editor_mid, and the same for low and high).
+        # Clearing only "pkg_editor" leaves those ticks in place, and the next run copies them back.
+        for key in list(st.session_state.keys()):
+            if key == "pkg_ids" or str(key).startswith("pkg_editor"):
+                del st.session_state[key]
         st.rerun()
 
     view = rows.copy()

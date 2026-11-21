@@ -61,6 +61,10 @@ The Next year page shows dp-prod month by month from `out/fact_costs.csv` (CHF, 
 
 Notice dates due on 2 Dec are repeated from the same `notice_calendar()` the Needs a human page uses. The job-shift table is `factors/kb/V4-job-shift.csv` as stored, including the quarterly training row left empty because of T-1053. Those reductions are not added to the package. `factors/kb/V6-our-ai-footprint.md` is absent, so the own-AI card says so and shows no kilograms.
 
+## Fix after review
+
+Reset on the package page was clearing `pkg_editor`, while the editor stores its ticks under `pkg_editor_mid` (and the same key for low and high). The next run copied the old ticks back into the gauges. Reset now deletes every `pkg_editor*` key and `pkg_ids`. A test unticks M1, clicks Reset, and checks the page shows 2,614 kg again.
+
 ## Open
 
 - A fork of shedman68/agent-lca was not created (`gh` is read-only here). The branch `grok/G1-app-v2` is pushed to the original repo, never to `main`. Draft PR: https://github.com/shedman68/agent-lca/pull/29

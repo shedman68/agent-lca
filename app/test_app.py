@@ -157,6 +157,27 @@ class PageTests(unittest.TestCase):
         self.assertFalse(page.exception, page.exception)
         self.assertIn("Measures package", [t.value for t in page.title])
 
+    def test_reset_restores_the_chosen_package(self):
+        page = _open(self.at, "package")
+        self.assertFalse(page.exception, page.exception)
+        # Untick the first row the way the data editor records a cell edit.
+        page.session_state["pkg_editor_mid"] = {
+            "edited_rows": {"0": {"include": False}},
+            "added_rows": [],
+            "deleted_rows": [],
+        }
+        page = page.run()
+        self.assertFalse(page.exception, page.exception)
+        self.assertNotIn("M1", page.session_state["pkg_ids"])
+        reset = next(b for b in page.button if b.label == "Reset to the chosen package")
+        page = reset.click().run()
+        self.assertFalse(page.exception, page.exception)
+        shown = " ".join(m.value for m in page.markdown)
+        self.assertIn("2,614 kg", shown)
+        self.assertNotIn("1,393 kg", shown)
+        saved = page.session_state.get("pkg_ids")
+        self.assertTrue(saved is None or "M1" in saved)
+
     def test_findings_and_human_still_load(self):
         findings = _open(self.at, "findings")
         self.assertFalse(findings.exception, findings.exception)
