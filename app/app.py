@@ -974,17 +974,17 @@ def page_about() -> None:
     if not out_ready():
         return
     s = data.package_summary()
-    left, right = st.columns([1.15, 1])
+    ui.hero("", "Everything has a <em>lifecycle.</em>",
+            "We measure the use phase of cloud, servers, AI and SaaS. Next: the full lifecycle.",
+            photo="about")
+    left, right = st.columns([1.05, 1])
     with left:
-        ui.hero("", "Everything has a <em>lifecycle.</em>")
-        st.html('<p class="gx-sub">We measure the use phase of cloud, servers, AI and SaaS. Next: the full lifecycle.</p>')
+        ui.grid([
+            ui.card("Agent", "Bots do the counting. People make the decisions.", kicker="Why the name"),
+            ui.card("LCA", "Life-cycle assessment, our craft from pharma.", kicker="Why the name"),
+        ])
     with right:
         ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
-    ui.grid([
-        ui.card("Agent", "Bots do the counting. People make the decisions.",
-                kicker="Why the name"),
-        ui.card("LCA", "Life-cycle assessment, our craft from pharma.", kicker="Why the name"),
-    ])
     if s is not None:
         ui.kpis([
             (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 per year, mid factors"),
@@ -1025,7 +1025,7 @@ def page_connect() -> None:
     """ALTYCA's user story: an IT manager loads her SME's exports."""
     _story_top(1)
     st.title("Connect")
-    ui.hero("", "An IT manager loads her company's exports. <em>The tool does the rest.</em>")
+    ui.hero("", "An IT manager loads her company's exports. <em>The tool does the rest.</em>", photo="connect")
     ui.explain("Exports:", "the files your providers already give you.")
     up = st.file_uploader("Drop your exports here (CSV or JSON lines)", accept_multiple_files=True,
                           type=["csv", "jsonl", "json"], key="connect_upload")
@@ -1049,6 +1049,10 @@ def page_connect() -> None:
         f"Gaps and contradictions flagged: {c['flags']} corrections logged, {c['contradictions']} cross-checks; "
         f"{c['planted']} lines of planted text set aside for a person",
     ]
+    if c.get("extra_kinds"):
+        more = int(c.get("extra_more") or 0)
+        tail = f", plus {more} more files in data/extra/" if more else ""
+        steps.append("Bonus sources used: " + ", ".join(c["extra_kinds"]) + tail)
     box = st.empty()
     if clicked:  # a short reveal for the demo; afterwards the list is static
         import time as _time
@@ -1074,7 +1078,8 @@ def page_stand() -> None:
     rows = _chosen_rows()
     ui.hero("",
                f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO2.</em> "
-               "Three places hold most of what you can save.")
+               "Three places hold most of what you can save.",
+               photo="stand")
     st.html(f'<p class="gx-sub">{_kwh_text(e["kwh_mid"])} kWh of electricity a year. CO2 range '
             f'{_tonnes(e["co2_low"])}–{_tonnes(e["co2_high"])} t on low and high factors.</p>')
     with st.popover("How this was calculated"):
@@ -1160,15 +1165,22 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
     ui.grid(cards)
     st.subheader("Know the limits")
     ai = data.kb_check("AI gateway vs provider invoices, all providers")
-    contra = (f"AI invoices are {chf(ai['diff'])} higher than the AI gateway ({pct_share(ai['diff'] / ai['independent'])}). "
-              "Flagged, not hidden: the plan uses the gateway, a person decides." if ai is not None else
-              "Sources that disagree are listed in step 5.")
+    pr = data.kb_check("provider_monthly_report vs azure+aws+hoster (12 baseline months)")
+    bits = []
+    if ai is not None and not _missing(ai["diff"]) and not _missing(ai["independent"]) and float(ai["independent"]):
+        bits.append(f"AI invoices are {chf(ai['diff'])} higher than the AI gateway "
+                    f"({pct_share(float(ai['diff']) / float(ai['independent']))}).")
+    if pr is not None and not _missing(pr["diff"]) and not _missing(pr["independent"]) and float(pr["independent"]):
+        bits.append(f"The provider monthly report is {chf(pr['diff'])} higher than the cloud and hoster invoices "
+                    f"({pct_share(float(pr['diff']) / float(pr['independent']))}).")
+    contra = (" ".join(bits) + " Flagged, not hidden. The plan keeps the detailed sources. A person decides."
+              if bits else "Sources that disagree are listed in step 5.")
     ui.grid([
         ui.card("Protection windows kept",
-                "Production at full size for night jobs and month-end. Paused machines restart before training days. "
-                "Backups stay.",
+                "Training days restart paused machines. Night jobs and month-end keep production at full size. "
+                "March keeps the test environment unchanged. Backups stay.",
                 kind="pink", kicker="Not touched"),
-        ui.card("One contradiction flagged", contra, kind="pink", kicker="Sources disagree"),
+        ui.card("Contradictions flagged", contra, kind="pink", kicker="Sources disagree"),
         ui.card("Needs your OK", "Production in quiet hours: Head of Consulting with the Head of Finance. "
                 "Licence cuts: Head of Finance.",
                 kind="pink", kicker="Hand-over to a person"),
@@ -1181,7 +1193,8 @@ def page_plan() -> None:
     s = data.package_summary()
     ok = s is not None and all(str(s.get(k, "")).strip() == "True" for k in ("target_co2_ok_mid", "target_cost_ok", "budget_ok"))
     line = "The plan meets all three targets." if ok else "The plan against the targets."
-    ui.hero("", f"<em>{line}</em>", "Targeted savings without risk to operations. CO2 first, francs on top.")
+    ui.hero("", f"<em>{line}</em>", "Targeted savings without risk to operations. CO2 first, francs on top.",
+            photo="plan")
     ui.explain("Low, mid, high:", "every factor is a range. The plan must pass on all three.")
     page_package(embedded=True, middle=_plan_middle)
     ui.bridge("Next: how the tool keeps helping once the plan runs.")
@@ -1202,7 +1215,7 @@ def page_track() -> None:
         return
     e = data.energy_totals()
     s = data.package_summary()
-    ui.hero("", "Ask the data. <em>It refuses what it must.</em>")
+    ui.hero("", "Ask the data. <em>It refuses what it must.</em>", photo="track")
     ui.explain("Planted instruction:", "text in the data that tries to command an AI.")
     examples = assistant.example_questions()
     # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
@@ -1229,6 +1242,12 @@ def page_track() -> None:
         one_off = data.one_off_total()
         st.caption("Forecast = the baseline year repeated, mid factors with the low–high range. " + growth
                    + (f" The baseline includes CHF {one_off:,.0f} of one-off costs that will not recur." if one_off else ""))
+        with st.popover("How next year was calculated"):
+            st.markdown(
+                "Without the plan repeats the baseline year in `out/fact_costs.csv`. With the plan subtracts the "
+                "chosen rows summarised in `measures/package_summary.csv`. The range is the low and high CO2 columns "
+                "already stored. One-off costs are labelled and are not a saving. The production-growth note scales "
+                "only that platform's own baseline months and is not part of the plan.")
     cards = []
     res = data.own_ai_result()
     tot = None if res is None else res[res["person"].astype(str).str.upper().eq("TOTAL")]
@@ -1249,7 +1268,8 @@ def page_track() -> None:
                                  "Not added to the plan. Training days stay protected.", kicker="Carbon-aware"))
     cards.append(ui.card("Path to operation", "1 · Each month: drop the exports, run the pipeline; two checks must pass. "
                          "2 · Owners decide on the «needs your OK» list. 3 · Once a year: review the factors.",
-                         meta="Full note: step 5", kicker="For an SME without a specialist team"))
+                         meta="Full note in step 5: submission/path_to_operation.md",
+                         kicker="For an SME without a specialist team"))
     ui.grid(cards)
     st.subheader("Next: GreenOps agents")
     ui.grid([ui.card(n, d, meta=f"Proposes · {a}", kicker="Roadmap · not built yet") for n, d, a in AGENTS_ROADMAP])
@@ -1284,6 +1304,16 @@ def page_behind() -> None:
         else:
             st.caption("Every factor with low / mid / high and its source (`factors/factors.csv`).")
             st.dataframe(fac, hide_index=True, width="stretch")
+            notes = ""
+            if "key" in fac.columns and "notes" in fac.columns:
+                hit = fac[fac["key"].astype(str).eq("grid_CH")]
+                if not hit.empty:
+                    notes = str(hit.iloc[0]["notes"])
+            if "CONSUMPTION mix incl. imports" in notes:
+                st.markdown(
+                    "**Swiss electricity.** The Switzerland factor uses the consumption mix, including imports, "
+                    "not only what Swiss power plants produce. Imports are power the servers actually draw. "
+                    "Source: `factors/factors.csv`, row `grid_CH`.")
             st.markdown("**Market-based view: not computed.** Every Swiss kWh can carry a guarantee of origin, which "
                         "would make the footprint look almost zero. We show location-based on purpose: the power mix "
                         "where the data centre stands.")

@@ -577,8 +577,19 @@ def _show(st, md: str, mode: str | None) -> None:
         # Pink = refused / needs a human (R9 palette). The word "Refused." carries the meaning, not the colour.
         body = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _html.escape(md))  # keep the answer's bold, escape the rest
         st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body}</div>', unsafe_allow_html=True)
+        # Only planted text. A protection refusal (backup, failover, audit report) already names its ticket.
+        source = refusal_source(md)
+        if source:
+            st.caption(source)
     else:
         st.markdown(md)
+
+
+def refusal_source(md: str) -> str | None:
+    """Source line for a refusal that quotes planted text. None for a protection rule."""
+    if "not an instruction" in md:
+        return "Source: the sentence is stored in the data. It was read as data and not followed."
+    return None
 
 
 def render_assistant(embedded: bool = False, questions: list[str] | None = None):
