@@ -46,6 +46,14 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+/* R10 item 2: popover buttons ("How … was calculated") and inline code chips readable in dark and light mode */
+[data-testid="stPopover"] button,[data-testid="stPopoverButton"],[data-testid="stPopover"] > div > button{
+  background:var(--card,#16191e) !important;color:var(--ink,#f2f4f5) !important;border:1px solid var(--line,#262b33) !important;}
+[data-testid="stPopover"] button p,[data-testid="stPopover"] button span,[data-testid="stPopover"] button div{color:var(--ink,#f2f4f5) !important;}
+[data-testid="stPopover"] button svg{fill:var(--ink,#f2f4f5) !important;color:var(--ink,#f2f4f5) !important;}
+.stApp code,[data-testid="stSidebar"] code,[data-testid="stCaptionContainer"] code{
+  background:var(--card2,#1c2026) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33);
+  border-radius:6px;padding:1px 6px;}
 .gx-eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--teal-ink,#00cc99);margin:0 0 10px;}
 .gx-hero{font-size:clamp(30px,4.4vw,52px);line-height:1.08;font-weight:800;letter-spacing:-.035em;color:var(--ink,#f2f4f5);margin:0 0 14px;max-width:22ch;}
 .gx-hero em{font-style:normal;color:var(--teal-ink,#00cc99);}

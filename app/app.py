@@ -1348,11 +1348,25 @@ def page_behind() -> None:
 _funcs = [page_about, page_connect, page_stand, page_plan, page_track, page_behind]
 pages = []
 for (url, title, _label), fn in zip(STORY, _funcs):
-    pg = st.Page(fn, title=i18n.tr(title), url_path=url, default=(url == "about"))
+    # The default page is served at "/" but still reserves its own path; "home" keeps "/about" free for the alias.
+    pg = st.Page(fn, title=i18n.tr(title), url_path="home" if url == "about" else url, default=(url == "about"))
     PAGES[url] = pg
     pages.append(pg)
-nav = st.navigation(pages)
+
+
+def page_about_alias() -> None:
+    """R10: /about opens About directly (the default page lives at "/"), with no "page not found" notice."""
+    page_about()
+
+
+# The alias must be registered but must not show as a seventh sidebar entry: the built-in menu is hidden and the
+# six story links are drawn below with st.page_link.
+pages.append(st.Page(page_about_alias, title=i18n.tr(STORY[0][1]), url_path="about"))
+nav = st.navigation(pages, position="hidden")
 with st.sidebar:
+    for url, title, _label in STORY:
+        st.page_link(PAGES[url], label=i18n.tr(title))
+    st.divider()
     st.toggle("Story mode", key=ui.STORY_KEY, value=True, help="Progress bar and Back / Next for presenting.")
     st.toggle("Light mode (projector)", key="light_mode", help="Brighter colours for a washed-out projector.")
     st.toggle("Deutsch", key=i18n.KEY, help="Interface in German. Text from the data and all numbers stay as stored.")

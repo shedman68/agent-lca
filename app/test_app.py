@@ -596,7 +596,7 @@ class StoryTests(unittest.TestCase):
     def test_five_pages_in_story_order(self):
         at = self._app()
         urls = [i.get("url_pathname") for i in at._registered_pages.values()]
-        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"])
+        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers", "about"])
         for url, title in [("", "About AgentLCA"), ("connect", "Connect"), ("where-you-stand", "Where you stand"),
                            ("your-plan", "Your plan"),
                            ("stay-on-track", "Stay on track"), ("behind-the-numbers", "Behind the numbers")]:
@@ -753,3 +753,14 @@ class R10FormatTests(unittest.TestCase):
         html = ui.card("t", "", "1,221", "kg CO2 a year")
         self.assertIsNone(re.search(r"\d<span", html), html)
         self.assertIn("1,221 <span>", html)
+
+
+class R10RoutingTests(unittest.TestCase):
+    def test_about_alias_renders_about(self):
+        """R10 item 3: /about opens About (no 'page not found'); '/' stays the default."""
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "about")
+        self.assertFalse(page.exception, page.exception)
+        self.assertIn("About AgentLCA", [t.value for t in page.title])
