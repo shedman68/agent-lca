@@ -5,6 +5,7 @@
 
 | Date | Decision | Why | Who | Where |
 | --- | --- | --- | --- | --- |
+| 21.11. 12:50 | Baseline cost low, mid and high are the same reconciled total. The allocation rule sits in the calculation, with n/a (text rule) in the value cells. growth_per_year stays n/a and records T-1261 as up to +20 % for dp-prod only, not in the baseline | cost has no factor range; a text rule is not a low/mid/high number; 24 nodes must not enter the baseline | Grok | `submission/build_templates.py`, grok/G8-template-gaps |
 | 21.11. 11:40 | Draft tables follow the package on main: M1–M8 and C1, market-based CO2 on each measure left blank. Baseline cost has no low/high, so those cells are n/a. Company growth is n/a (T-1261 is not a company rate). Market-based company CO2 is the bonus product of baseline kWh and grid_market_based (213.0 / 1,932.3 / 19,659.6 kg), calculated because PR #45 was still open | the measures template still listed M9, and a Must row must not stay blank | Grok | `submission/build_templates.py`, PR #35 |
 | 21.11. 12:15 | Counting of paused hours: official package keeps one factor per hour (consistent with the baseline and the jury's uniform reference baseline); idle-power result shown as a sensitivity; ask ALTYCA's mentor; C2 is the labelled «physical counting» option | Rashed delegated («complete all tasks», 12:11), Claude's 11:05 proposal | Rashed | chat |
 | 21.11. 12:15 | Merged #36 (app safety), #37 + #40 (idle factors, V6 draft, template check), #38 (Hakim QA + findings); closed #33 | all checks pass on the combined state | Rashed | chat |

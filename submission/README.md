@@ -21,7 +21,7 @@ Open the local URL Streamlit prints. The pages read `out/` and `measures/`. They
 .venv/bin/python submission/build_templates.py
 ```
 
-Run that after the pipeline. The measures table is M1–M8 and C1. Its market-based CO2 column stays blank. The baseline market-based company row is a bonus product of baseline kWh and `grid_market_based`, not a pipeline total. Cost low/high and company growth are `n/a`.
+Run that after the pipeline. The measures table is M1–M8 and C1. Its market-based CO2 column stays blank. The baseline market-based company row is a bonus product of baseline kWh and `grid_market_based`, not a pipeline total. Cost has no factor range, so low, mid and high are the same total. The allocation rule is text: the value cells say `n/a (text rule)` and the rule is in the calculation. Company growth stays `n/a`; the T-1261 note is dp-prod only and is not in the baseline.
 
 3. **`submission/path_to_operation.md`.** Still the 02:30 draft. The own-energy sentence has no team total. The Next year card shows `factors/kb/V6-our-ai-footprint.md`, which covers Vinzenz and Hakim only.
 
