@@ -107,4 +107,4 @@ If someone asks about the growth line above the card, read what is printed and s
 
 ## If the app fails
 
-Use the PNGs in `docs/kb/screenshots/` (one per page). Say the same sentences. Do not type a number that is not on the slide.
+The PNGs in `docs/kb/screenshots/` are from the earlier package. `package.png` still shows M1–M9, 2,614 kg and CHF 133,427. Do not read those package figures. If the app is down, say the package sentences in section 3. Those numbers are `measures/package_summary.csv`: 2,664 kg (−43.0 %), CHF 134,306 (−28.6 %), 14.5 person-days, and 6,496 kg on high factors. The other five PNGs can stand in for navigation. Do not type a package number that is only on `package.png`.

@@ -444,7 +444,7 @@ def page_package() -> None:
             st.info("`factors/kb/V2-idle-impact.csv` could not be read; the sensitivity is not shown.")
 
     st.subheader("Tick measures on or off")
-    st.caption("Package rows are the chosen set. C1 and C2 are candidates and start off. "
+    st.caption("Package rows are the chosen set and start ticked. C1 is in that set. C2 is a candidate and starts off. "
                "C2's stored CO2 already assumes M1 stays on; this page does not recalculate it. "
                "A «Yes» in Needs a human means the row asks for a decision. Nothing here switches a protected resource off.")
     if st.button("Reset to the chosen package"):
