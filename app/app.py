@@ -65,6 +65,11 @@ def out_ready() -> bool:
                  "`python3 analysis/findings.py --data data --out out` and "
                  "`python3 measures/measures.py --out out`.")
         return False
+    try:
+        data.aligned_baseline()
+    except ValueError as exc:  # the two out/ files do not line up row by row: stop, never guess a split
+        st.error(str(exc))
+        return False
     if totals.get("co2_mid") is None:
         st.error("out/fact_costs.csv has no CO2 column yet. Fill factors/factors.csv and rerun the pipeline. "
                  "This page will not estimate a figure.")
