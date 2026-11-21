@@ -492,3 +492,56 @@ class IdleSensitivityTests(unittest.TestCase):
         self.assertFalse(page.exception, page.exception)
         labels = [e.label for e in page.expander]
         self.assertIn("Sensitivity: if paused hours count at idle power", labels)
+
+
+class I18nTests(unittest.TestCase):
+    """German toggle: our interface text changes, numbers and data text do not."""
+
+    def test_no_phrase_changes_a_digit(self):
+        import re
+
+        from app import i18n
+
+        for en, de in i18n.DE.items():
+            self.assertEqual(re.findall(r"\d", en), re.findall(r"\d", de), en)
+
+    def test_every_page_renders_in_german_with_the_same_numbers(self):
+        import re
+
+        from streamlit.testing.v1 import AppTest
+
+        def numbers(page):
+            text = " ".join(m.value for m in list(page.markdown) + list(page.caption))
+            return sorted(re.findall(r"\d[\d,.']*", text))
+
+        en = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        de = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
+        de.session_state["lang_de"] = True
+        de = de.run()
+        self.assertFalse(de.exception, de.exception)
+        self.assertIn("Gesamtbild", [t.value for t in de.title])
+        titles = {"findings": "Befunde", "package": "Massnahmenpaket", "needs-a-human": "Braucht einen Menschen",
+                  "ask": "Frag die Daten", "next-year": "Nächstes Jahr"}
+        for url, title in titles.items():
+            page = _open(de, url)
+            self.assertFalse(page.exception, (url, page.exception))
+            self.assertIn(title, [t.value for t in page.title], url)
+        pkg_en, pkg_de = _open(en, "package"), _open(de, "package")
+        self.assertEqual(numbers(pkg_en), numbers(pkg_de))
+
+
+class IdleDecisionTests(unittest.TestCase):
+    def test_sensitivity_shows_official_and_b_only(self):
+        """Rashed's decision 21.11: headline = one factor per hour; sensitivity = idle power on both sides (B)."""
+        import pandas as pd
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "package")
+        self.assertFalse(page.exception, page.exception)
+        tables = [d.value for d in page.dataframe if "Counting" in getattr(d.value, "columns", [])]
+        self.assertEqual(len(tables), 1)
+        shown = tables[0]
+        self.assertEqual(list(shown["Counting"]), ["Package as counted (official)", "Idle power in baseline and savings"])
+        idle = pd.read_csv(ROOT / "factors" / "kb" / "V2-idle-impact.csv", index_col=0)
+        self.assertEqual(shown.iloc[1]["mid"], f"−{idle.loc['B_pct', 'mid']:.1f} %")

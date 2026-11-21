@@ -17,9 +17,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import assistant  # noqa: E402
 import charts  # noqa: E402
 import data  # noqa: E402
+import i18n  # noqa: E402
 import register  # noqa: E402
 
 st.set_page_config(page_title="GreenOps Basel", page_icon="🌿", layout="wide")
+i18n.install(st)  # German toggle in the sidebar; English mode changes nothing
 
 CITE = "Sample data ALTYCA, sprintd Basel 2026"
 # Case targets (AGENTS.md). These are the decision rules, not figures measured from out/.
@@ -377,14 +379,14 @@ def page_package() -> None:
               "center": _signed(result["cost_pct"] or 0), "sub": f"target −{COST_TARGET:.0f} %",
               "caption": "Cost reduction"},
         effort={"fill": result["pd"] / PD_CAP, "status": pd_status,
-                "center": f"{result['pd']:.1f}", "sub": f"of {PD_CAP:.0f} PD",
+                "center": f"{result['pd']:.1f}", "sub": f"{'von' if i18n.is_de() else 'of'} {PD_CAP:.0f} PD",
                 "caption": "Budget"},
     )
     passed = sum(s_ == "good" for s_ in (co2_status, cost_status, pd_status))
     st.html(charts.verdict_html(passed, 3, level.capitalize()))
     st.html(board)
     pcol, ccol, ecol = st.columns(3)
-    with pcol.popover("How CO2 was calculated"):
+    with pcol.popover(i18n.tr("How CO2 was calculated")):
         base_co2 = result["base_co2_kg"]
         pct = result["co2_pct"]
         base_txt = "–" if _missing(base_co2) else f"{base_co2:,.0f} kg"
@@ -397,13 +399,13 @@ def page_package() -> None:
             "Mid is `savings_co2_kg_location_based`. Market-based CO2 is blank in the file and is not shown. "
             "An em dash means that baseline column is empty, so the percent is not estimated."
         )
-    with ccol.popover("How cost was calculated"):
+    with ccol.popover(i18n.tr("How cost was calculated")):
         st.markdown(
             f"Sum of `savings_cost_chf_per_year` on the ticked rows "
             f"({chf(result['cost_chf'])}) divided by baseline `cost_chf` in `out/fact_costs.csv` "
             f"({chf(result['base_cost_chf'], 2)}). Cost does not change with the factor switch."
         )
-    with ecol.popover("How the budget was calculated"):
+    with ecol.popover(i18n.tr("How the budget was calculated")):
         st.markdown(
             f"Sum of `effort_person_days` on the ticked rows ({result['pd']:.1f}). "
             f"CHF {result['effort_chf']:,.0f} = person-days × CHF {data.PD_CHF:,.0f}. "
@@ -428,18 +430,18 @@ def page_package() -> None:
             idle = pd.read_csv(idle_file, index_col=0)
             with st.expander("Sensitivity: if paused hours count at idle power", expanded=False):
                 st.markdown(
-                    "The package counts every server hour with one factor, as the baseline does. "
+                    "The package counts every server hour with one factor, in the baseline and in the savings alike. "
                     "A server that sits idle draws about half of an average hour (Vinzenz, `factors/kb/V2-idle-factors.md`). "
-                    "Counted that way, the same package saves less CO2. This is a sensitivity, not the package.")
+                    "Counted that way on both sides, baseline and savings both shrink. This is a sensitivity, not the package.")
                 idle_rows = [("Package as counted (official)", "pkg_now_pct"),
-                        ("Paused hours at idle power", "A_pct"),
-                        ("Idle power + move dp-dev to Zurich (C2)", "A_plus_C2_pct")]
+                             ("Idle power in baseline and savings", "B_pct")]
                 idle_tab = pd.DataFrame([{"Counting": n, **{lvl: f"−{idle.loc[k, lvl]:.1f} %" for lvl in ["low", "mid", "high"]}}
                                          for n, k in idle_rows])
                 st.dataframe(idle_tab, hide_index=True, width="stretch")
-                st.caption("Source: `factors/kb/V2-idle-impact.csv`, written by `factors/scripts/idle_impact.py` from `out/`, "
-                           "`measures/candidates.csv` and `factors/factors.csv`. Which counting the jury uses is open; "
-                           "C2 needs about 5 person-days and is outside the 15 PD budget.")
+                st.caption("Source: `factors/kb/V2-idle-impact.csv` (rows `pkg_now_pct`, `B_pct`), written by "
+                           "`factors/scripts/idle_impact.py` from `out/`, `measures/candidates.csv` and `factors/factors.csv`. "
+                           "Not shown: idle power in the savings only (baseline and savings counted differently), and "
+                           "moving dp-dev to Zurich (C2, about 5 person-days, outside the 15 PD budget). Decision: Rashed, 21.11.")
         except (OSError, ValueError, KeyError):
             st.info("`factors/kb/V2-idle-impact.csv` could not be read; the sensitivity is not shown.")
 
@@ -740,15 +742,16 @@ def page_next() -> None:
 
 # =============================================================================== navigation
 pages = [
-    st.Page(page_overview, title="Overall picture", icon="📊", default=True),
-    st.Page(page_findings, title="Findings", icon="🔎", url_path="findings"),
-    st.Page(page_package, title="Package", icon="🎯", url_path="package"),
-    st.Page(page_human, title="Needs a human", icon="🙋", url_path="needs-a-human"),
-    st.Page(assistant.render_assistant, title="Ask the data", icon="💬", url_path="ask"),
-    st.Page(page_next, title="Next year", icon="📅", url_path="next-year"),
+    st.Page(page_overview, title=i18n.tr("Overall picture"), icon="📊", default=True),
+    st.Page(page_findings, title=i18n.tr("Findings"), icon="🔎", url_path="findings"),
+    st.Page(page_package, title=i18n.tr("Package"), icon="🎯", url_path="package"),
+    st.Page(page_human, title=i18n.tr("Needs a human"), icon="🙋", url_path="needs-a-human"),
+    st.Page(assistant.render_assistant, title=i18n.tr("Ask the data"), icon="💬", url_path="ask"),
+    st.Page(page_next, title=i18n.tr("Next year"), icon="📅", url_path="next-year"),
 ]
 nav = st.navigation(pages)
 with st.sidebar:
+    st.toggle("Deutsch", key=i18n.KEY, help="Interface in German. Text from the data and all numbers stay as stored.")
     st.caption(f"Numbers: `out/` from `pipeline/pipeline.py` · {CITE}")
     if st.button("Reload data"):
         st.cache_data.clear()
