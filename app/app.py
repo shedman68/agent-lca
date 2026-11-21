@@ -16,6 +16,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import assistant  # noqa: E402
 import charts  # noqa: E402
+import format_num  # noqa: E402
 import data  # noqa: E402
 import i18n  # noqa: E402
 import register  # noqa: E402
@@ -42,6 +43,14 @@ st.markdown(
     [data-testid="stMetricLabel"] {font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75;}
     [data-testid="stMetric"] {padding: 0.15rem 0 0.35rem;}
     .block-container {padding-top: 1.35rem; padding-bottom: 3rem; max-width: 1180px;}
+    @media (max-width: 720px) {
+      [data-testid="stSidebar"] {min-width: 0 !important;}
+      h1 {font-size: 1.6rem !important;}
+      .block-container {padding-top: 0.85rem; padding-left: 0.7rem; padding-right: 0.7rem;}
+      [data-testid="stHorizontalBlock"] {flex-wrap: wrap !important;}
+      [data-testid="stColumn"] {width: 100% !important; flex: 1 1 100% !important; min-width: 100% !important;}
+      .stButton > button {min-height: 44px; height: auto; white-space: normal; text-align: left;}
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -94,7 +103,7 @@ def _kpi_card(label: str, value: str, unit: str = "", hint: str = "", *, unit_fi
         if hint else ""
     )
     return (
-        f'<div style="flex:1 1 200px;min-width:180px;padding:18px 20px 16px;border-radius:12px;'
+        f'<div style="flex:1 1 200px;min-width:min(180px, 100%);padding:18px 20px 16px;border-radius:12px;'
         f'background:{bg};border:1px solid {p["grid"]};font-family:{charts.FONT_INLINE};color:{ink}">'
         f'<div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;'
         f'color:{p["muted"]};line-height:1.35;margin:0 0 10px;min-height:2.7em">{label}</div>'
@@ -144,6 +153,7 @@ def out_ready() -> bool:
 
 def factor_level() -> str:
     """Low / mid / high factors. The label is the jury question: they may recalculate on another set."""
+    st.caption("Low, mid and high are three factor sets. The cards use the one you pick. Cost does not change.")
     choice = st.segmented_control(
         "What the jury might recalculate",
         ["Low factors", "Mid factors", "High factors"],
@@ -154,12 +164,14 @@ def factor_level() -> str:
 
 
 def _hero_html(facts_now: dict, level: str) -> str:
+    level_label = {"low": "Low factors", "mid": "Mid factors", "high": "High factors"}[level]
     return _kpi_row(
         _kpi_card(
-            f'Location-based CO2 per year · {level} factors',
+            "CO2 per year",
             _tonnes(facts_now["co2_level"]),
             "t",
-            f'Range {_tonnes(facts_now["co2_low"])}–{_tonnes(facts_now["co2_high"])} t on low and high factors',
+            f'Location-based: electricity mix of the country where it runs, not a green certificate. '
+            f'{level_label}. Range {_tonnes(facts_now["co2_low"])}–{_tonnes(facts_now["co2_high"])} t',
         ),
         _kpi_card(
             f'Energy ({level})',
@@ -188,6 +200,7 @@ def _overview_sentence(facts_now: dict) -> str:
 def page_overview() -> None:
     st.title("Overall picture")
     st.caption(f"Baseline year {data.BASELINE_LABEL} · every number from `out/` · {CITE}")
+    st.caption("CO2 here is location-based: the electricity mix where the server runs, not a green-power certificate.")
     if not out_ready():
         return
     level = factor_level()
@@ -200,7 +213,7 @@ def page_overview() -> None:
             "Low and high are the same sum on `co2_kg_low` and `co2_kg_high`. "
             "Energy is the sum of `kwh_*`. Cost is the sum of `cost_chf` "
             f"({chf(facts_now['cost_chf'], 2)}). "
-            "Each row is quantity × energy factor × PUE where that factor says so × the grid factor "
+            "Each row is quantity × energy factor × PUE (extra electricity for cooling and the building) where that factor says so × the grid factor "
             "of the row's country. Factors: `factors/factors.csv`. The pipeline writes the product; this page only adds it up. "
             "An em dash means that column is empty, so no figure is estimated."
         )
@@ -244,7 +257,8 @@ def page_overview() -> None:
                    .drop(columns=["share"], errors="ignore"), "Table view: all resources")
     with tab_country:
         country = data.impact_by("country", metric_key, level)
-        st.caption("Country sets the location-based grid factor. AI providers and SaaS are «EU mixed».")
+        st.caption("Country is where the work runs. CO2 uses that country's electricity mix, not a certificate. "
+                   "AI providers and SaaS are «EU mixed».")
         st.altair_chart(charts.ranked_bars(country, value="amount", unit=unit, axis_title=axis), width="stretch", theme=None)
         table_view(country.assign(amount=country["amount"].round(1), share_pct=(country["share"] * 100).round(1))
                    .rename(columns={"label": "country", "amount": unit, "share_pct": "share %"})
@@ -295,6 +309,7 @@ def _findings_structured(f: pd.DataFrame, source: str) -> None:
     st.caption(f"Ranked by addressable CO2 (location-based, mid factors) · `{source}`")
     with st.popover("How to read this page"):
         st.markdown("Written by `analysis/findings.py`. «Idle or unused» is not a saving claim. "
+                    "Addressable means that idle or unused part. "
                     "Findings overlap, so they are not added together. The package decides the savings.")
     if f.empty:
         st.info("The findings file has no rows.")
@@ -371,9 +386,7 @@ def _protection_hits(text: str) -> list[str]:
 
 def _signed(reduction_pct: float) -> str:
     """A reduction shows as −x %; a package that adds cost or CO2 shows as +x %, never as 0 %."""
-    if abs(reduction_pct) < 0.05:
-        return "0 %"
-    return f"−{reduction_pct:.1f} %" if reduction_pct > 0 else f"+{-reduction_pct:.1f} %"
+    return format_num.signed_pct(reduction_pct)
 
 
 def _bound_status(value: float | None, target: float, *, higher_is_better: bool) -> str:
@@ -445,7 +458,7 @@ def page_package() -> None:
         base_co2 = result["base_co2_kg"]
         pct = result["co2_pct"]
         base_txt = "–" if _missing(base_co2) else f"{base_co2:,.0f} kg"
-        pct_txt = "–" if pct is None else f"{pct:.1f} %"
+        pct_txt = format_num.signed_pct(pct)
         st.markdown(
             f"Sum of `{data.CO2_COL[level]}` on the ticked rows in `measures/candidates.csv`, "
             f"divided by the sum of `co2_kg_{level}` on baseline rows in `out/fact_costs.csv` "
@@ -469,17 +482,12 @@ def page_package() -> None:
     st.html(_kpi_row(
         _kpi_card("CO2 saved", _qty(result["co2_kg"]), "kg"),
         _kpi_card("Cost saved", _qty(result["cost_chf"]), "CHF", unit_first=True),
-        _kpi_card("Effort", f"{result['pd']:.1f}", "PD", f'CHF {result["effort_chf"]:,.0f}'),
+        _kpi_card("Effort", f"{result['pd']:.1f}", "person-days", f'CHF {result["effort_chf"]:,.0f}'),
         _kpi_card("Energy saved, mid", _qty(result["kwh"]), "kWh"),
     ))
     st.caption("Energy saved uses the mid factor only (the measure file stores one energy column).")
     if summary is not None:
-        st.caption(
-            "Chosen package in `measures/package_summary.csv`: "
-            f"CO2 low −{float(summary['co2_pct_low']):.1f} % · mid −{float(summary['co2_pct_mid']):.1f} % · "
-            f"high −{float(summary['co2_pct_high']):.1f} % · cost −{float(summary['chf_pct']):.1f} % · "
-            f"{float(summary['effort_pd']):.1f} PD. Unticking a row shows the trade-off against that package."
-        )
+        st.caption(format_num.package_saved_line(summary))
 
     idle_file = Path(__file__).resolve().parent.parent / "factors" / "kb" / "V2-idle-impact.csv"
     if idle_file.exists():
@@ -492,7 +500,7 @@ def page_package() -> None:
                     "Counted that way on both sides, baseline and savings both shrink. This is a sensitivity, not the package.")
                 idle_rows = [("Package as counted (official)", "pkg_now_pct"),
                              ("Idle power in baseline and savings", "B_pct")]
-                idle_tab = pd.DataFrame([{"Counting": n, **{lvl: f"−{idle.loc[k, lvl]:.1f} %" for lvl in ["low", "mid", "high"]}}
+                idle_tab = pd.DataFrame([{"Counting": n, **{lvl: format_num.signed_pct(idle.loc[k, lvl]) for lvl in ["low", "mid", "high"]}}
                                          for n, k in idle_rows])
                 st.dataframe(idle_tab, hide_index=True, width="stretch")
                 st.caption("Source: `factors/kb/V2-idle-impact.csv` (rows `pkg_now_pct`, `B_pct`), written by "
@@ -503,6 +511,7 @@ def page_package() -> None:
             st.info("`factors/kb/V2-idle-impact.csv` could not be read; the sensitivity is not shown.")
 
     st.subheader("Tick measures on or off")
+    st.caption("On a phone, swipe the measure table sideways. The gauges above follow the ticks.")
     st.caption("Package rows are the chosen set and start ticked. C1 is in that set. C2 is a candidate and starts off. "
                "C2's stored CO2 already assumes M1 stays on; this page does not recalculate it. "
                "A «Yes» in Needs a human means the row asks for a decision. Nothing here switches a protected resource off.")

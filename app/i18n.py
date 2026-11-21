@@ -126,6 +126,22 @@ DE: dict[str, str] = {
     "Effort": "Aufwand",
     "Energy saved uses the mid factor only (the measure file stores one energy column).":
         "Energieeinsparung nur mit mittlerem Faktor (die Massnahmendatei speichert eine Energiespalte).",
+    # phone polish: short labels and plain words. No digits, so German shows the same figures.
+    "CO2 per year": "CO2 pro Jahr",
+    "Location-based: electricity mix of the country where it runs, not a green certificate.":
+        "Standortbasiert: Strommix des Landes, in dem es läuft, kein Grünstromzertifikat.",
+    "CO2 here is location-based: the electricity mix where the server runs, not a green-power certificate.":
+        "CO2 hier ist standortbasiert: der Strommix dort, wo der Server läuft, kein Grünstromzertifikat.",
+    "Low, mid and high are three factor sets. The cards use the one you pick. Cost does not change.":
+        "Tief, mittel und hoch sind drei Faktorensätze. Die Karten nutzen den gewählten. Die Kosten ändern sich nicht.",
+    "PUE (extra electricity for cooling and the building)":
+        "PUE (zusätzlicher Strom für Kühlung und Gebäude)",
+    "Addressable means that idle or unused part.":
+        "Adressierbar meint diesen ungenutzten Teil.",
+    "Country is where the work runs. CO2 uses that country's electricity mix, not a certificate. AI providers and SaaS are «EU mixed».":
+        "Das Land ist dort, wo die Arbeit läuft. CO2 nutzt den Strommix dieses Landes, kein Zertifikat. KI-Anbieter und SaaS sind «EU mixed».",
+    "On a phone, swipe the measure table sideways. The gauges above follow the ticks.":
+        "Auf dem Telefon die Massnahmentabelle seitlich wischen. Die Anzeigen oben folgen den Häkchen.",
     "Our AI use during the sprint": "Unsere KI-Nutzung im Sprint",
     "location-based CO2, mid factors": "standortbasiertes CO2, mittlere Faktoren",
     "Counted so far:": "Bisher gezählt:",

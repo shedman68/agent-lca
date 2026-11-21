@@ -545,3 +545,30 @@ class IdleDecisionTests(unittest.TestCase):
         self.assertEqual(list(shown["Counting"]), ["Package as counted (official)", "Idle power in baseline and savings"])
         idle = pd.read_csv(ROOT / "factors" / "kb" / "V2-idle-impact.csv", index_col=0)
         self.assertEqual(shown.iloc[1]["mid"], f"−{idle.loc['B_pct', 'mid']:.1f} %")
+
+
+class FormatTests(unittest.TestCase):
+    def test_signed_percent_thousands_and_units(self):
+        from app.app import _kg, _qty, chf, pct_share
+        from app.format_num import package_saved_line, signed_pct
+
+        self.assertEqual(signed_pct(28.44), "−28.4 %")
+        self.assertEqual(signed_pct(-3.21), "+3.2 %")
+        self.assertEqual(signed_pct(0.04), "0 %")
+        self.assertEqual(signed_pct(None), "–")
+        self.assertEqual(pct_share(0.359), "35.9 %")
+        self.assertEqual(pct_share(None), "–")
+        self.assertEqual(chf(1234567.891, 2), "CHF 1,234,567.89")
+        self.assertEqual(_qty(1234567.4), "1,234,567")
+        self.assertEqual(_qty(None), "–")
+        self.assertEqual(_kg(1221.4), "1,221 kg")
+        self.assertEqual(_kg(None), "–")
+
+        summary = pd.read_csv(ROOT / "measures" / "package_summary.csv", index_col=0).squeeze()
+        line = package_saved_line(summary)
+        self.assertIn(signed_pct(summary["co2_pct_mid"]), line)
+        self.assertIn(signed_pct(summary["chf_pct"]), line)
+        self.assertIn(signed_pct(summary["co2_pct_low"]), line)
+        self.assertIn(signed_pct(summary["co2_pct_high"]), line)
+        self.assertIn(f"{float(summary['effort_pd']):.1f} person-days", line)
+        self.assertNotRegex(line, r"-\d")
