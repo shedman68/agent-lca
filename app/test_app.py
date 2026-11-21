@@ -340,3 +340,14 @@ class SubmissionAndRegisterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IdleSensitivityTests(unittest.TestCase):
+    def test_idle_panel_renders_on_package_page(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(Path(__file__).resolve().parent / "app.py"), default_timeout=120)
+        at.run()
+        page = _open(at, "package")
+        self.assertFalse(page.exception, page.exception)
+        labels = [e.label for e in page.expander]
+        self.assertIn("Sensitivity: if paused hours count at idle power", labels)
