@@ -1,7 +1,7 @@
 # R6 – 5-minute demo script
 
 - **Task:** R6 pitch, drafted for G6 · **Author:** Grok · **Date:** 21.11.2026 · **Status:** draft
-- **Sources:** `out/fact_costs.csv`, `out/fact_costs_allocated.csv` (department split), `out/findings.csv`, `measures/package_summary.csv`, `measures/candidates.csv`. Sample data ALTYCA, sprintd Basel 2026.
+- **Sources:** `out/fact_costs.csv`, `out/fact_costs_allocated.csv` (department split), `out/findings.csv`, `measures/package_summary.csv`, `measures/candidates.csv`, `factors/kb/V6-result.csv` (own-AI card only). Sample data ALTYCA, sprintd Basel 2026.
 - **Screen formats** below are what the app prints (kg ÷ 1,000 to one decimal for tonnes; other figures with a thousands separator). The unrounded sums are in the source lines.
 
 Run offline from the repo root, with pipeline output already in `out/`:
@@ -44,9 +44,9 @@ Source: `out/findings.csv`, row F1, ranked by `addressable_co2_kg_mid`. Addressa
 
 **Click:** **Package**.
 
-**Say:** «The chosen rows are already ticked. CO2 first: minus 42.2 percent, 2,614 kilograms, against a minus 40 percent target. Cost: minus 28.4 percent, 133,427 francs, against minus 25 percent. Effort: 14.0 person-days, 15,400 francs, inside a 15 person-day cap. Energy saved on the mid factor: 12,423 kilowatt-hours.»
+**Say:** «The chosen rows are already ticked. CO2 first: minus 43.0 percent, 2,664 kilograms, against a minus 40 percent target. Cost: minus 28.6 percent, 134,306 francs, against minus 25 percent. Effort: 14.5 person-days, 15,950 francs, inside a 15 person-day cap. Energy saved on the mid factor: 12,603 kilowatt-hours.»
 
-The three target marks (CO2 −40 %, cost −25 %, 15 person-days) are the case rules printed on the gauges. They are not a measured row in `out/` or `measures/`. Every result just spoken is `measures/package_summary.csv` for the chosen package: `co2_pct_mid` 42.2, `co2_mid` 2,614 kg, `chf_pct` 28.4, `chf` 133,427, `effort_pd` 14.0, `effort_chf` 15,400, `kwh_mid` 12,423. The same file has `target_co2_ok_mid`, `target_cost_ok` and `budget_ok` all true. The page adds the ticked rows in `measures/candidates.csv`; it does not rewrite them.
+The three target marks (CO2 −40 %, cost −25 %, 15 person-days) are the case rules printed on the gauges. They are not a measured row in `out/` or `measures/`. Every result just spoken is `measures/package_summary.csv` for the chosen package: `co2_pct_mid` 43.0, `co2_mid` 2,664 kg, `chf_pct` 28.6, `chf` 134,306, `effort_pd` 14.5, `effort_chf` 15,950, `kwh_mid` 12,603. The same file has `target_co2_ok_mid`, `target_cost_ok` and `budget_ok` all true. The page adds the ticked rows in `measures/candidates.csv`; it does not rewrite them.
 
 **Click:** **How CO2 was calculated**.
 
@@ -56,11 +56,11 @@ Close the popover.
 
 **Click:** **High factors** under **What the jury might recalculate**.
 
-**Say:** «On the high factors the CO2 cut is minus 40.0 percent. Still on the line. Low would be minus 49.0 percent.»
+**Say:** «On the high factors the CO2 cut is minus 42.2 percent. Still past the line. Low is minus 49.6 percent. Mid, which we just showed, is minus 43.0 percent.»
 
 **Click:** **Mid factors** so the room is back on the mid view.
 
-`co2_pct_high` 40.0 and `co2_pct_low` 49.0 are in `measures/package_summary.csv`. Do not tick C1 or C2.
+`co2_pct_low` 49.6, `co2_pct_mid` 43.0 and `co2_pct_high` 42.2 are in `measures/package_summary.csv`. Do not tick C1 or C2. The idle-power expander is a sensitivity, not the spoken package. Leave it closed.
 
 ## 4. A refused edge case — 3:00 to 4:00
 
@@ -86,11 +86,11 @@ The spoken refusal is the sentence the Ask page returns for that prompt. No new 
 
 **Click:** **Next year**. Scroll to **Our own AI use**.
 
-**Say:** «The card is empty on purpose. Our own AI energy for this sprint is not in out/ and not in measures/. There is no kilogram to put on the slide, so we do not invent one.»
+**Say:** «The card is Vinzenz’s draft, not a company total. So far, Vinzenz and Hakim: 2.6 kilowatt-hours and 0.71 kilograms at the mid factor. Rashed and this agent are still missing, so we do not call it the team’s footprint.»
 
-**Say:** «It matters for Basel because the CO2 we do show is location-based: the electricity that is actually consumed, including what is imported. Germany is already 35.9 percent of this firm’s cloud CO2. A tool that will not invent a factor will not invent its own footprint either. When the team’s token note is in the repo, this card can show it. Until then it stays blank.»
+**Say:** «It matters for Basel because the CO2 we do show is location-based: the electricity that is actually consumed, including what is imported. Germany is already 35.9 percent of this firm’s cloud CO2. The same rule applies to our own use: the card shows the file, and it says who is not in it yet.»
 
-`data.own_ai_note()` is empty: `factors/kb/V6-our-ai-footprint.md` is not in the repo. No own-use kWh or kg appears in `out/` or `measures/`. The 35.9 percent is the same Germany share as in section 1 (`out/fact_costs.csv`).
+The card is `factors/kb/V6-our-ai-footprint.md`, which the page prints when the file is present. The mid figures on that page are the TOTAL row of `factors/kb/V6-result.csv`: `kwh_mid` 2.606 and `co2_kg_mid` 0.7088, shown in the note as 2.6 kWh and 0.71 kg. That file is not in `out/` or `measures/`, and it is not added to the package. The 35.9 percent is the same Germany share as in section 1 (`out/fact_costs.csv`).
 
 ## If the app fails
 
