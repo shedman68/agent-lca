@@ -1,7 +1,7 @@
 # G9 Mentor polish (phone)
 
 - **Task:** G9 · **Author:** Grok (for Rashed) · **Date:** 21.11.2026 · **Status:** draft
-- **Branch:** `grok/G9-mentor-polish`, stacked on #65 (`rashed/ui-kpi-spacing`). Draft PR to `main`, merge after #65.
+- **Branch:** `grok/G9-mentor-polish`. Draft PR https://github.com/shedman68/agent-lca/pull/68 against `main`. Branched from #65; #65 merged while this was open, so the diff against `main` is only this work.
 - **Sources:** presentation only. Figures stay in `out/` and `measures/`.
 
 ## Reused, not redone

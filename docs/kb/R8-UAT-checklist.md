@@ -8,7 +8,7 @@ An example quoted in a brief (14.0 person-days, cost −28.4 %, CO2 −49.0 % / 
 
 ## Go-live (two steps)
 
-1. Merge **#58** (`fix/streamlit-cloud-autobuild`) so the cloud app builds `out/` on first start. For this polish, also merge **#65** (`rashed/ui-kpi-spacing`), then this draft (stacked on #65). #58 and #65 touch different parts of `app/app.py`; a merge-tree of #58 onto this branch had no conflict markers.
+1. Merge **#58** (`fix/streamlit-cloud-autobuild`) so the cloud app builds `out/` on first start, and merge this draft (**#68**) for the phone polish. **#65** is already on `main`. #58 and this branch touch different parts of `app/app.py`; a merge-tree had no conflict markers.
 2. At [share.streamlit.io](https://share.streamlit.io) deploy or reboot the app from branch **main**, main file **`app/app.py`**. Open https://agent-lca-greenops.streamlit.app/ on the phone. First boot can take a few minutes while #58 builds `out/`.
 
 On a phone the page list is behind the menu (top corner). Sidebar: factor words, Deutsch, Reload data.
