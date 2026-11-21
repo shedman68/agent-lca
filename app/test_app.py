@@ -627,7 +627,7 @@ class StoryTests(unittest.TestCase):
 
     def test_t1251_one_click_is_refused(self):
         page = _open(self._app(), "stay-on-track")
-        btn = next(b for b in page.button if b.label.startswith("T-1251"))
+        btn = next(b for b in page.button if b.label.startswith("A ticket says"))
         page = btn.click().run()
         self.assertFalse(page.exception, page.exception)
         shown = " ".join(m.value for m in page.markdown)
