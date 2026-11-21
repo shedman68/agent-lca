@@ -15,8 +15,11 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | [QA-01-review-sat-0200.md](QA-01-review-sat-0200.md) | Independent QA against the jury criteria: 35 % complete, gaps, priorities | final |
 | [G-app-v2.md](G-app-v2.md) | G1–G5 app v2: package, findings, assistant, submission drafts, next-year page (M1–M4). 24-node forecast not calculated | draft |
 | [R0-vscode-prompt.md](R0-vscode-prompt.md) | R0 hand-over prompt for Claude Code in VS Code, with best practices | final |
-| R1-measures.md | R1 measures calculator | open |
 | R2-package.md | R2 chosen package vs target and budget | open |
+| [R1-measures-v0.md](R1-measures-v0.md) | R1 v0 package (overnight draft, merged with #29) | superseded by R1-measures.md |
+| [R1-measures.md](R1-measures.md) | R1 final calculator: fixes from the #26 review, contract dates, token weighting, open C1 decision | draft |
+| [expert-questions-energy.md](expert-questions-energy.md) | Questions for the energy expert (idle power, attribution) | final |
+| [handoff-vscode-to-cloud.md](handoff-vscode-to-cloud.md) | Hand-over VS Code → cloud session, 21.11 10:30 | final |
 | [R4-needs-a-human.md](R4-needs-a-human.md) | R4 needs-a-human list: protection windows, planted text, contradictions, one-offs | draft |
 | R6-pitch.md | R6 pitch script | open |
 | handoff-vscode-to-cloud.md | Handoff VS Code → cloud: R1 decisions, review findings #26/#29, next steps | final |

@@ -5,6 +5,10 @@
 
 | Date | Decision | Why | Who | Where |
 | --- | --- | --- | --- | --- |
+| 21.11. 11:40 | R1 effort cap: `measures.csv` holds M1–M9 only; C1/C2 and bonus candidates stay in `candidates.csv`; `trap_guard.py` unchanged | 15 PD cap; candidates visible without inflating the package | Rashed (delegated to Claude, VS Code 10:30) | handoff-vscode-to-cloud.md |
+| 21.11. 11:40 | Contract year Dec 2026 – Nov 2027, notice given 1 Dec 2026; per-contract dates from `contract_end` / `notice_period_days` replace the flat 60 % on M8 (also used for M7); a passed notice date rolls one billing cycle (12 months annual, 1 month monthly) | savings only from dates that can be reached | Rashed (delegated) | handoff; R1-measures.md |
+| 21.11. 11:40 | Log retention 365 → 90 days (M6); db-audit and backups (T-1039) untouched | logs are not backups | Rashed (delegated) | handoff |
+| 21.11. 11:40 | AI model CO2 (M9, C1): token-split factors weighted by input **and** output tokens per row, as `pipeline.py` computes energy | ai-marketing is 3.77 bn input vs 0.22 bn output tokens; output-only overstated the saving | Rashed (delegated) | handoff; #26 review |
 | 21.11. 10:10 | Keep M5 (dp-prod resized in idle hours) in the package; its sign-off goes on the needs-a-human list | without it cost −22.2 %, CO2 −36.1 % | Rashed | chat |
 | 21.11. 10:10 | T-1261 (24 nodes from Oct 2026): sentence + up-to-+20 % range on the Next year page; baseline unchanged | case asks for the baseline year; jury recalculates on it | Rashed | chat |
 | 21.11. 10:10 | C1 decided after Vinzenz's idle-power factors (≈ 11:00) | margin on high factors is zero | Rashed | chat |

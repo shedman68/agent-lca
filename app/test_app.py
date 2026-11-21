@@ -173,8 +173,13 @@ class PageTests(unittest.TestCase):
         page = reset.click().run()
         self.assertFalse(page.exception, page.exception)
         shown = " ".join(m.value for m in page.markdown)
-        self.assertIn("2,614 kg", shown)
-        self.assertNotIn("1,393 kg", shown)
+        import pandas as pd
+
+        summary = pd.read_csv(ROOT / "measures" / "package_summary.csv", index_col=0)["value"]
+        m1 = pd.read_csv(ROOT / "measures" / "measures.csv").set_index("measure_id").loc["M1", "savings_co2_kg_location_based"]
+        full = float(summary["co2_mid"])
+        self.assertIn(f"{full:,.0f} kg", shown)  # chosen package, from the summary file
+        self.assertNotIn(f"{full - m1:,.0f} kg", shown)  # package without M1
         saved = page.session_state.get("pkg_ids")
         self.assertTrue(saved is None or "M1" in saved)
 

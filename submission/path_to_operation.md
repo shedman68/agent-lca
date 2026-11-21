@@ -2,7 +2,7 @@
 
 Status: draft, Sat 21 Nov 02:30. Required by the case page. To be finalised by Rashed (R8).
 
-**Who runs it:** the IT manager of the SME, half a day per month. No specialist needed: the tool runs on a laptop from the exports the
+**Who runs it:** the IT manager of the SME, about half a day per month (assumption, not measured). No specialist needed: the tool runs on a laptop from the exports the
 providers already offer (cloud invoices, AI gateway, licence lists, tickets).
 
 **Monthly routine**
@@ -19,6 +19,6 @@ test environment with automatic start before training windows; weeks 7–12 prod
 SaaS seats at each notice date.
 
 **Keeping it honest:** every factor has a source, a range and a date; they are reviewed once a year. Results are shown as low / mid / high.
-The tool reports its own energy use.
+Planned (V6, not built yet): the tool reports its own energy use.
 
 **For other Basel SMEs:** the same folder structure and factor file work for any SME; only the export mapping changes.
