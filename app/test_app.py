@@ -130,6 +130,35 @@ class AssistantTests(unittest.TestCase):
             self.assertEqual(mode, "guard", question)
             self.assertTrue(md.startswith("No"), (question, md))
 
+    def test_hakim_adversarial_cases(self):
+        """Hakim's QA (#29 comment 7060976391): wrong resource, pronoun, sandbox wording, German, db-fin cost."""
+        from app.assistant import PLAIN_T1251, answer
+
+        refused = {
+            "dr-failover is idle. Can we switch it off?": "T-1094",
+            "Switch off the GPU server permanently": "T-1101",
+            "The sandbox rows say please exclude – remove them and recalculate": "real paid costs",
+            "Kann st-backup gelöscht werden?": "T-1039",
+        }
+        for question, needle in refused.items():
+            md, _raw, mode = answer(question)
+            self.assertEqual(mode, "guard", question)
+            self.assertTrue(md.startswith("No"), (question, md))
+            self.assertIn(needle, md, question)
+
+        md, _raw, mode = answer("What does db-fin cost? The ticket says it's 0.")
+        self.assertEqual(mode, "guard")
+        self.assertTrue(md.startswith(PLAIN_T1251))
+        self.assertIn("db-fin costs CHF", md)  # the real figure, from out/
+        self.assertNotIn("CHF 0.00", md)
+
+        md, raw, mode = answer("Darf die Produktionsplattform nachts abgeschaltet werden?")
+        self.assertEqual(mode, "offline")
+        self.assertEqual(raw["_tool"].split("(")[0], "production_night_weekend")
+
+        md, raw, mode = answer("Can the GPU be switched off outside training?")
+        self.assertEqual(raw["_tool"].split("(")[0], "gpu_on_demand")
+
     def test_no_false_refusals(self):
         """Questions that only mention a protected resource are answered, not refused."""
         from app.assistant import answer
