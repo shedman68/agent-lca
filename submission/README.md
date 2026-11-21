@@ -1,5 +1,7 @@
 # What to upload at 15:00
 
+Data citation for every table and screen: «Sample data ALTYCA, sprintd Basel 2026».
+
 Upload four things. Numbers in the tables come from `out/` and from `measures/measures.csv`. The app does not need a network once the packages below are installed.
 
 1. **The app, run offline.** Copy the repo (or at least `app/`, `out/`, `measures/`, `factors/`, `analysis/kb/`, `docs/`, `data/` and `requirements.txt`). From the repo root:
