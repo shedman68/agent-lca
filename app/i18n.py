@@ -120,6 +120,12 @@ DE: dict[str, str] = {
     "Nothing on this page is added to the package.": "Nichts auf dieser Seite wird zum Paket addiert.",
     "From ": "Aus ",
     "Our own AI use": "Unsere eigene KI-Nutzung",
+    "CO2 saved": "CO2 eingespart",
+    "Cost saved": "Kosten eingespart",
+    "Energy saved, mid": "Energie eingespart, mittel",
+    "Effort": "Aufwand",
+    "Energy saved uses the mid factor only (the measure file stores one energy column).":
+        "Energieeinsparung nur mit mittlerem Faktor (die Massnahmendatei speichert eine Energiespalte).",
     "Our AI use during the sprint": "Unsere KI-Nutzung im Sprint",
     "location-based CO2, mid factors": "standortbasiertes CO2, mittlere Faktoren",
     "Counted so far:": "Bisher gezählt:",

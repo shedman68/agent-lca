@@ -76,7 +76,7 @@ def ranked_bars(df: pd.DataFrame, label: str = "label", value: str = "cost_chf",
     p = pal()
     d = df.copy()
     d["_chf"] = d[value].map(lambda v: _amount_text(float(v), unit))
-    d["_share"] = d["share"].map(lambda v: f"{v:.1%}") if "share" in d else ""
+    d["_share"] = d["share"].map(lambda v: f"{v * 100:.1f} %") if "share" in d else ""
     if highlight:
         d["_hl"] = d[label].isin(highlight)
         color = alt.condition("datum._hl", alt.value(p["accent"]), alt.value(p["other"]))
@@ -85,7 +85,7 @@ def ranked_bars(df: pd.DataFrame, label: str = "label", value: str = "cost_chf",
     tips = [alt.Tooltip(f"{label}:N", title="Group"), alt.Tooltip("_chf:N", title=unit), alt.Tooltip("_share:N", title="Share")]
     tips += tooltip_extra or []
     order = list(d[label])
-    base = alt.Chart(d).encode(y=alt.Y(f"{label}:N", sort=order, title=None, axis=alt.Axis(labelLimit=320, domain=False, ticks=False, labelPadding=8, labelColor=PALETTE[mode()]["ink2"], labelFontSize=16)))
+    base = alt.Chart(d).encode(y=alt.Y(f"{label}:N", sort=order, title=None, axis=alt.Axis(labelLimit=420, domain=False, ticks=False, labelPadding=10, labelColor=PALETTE[mode()]["ink2"], labelFontSize=16)))
     axis = chf_axis(axis_title or ("CHF per year" if unit == "CHF" else f"{unit} per year"))
     # Room right of the longest bar so its value label is never clipped.
     xmax = float(d[value].max()) if len(d) else 0.0
