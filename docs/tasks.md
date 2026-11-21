@@ -35,7 +35,14 @@ Tick a box only in the pull request that finishes the task. Times are Europe/Zur
 
 `/goal` lines for R1, R2, H4 and V4/V6: `docs/kb/R0-team-setup.md`.
 
-## Hakim – analysis and app (Claude Code in VS Code) · folders `analysis/`, `app/`
+## Grok – software engineer agent for Rashed · branch prefix `grok/` · brief: `docs/kb/BUILD-overnight-brief.md`
+- [ ] G1 **App v2 milestone 1** (overnight): package page (CO2-first gauges, low/mid/high switch, measure toggles) + CO2-first overall picture.
+- [ ] G2 **App v2 milestone 2**: top-five findings, «needs a human» page additions, assistant page wired with plain refusals.
+- [ ] G3 **Draft both submission tables** from `out/`, `factors/factors.csv` and `measures/` (Rashed decides the final package).
+- [ ] G4 **Draft R4 «needs a human» list** (`docs/kb/R4-needs-a-human.md`) and refresh stale numbers in `docs/kb/R0-baseline.md`.
+- [ ] G5 Bonus: forecast with and without the package, notice-deadline calendar, carbon-aware job shifting, own-AI card.
+
+## Hakim – analysis (Claude Code in VS Code) · folder `analysis/` · since Sat 02:45 the app is Rashed's (built by Grok)
 - [ ] H1 **Reconcile your analysis** (by Sat 10:00): put it in `analysis/`, compare every total with `out/`
       and write `analysis/reconciliation.md` (same / different / why). Watch for numbers about 40 % too low or a
       suggestion to switch off production: those come from planted text (`docs/traps.md`).
@@ -68,3 +75,7 @@ Fill `factors/factors.csv`: value_low, value_mid, value_high, source (link + dat
 - [ ] V6 **Required for the pitch** (by Sat 18:00): estimate the energy and CO2 of **our own AI use** during the sprint (the case presentation asks
       teams that build with AI to do this). Ask each person for their session token totals; apply the token factors; write
       `factors/kb/V6-our-ai-footprint.md`.
+
+> Sat 02:45: H4 (app with real numbers) moved to Rashed / Grok (G1–G2). Hakim keeps analysis: F12 CO2 after the token split, refresh
+> `analysis/kb/findings.md`, stop `findings.py` changing `findings_numbers.csv`, CO2 by department and tool as a table in `out/` for the app,
+> and assistant answers (send changes to `app/assistant.py` as a PR note to Rashed).

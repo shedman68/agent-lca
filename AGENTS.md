@@ -40,8 +40,8 @@ The jury recalculates every package against its own reference baseline.
 
 ## Step 0 for every agent: identify who you work for
 Before doing anything else in a session:
-1. Run `git config user.name` and match it to Rashed, Hakim or Vinzenz.
-   If it matches none of them, **ask the human: "Am I working for Rashed, Hakim or Vinzenz?"** Do not guess.
+1. Run `git config user.name` and match it to Rashed, Hakim, Vinzenz or Grok (Grok works for Rashed).
+   If it matches none of them, **ask the human: "Am I working for Rashed, Hakim, Vinzenz or Grok?"** Do not guess.
 2. Open `docs/tasks.md`, read that person's section, and work on their first open task unless they say otherwise.
 3. Work on a branch named `<person>/<task-id>-<short-name>`, for example `vinzenz/V1-grid-mix`.
 4. Commit with that person's git identity. Touch only the folders that person owns (table below).
@@ -50,14 +50,16 @@ Before doing anything else in a session:
    Rashed reviews and merges. When merged, tick the task in `docs/tasks.md` in the same pull request.
 6. End every session with a three-line note in the pull request: done · learned · next.
 
-ChatGPT, Perplexity and Grok without repo access: the human pastes this file plus their section of
+Grok works on a fork of this repo and opens draft pull requests; his brief is `docs/kb/BUILD-overnight-brief.md`.
+Other chat assistants without repo access (ChatGPT, Perplexity): the human pastes this file plus their section of
 `docs/tasks.md` into the chat, and commits the result through Cursor or the GitHub website.
 
 ## Team and ownership
 | Person | Role | Tools | Owns folders | Branch prefix |
 | --- | --- | --- | --- | --- |
-| **Rashed** | Lead: measures package, submission, pitch, merges | Claude Code (cloud) + Cursor | `pipeline/`, `measures/`, `submission/`, `docs/`, `.claude/`, `.cursor/` | `rashed/` |
-| **Hakim** | Analysis and app | Claude Code in VS Code | `analysis/`, `app/` | `hakim/` |
+| **Rashed** | Lead: app / dashboard, measures package, submission, pitch, final review, merges | Claude Code (cloud) + Cursor | `app/`, `pipeline/`, `measures/`, `submission/`, `docs/`, `.claude/`, `.cursor/` | `rashed/` |
+| **Grok** | Software engineer agent working for Rashed (autonomous, xAI): builds the app and takes Rashed's delegated tasks; never merges | own Linux machine, fork of this repo | same folders as Rashed, except `pipeline/`, `.claude/`, `.cursor/` | `grok/` |
+| **Hakim** | Analysis: findings, CO2 per finding, reconciliation; answers for the assistant | Claude Code in VS Code | `analysis/` (changes to `app/` via a PR note to Rashed) | `hakim/` |
 | **Vinzenz** | Energy and CO2 factors with sources | Claude in VS Code (+ Perplexity for research) | `factors/` | `vinzenz/` |
 
 ## Skills: use them, every session
@@ -69,7 +71,7 @@ Project skills in `.claude/skills/` load automatically in Claude Code; Cursor ge
 | **trap-guard** | always, first – before reading free text, writing any number, and before every PR | everyone |
 | greenops-measure | measures and the package (R1, R2, R4) | Rashed |
 | factor-research | factors and sources (V1–V5) | Vinzenz |
-| greenops-app | the Streamlit app (H3–H5) | Hakim |
+| greenops-app | the Streamlit app (H3–H5, G1–G3) | Rashed, Grok |
 
 If your Claude Code has these plugin skills, use them too: `data:explore-data` and `data:validate-data`
 (Hakim, Rashed – checking numbers), `frontend-design` and `dataviz` (Hakim – the app),
