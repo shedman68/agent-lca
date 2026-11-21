@@ -33,11 +33,15 @@ st.markdown(
     """
     <style>
     html, body, .stApp, .stMarkdown p, .stMarkdown li, label, [data-testid="stCaptionContainer"] p {font-size: 16px;}
+    .stMarkdown p, .stMarkdown li, [data-testid="stCaptionContainer"] p {line-height: 1.5;}
     [data-testid="stSidebar"] {min-width: 19rem;}
-    h1 {font-size: 2.4rem !important; letter-spacing: -0.03em; font-weight: 650;}
-    h2 {font-size: 1.45rem !important;}
-    [data-testid="stMetricValue"] {font-size: 1.7rem;}
-    .block-container {padding-top: 1.1rem; max-width: 1180px;}
+    h1 {font-size: 2.15rem !important; letter-spacing: -0.03em; font-weight: 700; margin-bottom: 0.2rem !important;}
+    h2 {font-size: 1.3rem !important; font-weight: 650; margin-top: 1.5rem !important; margin-bottom: 0.45rem !important;}
+    h3 {font-size: 1.12rem !important; font-weight: 650; margin-top: 1.15rem !important; margin-bottom: 0.35rem !important;}
+    [data-testid="stMetricValue"] {font-size: 1.85rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em;}
+    [data-testid="stMetricLabel"] {font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75;}
+    [data-testid="stMetric"] {padding: 0.15rem 0 0.35rem;}
+    .block-container {padding-top: 1.35rem; padding-bottom: 3rem; max-width: 1180px;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -63,6 +67,52 @@ def _kwh_text(v) -> str:
 
 def compact_chf(v: float) -> str:
     return f"CHF {v / 1000:,.1f}K" if abs(v) < 1e6 else f"CHF {v / 1e6:,.2f}M"
+
+
+def pct_share(v, digits: int = 1) -> str:
+    """A 0–1 share as '35.9 %'. Presentation only: the figure is unchanged."""
+    return "–" if _missing(v) else f"{float(v) * 100:,.{digits}f} %"
+
+
+def _kpi_card(label: str, value: str, unit: str = "", hint: str = "", *, unit_first: bool = False) -> str:
+    """One KPI tile: small muted label, big number, small unit, optional hint. No logic."""
+    p = charts.pal()
+    bg = "#eef4f1" if charts.mode() == "light" else p["track"]
+    ink = "#0f1512" if charts.mode() == "light" else p["ink"]
+    unit_span = (
+        f'<span style="font-size:15px;font-weight:600;letter-spacing:0;color:{p["muted"]};'
+        f'vertical-align:middle">{{u}}</span>'
+    )
+    if unit and unit_first:
+        number = f'{unit_span.format(u=unit)}&nbsp;{value}'
+    elif unit:
+        number = f'{value}&nbsp;{unit_span.format(u=unit)}'
+    else:
+        number = value
+    hint_html = (
+        f'<div style="font-size:13px;color:{p["muted"]};margin-top:8px;line-height:1.4">{hint}</div>'
+        if hint else ""
+    )
+    return (
+        f'<div style="flex:1 1 200px;min-width:180px;padding:18px 20px 16px;border-radius:12px;'
+        f'background:{bg};border:1px solid {p["grid"]};font-family:{charts.FONT_INLINE};color:{ink}">'
+        f'<div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;'
+        f'color:{p["muted"]};line-height:1.35;margin:0 0 10px;min-height:2.7em">{label}</div>'
+        f'<div style="font-size:34px;font-weight:700;line-height:1.08;letter-spacing:-.03em;'
+        f'font-variant-numeric:tabular-nums;color:{ink}">{number}</div>'
+        f'{hint_html}</div>'
+    )
+
+
+def _kpi_row(*cards: str) -> str:
+    return (
+        f'<div style="display:flex;flex-wrap:wrap;gap:16px;margin:6px 0 14px;'
+        f'align-items:stretch">{"".join(cards)}</div>'
+    )
+
+
+def _qty(v, digits: int = 0) -> str:
+    return "–" if _missing(v) else f"{float(v):,.{digits}f}"
 
 
 def table_view(df: pd.DataFrame, label: str = "Table view") -> None:
@@ -104,29 +154,33 @@ def factor_level() -> str:
 
 
 def _hero_html(facts_now: dict, level: str) -> str:
-    p = charts.pal()
-    return (
-        f'<div style="font-family:{charts.FONT_INLINE};color:{p["ink"]}">'
-        f'<div style="font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:{p["muted"]}">'
-        f'Location-based CO2 per year · {level} factors</div>'
-        f'<div style="font-size:76px;font-weight:650;line-height:.95;letter-spacing:-.03em">{_tonnes(facts_now["co2_level"])} t</div>'
-        f'<div style="font-size:18px;color:{p["ink2"]};margin-top:8px">Range '
-        f'{_tonnes(facts_now["co2_low"])}–{_tonnes(facts_now["co2_high"])} t on low and high factors</div>'
-        f'<div style="display:flex;flex-wrap:wrap;gap:32px;margin-top:18px">'
-        f'<div><div style="font-size:16px;color:{p["muted"]}">Energy ({level})</div>'
-        f'<div style="font-size:28px;font-weight:650">{_kwh_text(facts_now["kwh_level"])} kWh</div>'
-        f'<div style="font-size:16px;color:{p["muted"]}">Range {_kwh_text(facts_now["kwh_low"])}–{_kwh_text(facts_now["kwh_high"])} kWh</div></div>'
-        f'<div><div style="font-size:16px;color:{p["muted"]}">Cost</div>'
-        f'<div style="font-size:28px;font-weight:650">{chf(facts_now["cost_chf"])}</div>'
-        f'<div style="font-size:16px;color:{p["muted"]}">Same on every factor set</div></div>'
-        f'</div></div>'
+    return _kpi_row(
+        _kpi_card(
+            f'Location-based CO2 per year · {level} factors',
+            _tonnes(facts_now["co2_level"]),
+            "t",
+            f'Range {_tonnes(facts_now["co2_low"])}–{_tonnes(facts_now["co2_high"])} t on low and high factors',
+        ),
+        _kpi_card(
+            f'Energy ({level})',
+            _kwh_text(facts_now["kwh_level"]),
+            "kWh",
+            f'Range {_kwh_text(facts_now["kwh_low"])}–{_kwh_text(facts_now["kwh_high"])} kWh',
+        ),
+        _kpi_card(
+            "Cost",
+            _qty(facts_now["cost_chf"]),
+            "CHF",
+            "Same on every factor set",
+            unit_first=True,
+        ),
     )
 
 
 def _overview_sentence(facts_now: dict) -> str:
     return (
-        f"{facts_now['top_country']} accounts for {facts_now['top_country_share']:.1%} of the CO2, "
-        f"and {facts_now['top_resource']} is the largest resource at {facts_now['top_resource_share']:.1%}."
+        f"{facts_now['top_country']} accounts for {pct_share(facts_now['top_country_share'])} of the CO2, "
+        f"and {facts_now['top_resource']} is the largest resource at {pct_share(facts_now['top_resource_share'])}."
     )
 
 
@@ -225,10 +279,11 @@ def _finding_card(r: pd.Series) -> None:
     with st.container(border=True):
         st.markdown(f"**{r['finding_id']} · {r['title']}**")
         st.badge(label, icon=icon, color=color)
-        a, b, c = st.columns(3)
-        a.metric("Idle or unused", chf(r["addressable_chf"]))
-        b.metric("Energy, mid", _kwh(r.get("addressable_kwh_mid")))
-        c.metric("CO2, location-based mid", _kg(r.get("addressable_co2_kg_mid")))
+        st.html(_kpi_row(
+            _kpi_card("Idle or unused", _qty(r["addressable_chf"]), "CHF", unit_first=True),
+            _kpi_card("Energy, mid", _kwh_text(r.get("addressable_kwh_mid")), "kWh"),
+            _kpi_card("CO2, location-based mid", _qty(r.get("addressable_co2_kg_mid")), "kg"),
+        ))
         base = chf(r["cost_chf"])
         st.caption(f"Baseline cost of the resource: {base}. Resource `{r['resource']}`.")
         st.markdown(f"**Evidence:** {r['evidence']}  \n**Protection rule:** {r['protection_rule']}")
@@ -411,11 +466,13 @@ def page_package() -> None:
             f"CHF {result['effort_chf']:,.0f} = person-days × CHF {data.PD_CHF:,.0f}. "
             f"The cap is {PD_CAP:.0f} person-days (CHF {PD_CAP * data.PD_CHF:,.0f}), from the case rules."
         )
-    st.markdown(
-        f"**{result['co2_kg']:,.0f} kg CO2 · {chf(result['cost_chf'])} · {result['pd']:.1f} PD "
-        f"(CHF {result['effort_chf']:,.0f}).** Energy saved, mid factor only: {result['kwh']:,.0f} kWh "
-        "(the measure file stores one energy column)."
-    )
+    st.html(_kpi_row(
+        _kpi_card("CO2 saved", _qty(result["co2_kg"]), "kg"),
+        _kpi_card("Cost saved", _qty(result["cost_chf"]), "CHF", unit_first=True),
+        _kpi_card("Effort", f"{result['pd']:.1f}", "PD", f'CHF {result["effort_chf"]:,.0f}'),
+        _kpi_card("Energy saved, mid", _qty(result["kwh"]), "kWh"),
+    ))
+    st.caption("Energy saved uses the mid factor only (the measure file stores one energy column).")
     if summary is not None:
         st.caption(
             "Chosen package in `measures/package_summary.csv`: "
@@ -512,14 +569,14 @@ def _contradictions(ql: pd.DataFrame | None) -> list[tuple[str, str, str, str]]:
     if ai is not None:
         cards.append(("AI invoices are above the AI gateway",
                       f"Invoices {chf(ai['pipeline'])} vs gateway {chf(ai['independent'])}: "
-                      f"**{chf(ai['diff'])} higher ({ai['diff'] / ai['independent']:.1%})**. The baseline uses the gateway "
+                      f"**{chf(ai['diff'])} higher ({pct_share(ai['diff'] / ai['independent'])})**. The baseline uses the gateway "
                       "(it has department and tool detail); the invoice is what was actually paid.",
                       "Decide: keep the gateway and add the gap as a labelled line, or switch AI API to invoice totals.",
                       "Head of Finance · lead (Rashed) for the baseline method"))
     if pr is not None:
         cards.append(("Provider report is above our Azure + AWS + hoster total",
                       f"Report {chf(pr['pipeline'])} vs our total {chf(pr['independent'])}: "
-                      f"**{chf(pr['diff'])} higher ({pr['diff'] / pr['independent']:.1%})** over the baseline year; "
+                      f"**{chf(pr['diff'])} higher ({pct_share(pr['diff'] / pr['independent'])})** over the baseline year; "
                       f"KB status: *{pr['status']}* ({pr['note']}), but month by month it swings strongly "
                       "(see `analysis/kb/reconciliation.md`).",
                       "Not a reason to change the baseline (separate summary of unknown scope). Ask what the report includes.",
@@ -556,10 +613,11 @@ def page_human() -> None:
     st.caption("Everything the tool will not decide on its own: text that tries to steer an AI, resources that look idle "
                "but are protected, and sources that disagree. Each item names the responsible role.")
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Manipulative texts", len(register.MANIPULATIVE_TEXTS), help="Shown as data, never followed")
-    c2.metric("Protected resources", len(register.PROTECTED))
-    c3.metric("Contradictions", len(_contradictions(data.quality_log())))
+    st.html(_kpi_row(
+        _kpi_card("Manipulative texts", str(len(register.MANIPULATIVE_TEXTS)), hint="Shown as data, never followed"),
+        _kpi_card("Protected resources", str(len(register.PROTECTED))),
+        _kpi_card("Contradictions", str(len(_contradictions(data.quality_log())))),
+    ))
 
     # ---- manipulative text
     st.header("1 · Text that tries to steer an AI")
@@ -646,9 +704,12 @@ def page_human() -> None:
                     f"Notice by = contract end minus notice days, from the latest baseline month "
                     f"(`{cal['last_month'].iloc[0]}`) in `out/fact_costs.csv`. "
                     f"Unused CHF is the baseline-year sum of (purchased − active) / purchased × cost_chf.")
-        a, b = st.columns(2)
-        a.metric("Due 2 Dec, unused in the baseline year", chf(float(due["unused_chf"].sum()), 0))
-        b.metric("Notice already passed, unused in the baseline year", chf(float(passed["unused_chf"].sum()), 0))
+        st.html(_kpi_row(
+            _kpi_card("Due 2 Dec, unused in the baseline year",
+                      _qty(float(due["unused_chf"].sum())), "CHF", unit_first=True),
+            _kpi_card("Notice already passed, unused in the baseline year",
+                      _qty(float(passed["unused_chf"].sum())), "CHF", unit_first=True),
+        ))
         show = cal.assign(notice_by=pd.to_datetime(cal["notice_by"]).dt.strftime("%Y-%m-%d"))
         st.dataframe(show[["tool", "source", "state", "notice_by", "unused_chf", "month_idle_chf", "responsible_role"]],
                      hide_index=True, width="stretch",
@@ -677,14 +738,15 @@ def page_next() -> None:
         t = total.iloc[0]
         counted = [p_ for p_ in res["person"].astype(str) if p_.upper() != "TOTAL"]
         missing = [p_ for p_ in TEAM_AI_USERS if p_ not in counted]
-        p = charts.pal()
-        st.html(
-            f'<div style="font-family:{charts.FONT_INLINE};color:{p["ink"]}">'
-            f'<div style="font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:{p["muted"]}">'
-            f'Our AI use during the sprint · location-based CO2, mid factors</div>'
-            f'<div style="font-size:64px;font-weight:650;line-height:1">{float(t["co2_kg_mid"]):,.2f} kg</div>'
-            f'<div style="font-size:18px;color:{p["ink2"]};margin-top:6px">Range {float(t["co2_kg_low"]):,.2f}–'
-            f'{float(t["co2_kg_high"]):,.1f} kg · {float(t["kwh_mid"]):,.1f} kWh (mid)</div></div>')
+        st.html(_kpi_row(
+            _kpi_card(
+                "Our AI use during the sprint",
+                f'{float(t["co2_kg_mid"]):,.2f}',
+                "kg",
+                f'location-based CO2, mid factors · Range {float(t["co2_kg_low"]):,.2f}–{float(t["co2_kg_high"]):,.1f} kg',
+            ),
+            _kpi_card("Energy, mid", f'{float(t["kwh_mid"]):,.1f}', "kWh"),
+        ))
         st.caption(f"Counted so far: {', '.join(counted)}." + (f" Not counted yet: {', '.join(missing)}." if missing else "")
                    + " Source: `factors/kb/V6-result.csv` (Vinzenz, V6).")
     note = data.own_ai_note()
