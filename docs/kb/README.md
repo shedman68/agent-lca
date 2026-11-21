@@ -28,3 +28,4 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | handoff-vscode-to-cloud.md | Handoff VS Code → cloud: R1 decisions, review findings #26/#29, next steps | final |
 
 Other knowledge bases: [analysis/kb](../../analysis/kb/README.md) (Hakim) · [factors/kb](../../factors/kb/README.md) (Vinzenz).
+| [R9-plan.md](R9-plan.md) | R9 plan: app v2, one user story for the pitch (five pages, story mode) | in progress |

@@ -6,9 +6,23 @@ CSS variables and fall back to ALTYCA's colours if a variable is missing.
 """
 from __future__ import annotations
 
+import html as _html
+
 import streamlit as st
 
+import i18n
+
 STORY_KEY = "story_mode"
+
+
+def _raw(markup: str) -> None:
+    """st.html without the German phrase table: cards mix our labels with text from the data files."""
+    getattr(st, "_raw_html", st.html)(markup)
+
+
+def esc(text) -> str:
+    """Text from the data (descriptions, roles, titles) is escaped and never translated."""
+    return _html.escape(str(text))
 
 CSS = """<style>
 .gx-eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--teal-ink,#00cc99);margin:0 0 10px;}
@@ -60,16 +74,16 @@ def hero(eyebrow: str, line: str, sub: str = "") -> None:
     """One summary line in big type. The line may wrap a phrase in <em> for the accent colour."""
     sub_html = f'<p class="gx-sub">{sub}</p>' if sub else ""
     eye = f'<p class="gx-eyebrow">{eyebrow}</p>' if eyebrow else ""
-    st.html(f'<div>{eye}<p class="gx-hero">{line}</p>{sub_html}</div>')
+    _raw(f'<div>{eye}<p class="gx-hero">{i18n.tr(line, label=False)}</p>{i18n.tr(sub_html, label=False)}</div>')
 
 
 def explain(term: str, text: str) -> None:
     """First time an idea appears: one plain sentence, so the page makes sense without a voice-over."""
-    st.html(f'<p class="gx-explain"><b>{term}</b> {text}</p>')
+    _raw(f'<p class="gx-explain"><b>{i18n.tr(term)}</b> {i18n.tr(text, label=False)}</p>')
 
 
 def bridge(text: str) -> None:
-    st.html(f'<p class="gx-bridge">{text}</p>')
+    _raw(f'<p class="gx-bridge">{i18n.tr(text, label=False)}</p>')
 
 
 def kpis(items: list[tuple[str, str, str]], good: set[int] | None = None) -> None:
@@ -77,12 +91,17 @@ def kpis(items: list[tuple[str, str, str]], good: set[int] | None = None) -> Non
     good = good or set()
     cells = "".join(
         f'<div class="gx-kpi{" good" if i in good else ""}"><div class="v">{v}<span class="u">{u}</span></div>'
-        f'<div class="l">{lbl}</div></div>' for i, (v, u, lbl) in enumerate(items))
-    st.html(f'<div class="gx-kpis">{cells}</div>')
+        f'<div class="l">{i18n.tr(lbl)}</div></div>' for i, (v, u, lbl) in enumerate(items))
+    _raw(f'<div class="gx-kpis">{cells}</div>')
 
 
 def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str = "", kind: str = "",
-         kicker: str = "") -> str:
+         kicker: str = "", data_title: bool = False, data_body: bool = False) -> str:
+    """Our own title, body, unit and kicker are translated here. Text from the data files is escaped and kept
+    as stored: set data_title / data_body, and pass meta already built (data parts through esc())."""
+    title = esc(title) if data_title else i18n.tr(title)
+    body = esc(body) if data_body else i18n.tr(body, label=False)
+    unit, kicker = i18n.tr(unit), i18n.tr(kicker)
     k = f'<p class="k">{kicker}</p>' if kicker else ""
     n = f'<div class="n">{number}<span>{unit}</span></div>' if number else ""
     m = f'<div class="meta">{meta}</div>' if meta else ""
@@ -91,11 +110,11 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
 
 
 def grid(cards: list[str]) -> None:
-    st.html(f'<div class="gx-grid">{"".join(cards)}</div>')
+    _raw(f'<div class="gx-grid">{"".join(cards)}</div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:
     pct = int(round(100 * step / total))
-    st.html(f'<div class="gx-story" role="progressbar" aria-valuenow="{step}" aria-valuemin="0" aria-valuemax="{total}" '
+    _raw(f'<div class="gx-story" role="progressbar" aria-valuenow="{step}" aria-valuemin="0" aria-valuemax="{total}" '
             f'aria-label="Story progress"><span class="s">Step {step} of {total}</span>'
             f'<div class="bar"><i style="width:{pct}%"></i></div><span class="s">{label}</span></div>')

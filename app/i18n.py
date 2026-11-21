@@ -174,6 +174,7 @@ DE: dict[str, str] = {
     "Who it is for": "Für wen",
     "The story in four steps": "Die Geschichte in vier Schritten",
     "What the plan does": "Was der Plan tut",
+    "Owner": "Verantwortlich",
     "· cost −": "· Kosten −",
     "` from `pipeline": "` aus `pipeline",
 }
@@ -186,7 +187,7 @@ LABEL_ONLY = {" of ", "All ", "Cost", "From ", "Range ", "target ", "Resource ",
               "Effort", "CO2 per year", "CO2 saved", "Cost saved", "Energy saved, mid",
               # R9: short page names, translated only where they are our labels
               "Where you stand", "Your plan", "Stay on track", "Behind the numbers", "Without the plan",
-              "With the plan", "Who it is for", "Story mode", "What the plan does"}
+              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner"}
 _ORDER = sorted(DE, key=len, reverse=True)
 _ORDER_SAFE = [p_ for p_ in _ORDER if p_ not in LABEL_ONLY]
 
@@ -219,6 +220,7 @@ def install(module=st) -> None:
     """Wrap the text functions once per process. In English mode the wrappers change nothing."""
     if getattr(module, "_i18n_installed", False):
         return
+    module._raw_html = module.html  # R9: ui.py renders cards that carry data text through this, untranslated
 
     def make(fn, label: bool):
         @functools.wraps(fn)

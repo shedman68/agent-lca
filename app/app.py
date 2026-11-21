@@ -634,10 +634,14 @@ def page_package(embedded: bool = False, middle=None) -> None:
         if set(new_ids) != selected_ids:
             st.session_state["pkg_ids"] = new_ids
             st.rerun()
-        with st.expander("Protection rule, change and the calculation on each row"):
-            detail = view.loc[view["measure_id"].astype(str).isin(selected_ids),
-                              ["measure_id", "change", "protection", "risks_and_exceptions", "assumptions_and_sources"]]
-            st.dataframe(detail, hide_index=True, width="stretch")
+        # Embedded, this sits inside an expander already; a switch avoids nesting expanders (Streamlit < 1.46).
+        show_rules = st.toggle("Show protection rule, change and calculation per row", key="pkg_rule_rows") \
+            if embedded else True
+        if show_rules:
+            with (nullcontext() if embedded else st.expander("Protection rule, change and the calculation on each row")):
+                detail = view.loc[view["measure_id"].astype(str).isin(selected_ids),
+                                  ["measure_id", "change", "protection", "risks_and_exceptions", "assumptions_and_sources"]]
+                st.dataframe(detail, hide_index=True, width="stretch")
 
 
 # =============================================================================== 4 Needs a human
@@ -968,8 +972,8 @@ def page_about() -> None:
                "data centres in Zurich, Frankfurt and Dublin. The decisions are made in Basel.")
     if s is not None:
         ui.kpis([
-            (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 per year, mid factors"),
-            (format_num.signed_pct(s["chf_pct"]), "", f"Cost per year · CHF {float(s['chf']):,.0f}"),
+            (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 cut per year, mid factors"),
+            (format_num.signed_pct(s["chf_pct"]), "", f"Cost saved per year · CHF {float(s['chf']):,.0f}"),
             (f"{float(s['effort_pd']):.1f}", f"of {PD_CAP:.0f} person-days", f"To implement · CHF {float(s['effort_chf']):,.0f}"),
         ], good={0})
     ui.explain("CO2, location-based:", "counted with the power mix of the country where the data centre stands, "
@@ -979,7 +983,7 @@ def page_about() -> None:
     st.markdown("**Nothing critical is switched off.** Production, backups and the emergency fallback stay on.")
     st.subheader("Who it is for")
     ui.grid([
-        ui.card("IT managers", "Load the exports you already have. Get one picture in minutes, not weeks."),
+        ui.card("IT managers", "Load the exports you already have. Get one picture from one pipeline run."),
         ui.card("Management", "A plan with targets, budget and a named owner for every step."),
         ui.card("Finance", "Francs on top: licences and contracts, with the notice dates that matter."),
     ])
@@ -996,7 +1000,7 @@ def page_about() -> None:
             st.html(ui.card(name, text, kicker=f"Step {step}"))
             st.page_link(PAGES[STORY[step][0]], label=f"Open: {name}", icon=":material/arrow_forward:")
     st.html('<div class="gx-foot"><b>Built for ALTYCA × Basel 2037: scale to every Basel SME.</b><br>'
-            "ALTYCA delivers it to its SME clients on Fabric and Databricks. Basel 2037 uses it as the standard method "
+            "ALTYCA could deliver it to its SME clients on Fabric and Databricks. Basel 2037 could use it as the standard method "
             "for advising and funding SMEs. Next: GreenOps agents that run the plan with human approval.<br>"
             "Team: Rashed · Hakim · Vinzenz, with AI agents (Claude, Grok). " + CITE + ".</div>")
     _story_nav(0)
@@ -1028,10 +1032,12 @@ def page_stand() -> None:
         pkg_kg = float(pd.to_numeric(rows["savings_co2_kg_location_based"], errors="coerce").fillna(0).sum())
         pkg_chf = float(pd.to_numeric(rows["savings_cost_chf_per_year"], errors="coerce").fillna(0).sum())
         f, _src = data.findings_ranked()
-        f1 = f[f["finding_id"].astype(str).eq("F1")].iloc[0]["title"] if f is not None and (f["finding_id"] == "F1").any() else ""
+        dev = f[f["resource"].astype(str).eq("dp-dev")] if f is not None else None
+        f1 = dev.iloc[0]["title"] if dev is not None and not dev.empty else ""
         ui.grid([
             ui.card("Development cluster, around the clock", str(f1), _qty(hs["dev"]["kg"]), "kg CO2 a year",
-                       f"CHF {hs['dev']['chf']:,.0f} a year · pause when idle", kind="accent", kicker="Hotspot 1"),
+                       f"CHF {hs['dev']['chf']:,.0f} a year · pause when idle, starts itself before training days", kind="accent",
+                       kicker="Hotspot 1", data_body=True),
             ui.card("Production platform at full size all week", "Fewer machines in quiet hours. Never switched off.",
                        _qty(hs["prod"]["kg"]), "kg CO2 a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
                        kicker="Hotspot 2"),
@@ -1061,12 +1067,14 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
     cards = []
     for _, r in selected.iterrows():
         kg = r.get(col)
+        has_kg = not _missing(kg) and float(kg)
+        chf_part = f"CHF {float(r['savings_cost_chf_per_year']):,.0f} a year · " if has_kg else ""
         cards.append(ui.card(
             str(r["description"]), "",
-            _qty(kg) if not _missing(kg) and float(kg) else f"{float(r['savings_cost_chf_per_year']):,.0f}",
-            "kg CO2 a year" if not _missing(kg) and float(kg) else "CHF a year",
-            f"CHF {float(r['savings_cost_chf_per_year']):,.0f} a year · {float(r['effort_person_days']):.1f} days · "
-            f"Owner: {r['responsible_role']}", kicker=str(r["measure_id"])))
+            _qty(kg) if has_kg else f"{float(r['savings_cost_chf_per_year']):,.0f}",
+            "kg CO2 a year" if has_kg else "CHF a year",
+            f"{chf_part}{float(r['effort_person_days']):.1f} person-days · {i18n.tr('Owner')}: {ui.esc(r['responsible_role'])}",
+            kicker=str(r["measure_id"]), data_title=True))
     ui.grid(cards)
     ui.grid([ui.card(
         "What we did not touch, and why",
@@ -1106,11 +1114,13 @@ def page_track() -> None:
     e = data.energy_totals()
     s = data.package_summary()
     ui.hero("", "Ask the data. <em>It refuses what it must.</em>",
-               "Offline, every answer backed by a calculation. Try a planted instruction.")
+               "Offline. Every figure in an answer comes from a calculation on the files. Try a planted instruction.")
     ui.explain("Planted instruction:", "text hidden in the data that tries to command an AI. The tool reads it as data "
                "and refuses.")
     examples = assistant.example_questions()
-    questions = [q for q in examples if "production platform" in q.lower() or "gpu" in q.lower()][:2] + [T1251_PROMPT]
+    # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
+    # full addressable figure differs from measure M2 on the previous page (M2 counts 75 % of the energy).
+    questions = [q for q in examples if "production platform" in q.lower() or "seats" in q.lower()][:2] + [T1251_PROMPT]
     with st.container():  # inside a container the chat box sits under the questions, not pinned to the page bottom
         assistant.render_assistant(embedded=True, questions=questions)
     st.subheader("Next year, with and without the plan")
@@ -1123,8 +1133,11 @@ def page_track() -> None:
             ui.card("With the plan", "Same usage, measures in place for a full year.", _tonnes(with_kg), "t CO2",
                        f"CHF {with_chf:,.0f} a year", kind="accent"),
         ])
-        st.caption("Mid factors. Assumes usage stays as in the baseline year; the production platform's growth to 24 "
-                   "nodes from October 2026 is shown in step 4.")
+        one_off = data.one_off_total()
+        st.caption("Mid factors. Assumes usage stays as in the baseline year; the production platform's growth from "
+                   "October 2026 is shown in step 4."
+                   + (f" The baseline includes CHF {one_off:,.0f} of one-off costs that will not recur "
+                      "(`docs/one_off_costs.csv`)." if one_off else ""))
     st.subheader("Next: GreenOps agents")
     ui.grid([ui.card(n, d, meta=f"Proposes · {a}", kicker="Roadmap · not built yet") for n, d, a in AGENTS_ROADMAP])
     ui.bridge("Next: the evidence behind every number, for your questions.")
@@ -1143,6 +1156,9 @@ def page_behind() -> None:
             text = data.kb_text(rel)
             if text:
                 st.caption(f"`{rel}`")
+                if "V5" in rel:
+                    st.caption("Note: V5's sensitivity figures count idle power in the savings only; the panel on "
+                               "step 2 counts it in baseline and savings alike (Rashed's decision, 21.11.).")
                 st.markdown(text)
     with tabs[1]:
         page_human(embedded=True)
@@ -1166,8 +1182,8 @@ def page_behind() -> None:
     with tabs[6]:
         st.markdown(
             "**One pipeline, two checks.** `pipeline.py` harmonises 28 files (time, currency, names); `findings.py` "
-            "finds the waste; `measures.py` builds the plan. Nothing is shown unless the baseline matches an independent "
-            "recalculation and the trap check passes.\n\n"
+            "finds the waste; `measures.py` builds the plan. The numbers are only accepted when the baseline matches an "
+            "independent recalculation and the trap check passes (checked on every build).\n\n"
             "**Built by a team of three with AI agents** (Claude Code, Grok, Cursor). Their own energy use is counted in "
             "«Next year & our AI energy».")
     _story_nav(4)

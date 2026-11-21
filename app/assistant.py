@@ -575,7 +575,8 @@ def _show(st, md: str, mode: str | None) -> None:
     if mode == "guard":
         import html as _html
         # Pink = refused / needs a human (R9 palette). The word "Refused." carries the meaning, not the colour.
-        st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {_html.escape(md)}</div>', unsafe_allow_html=True)
+        body = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _html.escape(md))  # keep the answer's bold, escape the rest
+        st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body}</div>', unsafe_allow_html=True)
     else:
         st.markdown(md)
 

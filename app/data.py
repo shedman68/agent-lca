@@ -540,3 +540,11 @@ def kb_text(relpath: str) -> str | None:
     """A kb or submission markdown file, as stored (jury answers, path to operation). None if absent."""
     path = ROOT / relpath
     return path.read_text(encoding="utf-8") if path.exists() else None
+
+
+def one_off_total() -> float | None:
+    """Sum of one-off extra costs inside the baseline (docs/one_off_costs.csv: T-1212, T-1189). Never a saving."""
+    frame = _read(ROOT / "docs" / "one_off_costs.csv")
+    if frame is None or "extra_cost_chf" not in frame.columns:
+        return None
+    return float(pd.to_numeric(frame["extra_cost_chf"], errors="coerce").fillna(0).sum())

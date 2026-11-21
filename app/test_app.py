@@ -633,3 +633,23 @@ class StoryTests(unittest.TestCase):
         shown = " ".join(c.value for c in page.caption)
         self.assertIn(f"{co2_share:.0%} of the plan's CO2 cut", shown)
         self.assertIn(f"{chf_share:.0%} of its francs", shown)
+
+
+class UiDataTextTests(unittest.TestCase):
+    """R9 review: German mode must not rewrite data text inside cards ("Head von IT")."""
+
+    def test_card_keeps_data_text_in_german(self):
+        import sys
+        from unittest import mock
+
+        sys.path.insert(0, str(ROOT / "app"))  # same import style as app.py, so ui's i18n is this i18n
+        import i18n
+        import ui
+
+        with mock.patch.object(i18n, "is_de", return_value=True):
+            html = ui.card("Run the GPU server on demand instead of 24/7", "", "325", "kg CO2 a year",
+                           f"1.0 person-days · {i18n.tr('Owner')}: {ui.esc('Head of IT')}", kicker="M2", data_title=True)
+        self.assertIn("Run the GPU server on demand instead of 24/7", html)
+        self.assertIn("Head of IT", html)
+        self.assertIn("Verantwortlich", html)
+        self.assertIn("325", html)

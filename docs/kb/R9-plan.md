@@ -17,10 +17,10 @@
 | not available here | `frontend-design` (not installed in this session) |
 
 ## Checklist (commit per page)
-- [ ] **P0 Theme + shell.** `app/theme.py`: ALTYCA tokens (bg #0d0f12, card #16191e, teal #00cc99 = good/PASS, pink #f84aa7 = refused /
+- [x] **P0 Theme + shell.** `app/theme.py`: ALTYCA tokens (bg #0d0f12, card #16191e, teal #00cc99 = good/PASS, pink #f84aa7 = refused /
   needs a human), light mode for the projector, Manrope (OFL) embedded as woff2 (offline), Streamlit chrome hidden, story bar
-  (progress + Back/Next), five numbered pages in the sidebar. **Done when:** every page renders with the theme offline; old URLs still open.
-- [ ] **P1 About (0).** Pain in one line, promise (CO2, cost, days from `package_summary`), who it serves, five chapter cards that jump,
+  (progress + Back/Next), five numbered pages in the sidebar. **Done when:** every page renders with the theme offline. (Old URLs are not kept; the tests map old page names to the story page that holds them.) From 21:45 Grok owns `app/theme.py`, `.streamlit/config.toml`, the font and the chart palette; page components are in `app/ui.py`.
+- [x] **P1 About (0).** Pain in one line, promise (CO2, cost, days from `package_summary`), who it serves, five chapter cards that jump,
   "Built for ALTYCA × Basel 2037" + team. **Done when:** ≤ 25 words per block; every number from `data.py`.
 - [ ] **P2 Where you stand (1).** "CHF … a year → … t CO2. Three places hold most of what you can save." Three hotspot cards
   (dev cluster, production platform, unused licences) with CHF and kg from `out/findings.csv`; overall picture + all findings in details.
