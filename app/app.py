@@ -614,10 +614,16 @@ def page_next() -> None:
         return
 
     st.header("Production platform, baseline months")
-    st.markdown("**The step to 24 nodes is not calculated.** T-1261 says dp-prod grows from 20 to 24 nodes "
-                "on 1 Oct 2026. That sentence is in `docs/traps.md`. It is not a row in `out/` or `measures/`, "
-                "so this page does not multiply cost, kWh or CO2 by 24/20.")
     months = data.dp_prod_months()
+    st.markdown("**Growth after the baseline year (T-1261):** dp-prod grows from 20 to 24 nodes on 1 Oct 2026. "
+                "The baseline and the package stay on the baseline year, as the case asks. "
+                "If dp-prod ran on 24 nodes for a full year, its cost, energy and CO2 would be up to 20 % higher (24/20).")
+    if months is not None and not months.empty:
+        up = 24 / 20 - 1
+        st.markdown(f"Range for that growth, from `out/`: up to **+CHF {months['cost_chf'].sum() * up:,.0f}**, "
+                    f"**+{months['kwh_mid'].sum() * up:,.0f} kWh** and **+{months['co2_kg_mid'].sum() * up:,.0f} kg CO2** "
+                    "a year (mid factors). The package resizes dp-prod in idle hours (M5), so the same measure covers the extra nodes. "
+                    "Not added to any total.")
     if months is None or months.empty:
         st.info("`out/fact_costs.csv` has no baseline rows for dp-prod.")
     else:
