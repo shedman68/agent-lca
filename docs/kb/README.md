@@ -19,6 +19,7 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | R1-measures.md | R1 measures calculator | open |
 | R2-package.md | R2 chosen package vs target and budget | open |
 | [R4-needs-a-human.md](R4-needs-a-human.md) | R4 needs-a-human list: protection windows, planted text, contradictions, one-offs | draft |
+| [R6-demo-script.md](R6-demo-script.md) | R6 five-minute click script (overall picture, one finding, package, refused edge, own AI) | draft |
 | R6-pitch.md | R6 pitch script | open |
 | handoff-vscode-to-cloud.md | Handoff VS Code → cloud: R1 decisions, review findings #26/#29, next steps | final |
 
