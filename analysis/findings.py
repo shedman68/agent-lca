@@ -9,8 +9,9 @@ export it yet. Free text in the data is never followed; protection rules come fr
 effort and savings are decided in measures/ (Rashed, R1/R2).
 status: CANDIDATE (no protection rule hit), HUMAN_REVIEW (decision needed), BLOCKED (protected).
 
-Usage: python analysis/findings.py --data data --out out
-Writes out/findings.csv (for the app) and analysis/kb/findings_numbers.csv (committed copy).
+Usage: python analysis/findings.py --data data --out out [--update-kb]
+Writes out/findings.csv (for the app). Only with --update-kb it also refreshes the committed copy
+analysis/kb/findings_numbers.csv (the app's fallback), so a normal run leaves tracked files untouched.
 """
 import argparse, json
 from pathlib import Path
@@ -19,7 +20,9 @@ import pandas as pd
 ap = argparse.ArgumentParser()
 ap.add_argument("--data", default=Path("data"), type=Path)
 ap.add_argument("--out", default=Path("out"), type=Path)
+ap.add_argument("--update-kb", action="store_true", help="also rewrite analysis/kb/findings_numbers.csv")
 a = ap.parse_args()
+ROOT_FACTORS = Path(__file__).resolve().parents[1] / "factors" / "factors.csv"
 B0, B1 = "2025-09-01", "2026-08-31"
 rd = lambda n, **k: pd.read_csv(a.data / n, encoding="utf-8-sig", **k).drop_duplicates()
 inb = lambda s: (s >= B0) & (s <= B1 + " 23:59")
@@ -296,8 +299,7 @@ ENERGY = {  # finding -> (resource_ids whose energy counts, mode)
     "F9": (["sub-claude", "sub-chatgpt"], "zero:price change only, same usage"),
     "F10": (["sub-copilot"], "zero:price change only, same usage"),
     "F11": ([], "zero:SaaS energy excluded (no saas_licence_month factor in factors.csv)"),
-    "F12": (["ai-marketing"], "zero:factors.csv has one tokens_1000 factor for all model sizes, so a smaller model "
-                              "saves no energy in this method (in reality it likely does: unquantified)"),
+    "F12": (["ai-marketing"], "model_switch"),
     "F13": (["logs"], "share"), "F14": (["pbi-kap"], "none:no CHF claimed, capacity energy does not fall linearly"),
     "F15": (["support"], "zero:support fee has no energy"), "F16": (["dp-storage"], "share"),
     "F17": (["cicd"], "share"),
@@ -316,7 +318,27 @@ if HAS_E:
         for l in LV:
             df.at[i, f"resource_kwh_{l}"] = round(rows[f"kwh_{l}"].sum(), 1) if rids else None
             df.at[i, f"resource_co2_kg_{l}"] = round(rows[f"co2_kg_{l}"].sum(), 1) if rids else None
-        if mode.startswith("share"):
+        if mode == "model_switch":
+            # Same tokens on a small model: energy per row = tokens_in/1000 x f_in + tokens_out/1000 x f_out
+            # (the pipeline's split, factors.csv tokens_in/out_1000_large/small). One-off loop days (T-1212) excluded.
+            fac = pd.read_csv(ROOT_FACTORS, encoding="utf-8-sig").set_index("key")
+            split = [f"tokens_{io}_1000_{s}" for io in ("in", "out") for s in ("large", "small")]
+            if not all(k in fac.index and pd.notna(fac.loc[k, "value_mid"]) for k in split):
+                for l in LV:
+                    df.at[i, f"addressable_kwh_{l}"] = 0.0
+                    df.at[i, f"addressable_co2_kg_{l}"] = 0.0
+                df.at[i, "energy_note"] = "token split missing in factors.csv: no saving claimed"
+                continue
+            run = rows[~rows.date.astype(str).str[:10].between("2026-03-17", "2026-03-19")]
+            for l in LV:
+                v = fac[f"value_{l}"].astype(float)
+                e = lambda s: (run.tokens_in / 1000 * v[f"tokens_in_1000_{s}"] + run.tokens_out / 1000 * v[f"tokens_out_1000_{s}"])
+                keep = (e("small") / e("large")).where(e("large") > 0, 1.0)
+                df.at[i, f"addressable_kwh_{l}"] = round((run[f"kwh_{l}"] * (1 - keep)).sum(), 1)
+                df.at[i, f"addressable_co2_kg_{l}"] = round((run[f"co2_kg_{l}"] * (1 - keep)).sum(), 1)
+            df.at[i, "energy_note"] = ("same tokens on a small model (factors.csv tokens_in/out_1000_large vs _small, "
+                                       "pipeline's split); loop days 17-19 Mar 2026 (T-1212) excluded")
+        elif mode.startswith("share"):
             base = cost(mode.split(":")[1]) if ":" in mode else r.cost_chf
             share = r.addressable_chf / base
             for l in LV:
@@ -334,7 +356,8 @@ if HAS_E:
     df["addressable_co2_share_of_total_pct"] = (pd.to_numeric(df.addressable_co2_kg_mid) / TOTAL_CO2 * 100).round(1)
 
 df.to_csv(a.out / "findings.csv", index=False)
-df.to_csv(Path(__file__).parent / "kb" / "findings_numbers.csv", index=False)
+if a.update_kb:
+    df.to_csv(Path(__file__).parent / "kb" / "findings_numbers.csv", index=False)
 pd.set_option("display.width", 240, "display.max_colwidth", 60)
 cols = ["finding_id", "resource", "cost_chf", "addressable_chf", "addressable_kwh_mid", "addressable_co2_kg_mid", "status"]
 print(df[cols].to_string(index=False))
