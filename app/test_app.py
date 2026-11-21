@@ -173,8 +173,13 @@ class PageTests(unittest.TestCase):
         page = reset.click().run()
         self.assertFalse(page.exception, page.exception)
         shown = " ".join(m.value for m in page.markdown)
-        self.assertIn("2,614 kg", shown)
-        self.assertNotIn("1,393 kg", shown)
+        import pandas as pd
+        from pathlib import Path
+        p = pd.read_csv(Path(__file__).resolve().parent.parent / "measures" / "measures.csv")
+        chosen = int(p["savings_co2_kg_location_based"].sum())
+        without_m1 = chosen - int(p.loc[p.measure_id == "M1", "savings_co2_kg_location_based"].sum())
+        self.assertIn(f"{chosen:,} kg", shown)
+        self.assertNotIn(f"{without_m1:,} kg", shown)
         saved = page.session_state.get("pkg_ids")
         self.assertTrue(saved is None or "M1" in saved)
 
