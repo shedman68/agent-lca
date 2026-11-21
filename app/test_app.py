@@ -276,5 +276,33 @@ class MisalignedOutTests(unittest.TestCase):
         self.assertTrue(any("line up" in e.value for e in at.error), [e.value for e in at.error])
 
 
+class SubmissionAndRegisterTests(unittest.TestCase):
+    def test_baseline_template_keeps_the_exact_template_shape(self):
+        """Review of #29: BOM lost and 9 extra rows added. Rows and columns must equal data/'s template."""
+        import pandas as pd
+
+        sub = ROOT / "submission" / "template_baseline_and_assumptions.csv"
+        tpl = ROOT / "data" / "template_baseline_and_assumptions.csv"
+        self.assertEqual(sub.read_bytes()[:3], b"\xef\xbb\xbf")
+        s = pd.read_csv(sub, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+        t = pd.read_csv(tpl, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+        self.assertEqual(list(s.columns), list(t.columns))
+        self.assertEqual(list(s.parameter), list(t.parameter))
+        extra = pd.read_csv(ROOT / "submission" / "factors_extra.csv", encoding="utf-8-sig", dtype=str)
+        self.assertEqual(len(extra), 9)
+        self.assertTrue(extra.must_or_bonus.str.startswith("extra").all())
+        self.assertFalse(set(extra.parameter) & set(t.parameter))
+
+    def test_planted_text_ids_do_not_clash_with_measure_ids(self):
+        import pandas as pd
+
+        from app import register
+
+        ids = [t["id"] for t in register.MANIPULATIVE_TEXTS]
+        self.assertEqual(ids, ["P1", "P2", "P3", "P4", "P5"])
+        measures = set(pd.read_csv(ROOT / "measures" / "candidates.csv").measure_id)
+        self.assertFalse(set(ids) & measures)
+
+
 if __name__ == "__main__":
     unittest.main()
