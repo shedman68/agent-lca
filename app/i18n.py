@@ -170,6 +170,16 @@ DE: dict[str, str] = {
     "4 · Behind the numbers": "4 · Hinter den Zahlen",
     "Connect": "Verbinden",
     "Extra sources used:": "Weitere Quellen genutzt:",
+    "Sort": "Sortieren",
+    "Biggest CO2 saving": "Grösste CO2-Einsparung",
+    "Biggest cost saving": "Grösste Kosteneinsparung",
+    "CO2 and cost together": "CO2 und Kosten zusammen",
+    "CO2 saved (kg per year)": "CO2 eingespart (kg pro Jahr)",
+    "CHF saved per year": "CHF eingespart pro Jahr",
+    "Person-days": "Personentage",
+    "Sorted by share of the total CO2 saving plus share of the total cost saving. Licence optimisations save no CO2, so they sit on the left edge.":
+        "Sortiert nach Anteil an der gesamten CO2-Einsparung plus Anteil an der gesamten Kosteneinsparung. "
+        "Lizenz-Massnahmen sparen kein CO2, deshalb stehen sie am linken Rand.",
     "Training days restart paused machines. Night jobs and month-end keep production at full size. "
     "The test environment stays unchanged 1–31 March 2026 (T-1204): release freeze and acceptance test. Backups stay.":
         "Trainingstage starten pausierte Maschinen neu. Nachtjobs und Monatsende halten die Produktion auf voller Grösse. "
@@ -218,7 +228,7 @@ LABEL_ONLY = {" of ", "All ", "Cost", "From ", "Range ", "target ", "Resource ",
               "Effort", "CO2 per year", "CO2 saved", "Cost saved", "Energy saved, mid",
               # R9: short page names, translated only where they are our labels
               "Where you stand", "Your plan", "Stay on track", "Behind the numbers", "Without the plan",
-              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name", "Data", "Know the limits", "Product Lead", "Energy & Environment Expert", "Data Analysis Expert"}
+              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name", "Data", "Know the limits", "Product Lead", "Energy & Environment Expert", "Data Analysis Expert", "Sort"}
 _ORDER = sorted(DE, key=len, reverse=True)
 _ORDER_SAFE = [p_ for p_ in _ORDER if p_ not in LABEL_ONLY]
 

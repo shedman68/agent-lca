@@ -900,3 +900,17 @@ class ReviewFixesTests(unittest.TestCase):
         self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich", blob)
         kwh = float(data.energy_totals()["kwh_mid"])
         self.assertIn(f"{kwh / 1000:,.0f} MWh of electricity a year", blob)
+
+
+class ReviewFixesGermanTests(unittest.TestCase):
+    def test_sort_labels_have_german_and_caption_is_not_mangled(self):
+        import sys
+        from unittest import mock
+        sys.path.insert(0, str(ROOT / "app"))
+        import i18n
+        cap = ("Sorted by share of the total CO2 saving plus share of the total cost saving. "
+               "Licence optimisations save no CO2, so they sit on the left edge.")
+        with mock.patch.object(i18n, "is_de", return_value=True):
+            self.assertEqual(i18n.tr("Sort"), "Sortieren")
+            self.assertEqual(i18n.tr("Biggest CO2 saving"), "Grösste CO2-Einsparung")
+            self.assertTrue(i18n.tr(cap, label=False).startswith("Sortiert nach Anteil"))

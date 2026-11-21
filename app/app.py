@@ -1198,8 +1198,8 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
         })
         st.altair_chart(charts.optimisation_map(pts, i18n.tr("CO2 saved (kg per year)"), i18n.tr("CHF saved per year"),
                                                 i18n.tr("Person-days")), width="stretch")
-        st.caption(i18n.tr("Sorted by share of the total CO2 saving plus share of the total cost saving. "
-                           "Licence optimisations save no CO2, so they sit on the left edge."))
+        st.caption("Sorted by share of the total CO2 saving plus share of the total cost saving. "
+                   "Licence optimisations save no CO2, so they sit on the left edge.")  # st.caption translates body text
     cards = []
     for _, r in ordered.iterrows():
         kg = r.get(col)
