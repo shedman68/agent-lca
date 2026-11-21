@@ -7,6 +7,7 @@ Free text in the data is shown as data on the "Needs a human" page and never act
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -40,6 +41,92 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Files the app cannot render without. Built by the documented README sequence.
+_REQUIRED_OUT = (
+    "fact_costs.csv",
+    "fact_costs_allocated.csv",
+    "findings.csv",
+    "quality_log.csv",
+)
+_PIPELINE_TIMEOUT_S = 300
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+def _out_files_ready(root: Path) -> bool:
+    out = root / "out"
+    return all((out / name).is_file() for name in _REQUIRED_OUT)
+
+
+def _run_step(root: Path, args: list[str], expect_line: str | None = None) -> None:
+    """Run one pipeline script with the app's interpreter and absolute paths."""
+    cmd = [sys.executable, *args]
+    result = subprocess.run(
+        cmd,
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=_PIPELINE_TIMEOUT_S,
+        check=False,
+    )
+    output = ((result.stdout or "") + ("\n" if result.stderr else "") + (result.stderr or "")).strip()
+    if result.returncode != 0:
+        tail = output[-2000:] if output else f"exit {result.returncode}"
+        raise RuntimeError(f"{Path(args[0]).name} failed (exit {result.returncode}): {tail}")
+    if expect_line is not None:
+        lines = [ln.strip() for ln in (result.stdout or "").splitlines()]
+        if expect_line not in lines:
+            tail = output[-2000:] if output else "no output"
+            raise RuntimeError(f"{Path(args[0]).name} did not print {expect_line!r}: {tail}")
+
+
+@st.cache_resource
+def _build_out_once() -> str:
+    """Run the README pipeline once per container when out/ is missing."""
+    root = _repo_root()
+    if _out_files_ready(root):
+        return "ready"
+    data = root / "data"
+    out = root / "out"
+    measures = root / "measures" / "measures.csv"
+    _run_step(root, [str(root / "pipeline" / "pipeline.py"), "--data", str(data), "--out", str(out)])
+    _run_step(root, [str(root / "analysis" / "findings.py"), "--data", str(data), "--out", str(out)])
+    _run_step(root, [str(root / "measures" / "measures.py"), "--out", str(out)])
+    _run_step(
+        root,
+        [str(root / "pipeline" / "verify_baseline.py"), "--data", str(data), "--out", str(out)],
+        expect_line="MATCH",
+    )
+    _run_step(
+        root,
+        [
+            str(root / "pipeline" / "trap_guard.py"),
+            "--data", str(data),
+            "--out", str(out),
+            "--measures", str(measures),
+        ],
+        expect_line="TRAP GUARD: PASS",
+    )
+    if not _out_files_ready(root):
+        raise RuntimeError("pipeline finished but required out/ files are still missing")
+    return "ready"
+
+
+def ensure_pipeline_output() -> None:
+    """If out/ is missing, build it once and show a spinner while it runs."""
+    if _out_files_ready(_repo_root()):
+        return
+    with st.spinner("Building numbers from the case data (first run only)…"):
+        try:
+            _build_out_once()
+        except Exception as exc:
+            st.error(f"Could not build `out/`: {exc}")
+
+
+ensure_pipeline_output()
 
 
 def chf(v: float | None, digits: int = 0) -> str:
