@@ -169,7 +169,7 @@ DE: dict[str, str] = {
     "3 · Stay on track": "3 · Auf Kurs bleiben",
     "4 · Behind the numbers": "4 · Hinter den Zahlen",
     "Connect": "Verbinden",
-    "Bonus sources used:": "Bonusquellen genutzt:",
+    "Extra sources used:": "Weitere Quellen genutzt:",
     "Training days restart paused machines. Night jobs and month-end keep production at full size. "
     "March keeps the test environment unchanged. Backups stay.":
         "Trainingstage starten pausierte Maschinen neu. Nachtjobs und Monatsende halten die Produktion auf voller Grösse. "

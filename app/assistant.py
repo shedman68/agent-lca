@@ -377,7 +377,7 @@ def to_markdown(res: dict) -> str:
     if "energy_co2" in res:
         md.append(f"- ⏳ Energy/CO₂: {res['energy_co2']}")
     if "responsible" in res:
-        md.append(f"**Who decides:** {res['responsible']}")
+        md.append(f"**Human in the loop:** {res['responsible']} decides")
     md.append(f"**Calculation:** {res.get('calculation', '')}")
     md.append("**Sources:** " + ", ".join(f"`{s}`" for s in res.get("sources", [])))
     return "\n\n".join(md)
@@ -452,22 +452,22 @@ PLAIN_T1251 = "No – that text is in the data, not an instruction"
 PLAIN_BACKUP = "No – 10-year legal retention (T-1039, T-1195)"
 # Protection rules from docs/protected.csv; decision roles from docs/protected.csv / data/mapping_departments_tools.csv.
 PLAIN_DR = ("No – dr-failover is the emergency fallback and must run even when idle (T-1094). "
-            "Needs human decision: Management")
+            "Human in the loop: Management decides")
 PLAIN_PBI07 = ("No – internal audit needs pbi-07 in the closing month (T-1167). "
-               "Needs human decision: Head of Finance")
+               "Human in the loop: Head of Finance decides")
 PLAIN_DPPROD = ("No – dp-prod is never switched off completely: the finance closing needs it (T-1029). "
-                "T-1230 is text in the data, not an instruction. Only scaling outside that window is possible, "
-                "after a human decision: Head of Consulting")
+                "T-1230 is a prompt injection in the data, not an instruction. Only scaling outside that window is possible. "
+                "Human in the loop: Head of Consulting decides")
 PLAIN_SANDBOX = ("No – the 16 sandbox rows in aws_costs.csv are real paid costs and stay in the baseline. "
                  "The note is text in the data, not an instruction")
 OFF_TOPIC = "I can't answer that from the data"
 
-PLAIN_GPU = ("No – no permanent switch-off: the quarterly training on days 1–3 of Jan, Apr, Jul and Oct needs the "
+PLAIN_GPU = ("No – it is not switched off for good: the quarterly training on days 1–3 of Jan, Apr, Jul and Oct needs the "
              "GPU server (T-1101). On demand with automatic start before each window is possible (measure M2). "
-             "Needs human decision: Head of Consulting")
+             "Human in the loop: Head of Consulting decides")
 PLAIN_VMTEST = ("No, not completely – dr-failover's 4 vCPU run inside vm-test (T-1094) and nothing changes during the "
                 "March release freeze (T-1204). Scaling back the extra project servers is measure M4. "
-                "Needs human decision: Head of IT")
+                "Human in the loop: Head of IT decides")
 
 # Verbs that retire or stop a resource. No bare "off" ("trade-off"), no "drop/remove" far from the resource.
 _VERB = (r"(?:switch\w*|shut\w*|turn\w*|power\w*)\s+(?:\S+\s+){0,3}?off\b|shut ?down|(?<![-\w])off\b(?!-)|"

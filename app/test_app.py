@@ -616,7 +616,7 @@ class StoryTests(unittest.TestCase):
         self.assertEqual(c["files"], 28)  # 13 core + 15 extra, as the case page says
         self.assertEqual(c["currencies"], ["CHF", "EUR", "USD"])
         blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(getattr(page, "html", [])))
-        self.assertIn("Bonus sources used:", blob)
+        self.assertIn("Extra sources used:", blob)
         self.assertIn("Power BI", blob)
 
     def test_story_buttons(self):
@@ -662,8 +662,8 @@ class StoryTests(unittest.TestCase):
         chf_share = chf[res.isin(["dp-dev", "dp-prod"]) | seats].sum() / chf.sum()
         page = _open(self._app(), "where-you-stand")
         shown = " ".join(c.value for c in page.caption)
-        self.assertIn(f"{co2_share:.0%} of the plan's CO2 cut", shown)
-        self.assertIn(f"{chf_share:.0%} of its francs", shown)
+        self.assertIn(f"{co2_share:.0%} of the plan's CO2 savings", shown)
+        self.assertIn(f"{chf_share:.0%} of its cost savings", shown)
 
     def test_ui_css_stays_inside_the_theme_contract(self):
         """grok/R9-theme's contract: ui.py may only read these CSS variables."""
@@ -785,3 +785,17 @@ class R10RobustnessLineTests(unittest.TestCase):
         self.assertFalse(page.exception, page.exception)
         bodies = " ".join(getattr(e.proto, "body", "") for e in page.get("html"))
         self.assertIn(expected, bodies)
+
+
+class CopyConnectRoadmapTests(unittest.TestCase):
+    def test_connect_says_upload_and_roadmap_is_not_built(self):
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=60)
+        at.run()
+        page = _open(at, "connect")
+        blob = " ".join(h.proto.body for h in page.get("html"))
+        self.assertIn("An IT manager uploads her company", blob)
+        self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", blob)
+        self.assertIn("Roadmap · not built yet", blob)
+        self.assertFalse(any("connect" in b.label.lower() and "sample" not in b.label.lower() for b in page.button))

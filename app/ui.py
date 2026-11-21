@@ -46,6 +46,9 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+[data-testid="stFileUploaderDropzone"]{background:var(--card2,#1c2026) !important;border:1px dashed var(--line,#262b33) !important;color:var(--ink2,#c4cad1) !important;}
+[data-testid="stFileUploaderDropzone"] span,[data-testid="stFileUploaderDropzone"] small,[data-testid="stFileUploaderDropzoneInstructions"] *{color:var(--ink2,#c4cad1) !important;}
+[data-testid="stFileUploaderDropzone"] button{background:var(--card,#16191e) !important;color:var(--ink,#f2f4f5) !important;border:1px solid var(--line,#262b33) !important;}
 /* R10 item 2: popover buttons ("How … was calculated") and inline code chips readable in dark and light mode */
 [data-testid="stPopover"] button,[data-testid="stPopoverButton"],[data-testid="stPopover"] > div > button{
   background:var(--card,#16191e) !important;color:var(--ink,#f2f4f5) !important;border:1px solid var(--line,#262b33) !important;}
@@ -94,6 +97,8 @@ CSS = """<style>
 .gx-refuse b{color:var(--pink,#f84aa7);}
 .gx-explain{font-size:15px;color:var(--muted,#9aa3ad);border-left:3px solid var(--teal,#00cc99);padding:2px 0 2px 12px;margin:0 0 18px;max-width:70ch;}
 .gx-explain b{color:var(--ink2,#c4cad1);}
+.gx-roadmap{font-size:14px;color:var(--muted,#9aa3ad);margin:-8px 0 18px;max-width:70ch;}
+.gx-roadmap .k{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-right:8px;}
 .gx-bridge{font-size:16px;color:var(--ink2,#c4cad1);margin:28px 0 8px;}
 .gx-photo{position:relative;border-radius:20px;padding:32px 28px 12px;margin:0 0 22px;min-height:210px;
 background-color:#0d0f12;background-size:cover;background-position:center;border:1px solid var(--line,#262b33);overflow:hidden;}
@@ -147,6 +152,11 @@ def hero(eyebrow: str, line: str, sub: str = "", photo: str = "") -> None:
 def explain(term: str, text: str) -> None:
     """First time an idea appears: one plain sentence, so the page makes sense without a voice-over."""
     _raw(f'<p class="gx-explain"><b>{i18n.tr(term)}</b> {i18n.tr(text, label=False)}</p>')
+
+
+def roadmap_note(text: str) -> None:
+    """One muted line for a roadmap item: same «Roadmap · not built yet» label as the GreenOps agents cards. No controls."""
+    _raw(f'<p class="gx-roadmap"><span class="k">{i18n.tr("Roadmap · not built yet")}</span>{i18n.tr(text, label=False)}</p>')
 
 
 def bridge(text: str) -> None:
