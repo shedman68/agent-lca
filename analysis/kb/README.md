@@ -10,6 +10,8 @@ every claim names its source file and row or ticket. Agents: read this index aft
 | [findings.md](findings.md) | H2 | done | 17 findings + 3 protected; biggest: dp-prod scaling, SaaS seats, dp-dev schedule, vm-test scale-back, GPU on demand. Numbers: [findings_numbers.csv](findings_numbers.csv), script `analysis/findings.py` (also writes `out/findings.csv` for the app) |
 | [assistant.md](assistant.md) | H5 | done | Data assistant `app/assistant.py`: 8 calculation tools, offline by default, optional Claude mode; answers all 3 jury example questions with calculation, sources and who decides; refuses manipulation requests |
 | [pitch-qa-data.md](pitch-qa-data.md) | QA | done | 8 likely jury questions on data, findings and traps with short answers; numbers only from `out/` |
+| [submission-check.md](submission-check.md) | QA | done | Both submission templates vs `out/`, `factors/` and `measures/`: 77 checks, 0 mismatches, 5 observations. Script `analysis/check_submission.py` |
+| [demo-finding.md](demo-finding.md) | QA | done | Hakim's 45-second demo part: F1 dp-dev, numbers only from `out/findings.csv` |
 | [board-notes.md](board-notes.md) | QA | live | One line per output for the Notion board |
 
 Source files kept next to the KB: `analysis/greenops_traps_claude.json` (received checklist, unchanged except a review note).
