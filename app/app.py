@@ -21,6 +21,24 @@ import register  # noqa: E402
 st.set_page_config(page_title="GreenOps Basel", page_icon="🌿", layout="wide")
 
 CITE = "Sample data ALTYCA, sprintd Basel 2026"
+# Case targets (AGENTS.md). These are the decision rules, not figures measured from out/.
+CO2_TARGET = data.TARGETS["co2_pct"]
+COST_TARGET = data.TARGETS["cost_pct"]
+PD_CAP = data.TARGETS["pd_max"]
+
+st.markdown(
+    """
+    <style>
+    html, body, .stApp, .stMarkdown p, .stMarkdown li, label, [data-testid="stCaptionContainer"] p {font-size: 16px;}
+    [data-testid="stSidebar"] {min-width: 19rem;}
+    h1 {font-size: 2.4rem !important; letter-spacing: -0.03em; font-weight: 650;}
+    h2 {font-size: 1.45rem !important;}
+    [data-testid="stMetricValue"] {font-size: 1.7rem;}
+    .block-container {padding-top: 1.1rem; max-width: 1180px;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 def chf(v: float | None, digits: int = 0) -> str:
@@ -36,60 +54,131 @@ def table_view(df: pd.DataFrame, label: str = "Table view") -> None:
         st.dataframe(df, hide_index=True, width="stretch")
 
 
+def out_ready() -> bool:
+    """Stop the page with a clear message when pipeline output is missing. Never substitute a number."""
+    try:
+        totals = data.energy_totals()
+    except FileNotFoundError as exc:
+        st.error(f"The numbers file is missing: {exc}. From the repo root run "
+                 "`python3 pipeline/pipeline.py --data data --out out`, then "
+                 "`python3 analysis/findings.py --data data --out out` and "
+                 "`python3 measures/measures.py --out out`.")
+        return False
+    if totals.get("co2_mid") is None:
+        st.error("out/fact_costs.csv has no CO2 column yet. Fill factors/factors.csv and rerun the pipeline. "
+                 "This page will not estimate a figure.")
+        return False
+    return True
+
+
+def factor_level() -> str:
+    """Low / mid / high factors. The label is the jury question: they may recalculate on another set."""
+    choice = st.segmented_control(
+        "What the jury might recalculate",
+        ["Low factors", "Mid factors", "High factors"],
+        default="Mid factors",
+        key="factor_level_label",
+    )
+    return {"Low factors": "low", "Mid factors": "mid", "High factors": "high"}.get(choice or "Mid factors", "mid")
+
+
+def _hero_html(facts_now: dict, level: str) -> str:
+    p = charts.pal()
+    co2_t = facts_now["co2_level"] / 1000
+    return (
+        f'<div style="font-family:{charts.FONT_INLINE};color:{p["ink"]}">'
+        f'<div style="font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:{p["muted"]}">'
+        f'Location-based CO2 per year · {level} factors</div>'
+        f'<div style="font-size:76px;font-weight:650;line-height:.95;letter-spacing:-.03em">{co2_t:,.1f} t</div>'
+        f'<div style="font-size:18px;color:{p["ink2"]};margin-top:8px">Range '
+        f'{facts_now["co2_low"] / 1000:,.1f}–{facts_now["co2_high"] / 1000:,.1f} t on low and high factors</div>'
+        f'<div style="display:flex;flex-wrap:wrap;gap:32px;margin-top:18px">'
+        f'<div><div style="font-size:16px;color:{p["muted"]}">Energy ({level})</div>'
+        f'<div style="font-size:28px;font-weight:650">{facts_now["kwh_level"]:,.0f} kWh</div>'
+        f'<div style="font-size:16px;color:{p["muted"]}">Range {facts_now["kwh_low"]:,.0f}–{facts_now["kwh_high"]:,.0f} kWh</div></div>'
+        f'<div><div style="font-size:16px;color:{p["muted"]}">Cost, shown second</div>'
+        f'<div style="font-size:28px;font-weight:650">{chf(facts_now["cost_chf"])}</div>'
+        f'<div style="font-size:16px;color:{p["muted"]}">Same on every factor set</div></div>'
+        f'</div></div>'
+    )
+
+
+def _overview_sentence(facts_now: dict) -> str:
+    return (
+        f"Location-based CO2 is {facts_now['co2_level'] / 1000:,.1f} t a year "
+        f"(range {facts_now['co2_low'] / 1000:,.1f}–{facts_now['co2_high'] / 1000:,.1f} t). "
+        f"{facts_now['top_country']} accounts for {facts_now['top_country_share']:.1%} of it, "
+        f"and {facts_now['top_resource']} is the largest resource at {facts_now['top_resource_share']:.1%}."
+    )
+
+
 # =============================================================================== 1 Overall picture
 def page_overview() -> None:
     st.title("Overall picture")
-    st.caption(f"Baseline year {data.BASELINE_LABEL} · all numbers from `out/` (pipeline) · {CITE}")
+    st.caption(f"Baseline year {data.BASELINE_LABEL} · location-based CO2 first, cost second · "
+               f"every number from `out/` · {CITE}")
+    if not out_ready():
+        return
+    level = factor_level()
+    facts_now = data.overview_facts(level)
+    st.html(_hero_html(facts_now, level))
+    with st.popover("How this number was calculated"):
+        st.markdown(
+            f"**{facts_now['co2_level'] / 1000:,.1f} t** is the sum of `co2_kg_{level}` on baseline rows "
+            f"in `out/fact_costs.csv` (Sep 2025–Aug 2026), divided by 1,000. "
+            "Low and high are the same sum on `co2_kg_low` and `co2_kg_high`. "
+            "Energy is the sum of `kwh_*`. Cost is the sum of `cost_chf` "
+            f"({chf(facts_now['cost_chf'], 2)}). "
+            "Each row is quantity × energy factor × PUE where that factor says so × the grid factor "
+            "of the row's country. Factors: `factors/factors.csv`. The pipeline writes the product; this page only adds it up."
+        )
+    st.markdown(f"**{_overview_sentence(facts_now)}**")
 
-    t = data.baseline_totals()
-    c1, c2, c3, c4 = st.columns([1.4, 1, 1, 1])
-    c1.markdown(f'<div style="font-size:13px;opacity:.7">Total cost per year</div>'
-                f'<div style="font-size:48px;font-weight:600;line-height:1.1">{chf(t["cost_chf"])}</div>',
-                unsafe_allow_html=True)
-    c2.metric("Imputed (missing costs)", compact_chf(t["imputed_chf"]),
-              help="Missing costs filled with quantity × median unit price of the same resource (out/quality_log.csv).")
-    c3.metric("Energy per year", f"{t['kwh']:,.0f} kWh" if t["kwh"] is not None else "Pending",
-              help="Appears once factors/factors.csv is filled in (V1, V2) and the pipeline is rerun.")
-    c4.metric("CO2 per year (location-based)", f"{t['co2_kg'] / 1000:,.1f} t" if t["co2_kg"] is not None else "Pending",
-              help="Appears once factors/factors.csv is filled in (V1, V2) and the pipeline is rerun.")
+    metric = st.segmented_control(
+        "The chart shows", ["CO2", "Cost"], default="CO2", key="overview_metric",
+    )
+    metric_key = "cost" if metric == "Cost" else "co2"
+    unit = "CHF" if metric_key == "cost" else "kg"
+    axis = "CHF per year" if metric_key == "cost" else f"kg CO2 per year ({level} factors)"
+    st.subheader("By department" + (" · cost, the second view" if metric_key == "cost" else ""))
+    st.caption("One chart. Department uses `dept_allocated` and `alloc_share` from `out/fact_costs_allocated.csv` "
+               "multiplied by the row's CO2 or cost. The test account is folded into IT. "
+               "There is no overhead left to split in the baseline year.")
+    dept = data.impact_by("department", metric_key, level)
+    st.altair_chart(charts.ranked_bars(dept, value="amount", unit=unit, axis_title=axis), width="stretch", theme=None)
 
-    st.subheader("Cost per month by source")
-    m = data.monthly_by_source()
-    st.altair_chart(charts.monthly_stack(m, data.SOURCE_ORDER), width="stretch", theme=None)
-    src = data.by_dimension("source")
-    table_view(src.assign(cost_chf=src["cost_chf"].round(2), share=(src["share"] * 100).round(1))
-               .rename(columns={"label": "source", "cost_chf": "CHF", "share": "share %"}), "Table view: per source")
-
-    tab_dept, tab_tool, tab_country = st.tabs(["By department", "By tool", "By country"])
-    with tab_dept:
-        d = data.by_dimension("department")
-        st.caption("Shared overhead (e.g. Office AI assistant) is split by FTE share per month (headcount.csv); "
-                   "the AWS test account goes 100 % to IT.")
-        st.altair_chart(charts.ranked_bars(d), width="stretch", theme=None)
-        table_view(d.assign(cost_chf=d["cost_chf"].round(2), share=(d["share"] * 100).round(1))
-                   .rename(columns={"label": "department", "cost_chf": "CHF", "share": "share %"}))
+    tab_tool, tab_country, tab_month = st.tabs(["By tool", "By country", "Cost per month"])
     with tab_tool:
-        r = data.by_dimension("resource")
-        st.caption("Grouped by `resource_id`, because tool names have spelling variants in the data "
-                   "(dp-prod appears as «Data Platform Prod» and «Data platform production»).")
-        top_n = 15
-        top = r.head(top_n)
-        rest = r.iloc[top_n:]
-        shown = top[["label", "cost_chf", "share"]]
+        tool = data.impact_by("resource", metric_key, level)
+        st.caption("Grouped by `resource_id`. Tool names in the cost files have spelling variants, so the label "
+                   "is the canonical name plus the id.")
+        top_n = 12
+        top, rest = tool.head(top_n), tool.iloc[top_n:]
+        shown = top[["label", "amount", "share"]].rename(columns={"amount": "amount"})
         if not rest.empty:
-            shown = pd.concat([shown, pd.DataFrame([{"label": f"Other ({len(rest)} resources)",
-                                                     "cost_chf": rest["cost_chf"].sum(), "share": rest["share"].sum()}])])
-        st.altair_chart(charts.ranked_bars(shown), width="stretch", theme=None)
-        table_view(r.assign(cost_chf=r["cost_chf"].round(2), share=(r["share"] * 100).round(1))
-                   [["resource_id", "tool_canonical", "source", "cost_chf", "share", "tool_spellings", "responsible_role"]]
-                   .rename(columns={"tool_canonical": "tool", "cost_chf": "CHF", "share": "share %",
-                                    "tool_spellings": "name variants in data"}), "Table view: all resources")
+            shown = pd.concat([shown, pd.DataFrame([{
+                "label": f"Other ({len(rest)} resources)",
+                "amount": rest["amount"].sum(),
+                "share": rest["share"].sum(),
+            }])], ignore_index=True)
+        st.altair_chart(charts.ranked_bars(shown, value="amount", unit=unit, axis_title=axis), width="stretch", theme=None)
+        pretty = tool.assign(amount=tool["amount"].round(1), share_pct=(tool["share"] * 100).round(1))
+        table_view(pretty.rename(columns={"label": "tool", "amount": unit, "share_pct": "share %"})
+                   .drop(columns=["share"], errors="ignore"), "Table view: all resources")
     with tab_country:
-        c = data.by_dimension("country")
-        st.caption("Country decides the grid factor for location-based CO2. AI providers and SaaS are «EU mixed».")
-        st.altair_chart(charts.ranked_bars(c), width="stretch", theme=None)
-        table_view(c.assign(cost_chf=c["cost_chf"].round(2), share=(c["share"] * 100).round(1))
-                   .rename(columns={"label": "country", "cost_chf": "CHF", "share": "share %"}))
+        country = data.impact_by("country", metric_key, level)
+        st.caption("Country sets the location-based grid factor. AI providers and SaaS are «EU mixed».")
+        st.altair_chart(charts.ranked_bars(country, value="amount", unit=unit, axis_title=axis), width="stretch", theme=None)
+        table_view(country.assign(amount=country["amount"].round(1), share_pct=(country["share"] * 100).round(1))
+                   .rename(columns={"label": "country", "amount": unit, "share_pct": "share %"})
+                   .drop(columns=["share"]), "Table view: countries")
+    with tab_month:
+        st.caption("Cost only. Energy and CO2 are not stored per month in a separate file; the year total is above.")
+        monthly = data.monthly_by_source()
+        st.altair_chart(charts.monthly_stack(monthly, data.SOURCE_ORDER), width="stretch", theme=None)
+        src = data.by_dimension("source")
+        table_view(src.assign(cost_chf=src["cost_chf"].round(2), share=(src["share"] * 100).round(1))
+                   .rename(columns={"label": "source", "cost_chf": "CHF", "share": "share %"}), "Table view: per source")
 
 
 # =============================================================================== 2 Findings
@@ -193,59 +282,151 @@ def _signed(reduction_pct: float) -> str:
     return f"−{reduction_pct:.1f} %" if reduction_pct > 0 else f"+{-reduction_pct:.1f} %"
 
 
+def _bound_status(value: float | None, target: float, *, higher_is_better: bool) -> str:
+    if value is None:
+        return "pending"
+    if higher_is_better:
+        if value >= target:
+            return "good"
+        return "warning" if value >= target - 2 else "critical"
+    if value <= target:
+        return "good"
+    return "warning" if value <= target + 1 else "critical"
+
+
+def _tickets(text: str) -> str:
+    found = list(dict.fromkeys(re.findall(r"T-\d+", str(text))))
+    return ", ".join(found)
+
+
+def _selected_ids(rows: pd.DataFrame) -> set[str]:
+    """Ids ticked on the last edit. The gauges are drawn before the table, so they read this set."""
+    saved = st.session_state.get("pkg_ids")
+    if isinstance(saved, list):
+        return set(saved)
+    return set(rows.loc[rows["chosen"], "measure_id"].astype(str))
+
+
 def page_package() -> None:
     st.title("Measures package")
-    st.caption("Targets per year: CO2 −40 % (location-based) · cost −25 % · effort at most 15 person-days "
-               f"(CHF {15 * data.PD_CHF:,}; 1 PD = CHF {data.PD_CHF:,}).")
-    t = data.baseline_totals()
-    m, m_source = data.measures()
+    st.caption(f"Targets per year: CO2 −{CO2_TARGET:.0f} % (location-based) · cost −{COST_TARGET:.0f} % · "
+               f"at most {PD_CAP:.0f} person-days (CHF {PD_CAP * data.PD_CHF:,.0f}; 1 PD = CHF {data.PD_CHF:,.0f}). "
+               "Savings are the rows in `measures/`. This page adds up the ticked rows; it does not rewrite them.")
+    if not out_ready():
+        return
+    rows = data.package_rows()
+    if rows is None or rows.empty:
+        st.error("`measures/candidates.csv` is missing, so the package cannot be shown. "
+                 "Run `python3 measures/measures.py --out out`. No savings figure is invented here.")
+        return
+    if not bool(rows["files_agree"].iloc[0]):
+        st.warning("`measures/measures.csv` and the chosen rows in `measures/candidates.csv` do not list the same ids. "
+                   "The ticks start from `candidates.csv`. The files were not changed.")
 
-    if m is None or m.empty:
-        st.info("The package is not calculated yet (tasks R1/R2). The app reads it from `measures/measures.csv` "
-                "(or `out/measures.csv`) in the format of `submission/template_measures_package.csv`. "
-                "The target bar below shows the required values until then.", icon="⏳")
-        sel = pd.DataFrame(columns=["measure_id", "effort_person_days", "savings_cost_chf_per_year", "savings_co2_kg_location_based"])
-    else:
-        m = m.copy()
-        m["protection"] = (m["resource_or_source"].fillna("") + " " + m["description"].fillna("")).map(
-            lambda s: ", ".join(_protection_hits(s)))
-        m.insert(0, "include", True)
-        st.subheader("Choose measures")
-        st.caption(f"Source: `{m_source}`. Untick a measure to see its effect on the targets. Measures touching a "
-                   "protected resource are listed with their rule; they need human sign-off (see «Needs a human»).")
-        cols = ["include", "measure_id", "description", "resource_or_source", "protection", "effort_person_days",
-                "savings_cost_chf_per_year", "savings_energy_kwh_per_year", "savings_co2_kg_location_based",
-                "risks_and_exceptions"]
-        edited = st.data_editor(m[[c for c in cols if c in m]], hide_index=True, width="stretch",
-                                disabled=[c for c in cols if c != "include"], key="pkg")
-        sel = m[edited["include"].values]
+    level = factor_level()
+    selected_ids = _selected_ids(rows)
+    selected = rows[rows["measure_id"].astype(str).isin(selected_ids)]
+    result = data.package_result(selected, level)
+    summary = data.package_summary()
 
-    pd_used = float(sel["effort_person_days"].sum()) if len(sel) else 0.0
-    cost_saved = float(sel["savings_cost_chf_per_year"].sum()) if len(sel) else 0.0
-    co2_saved = float(sel["savings_co2_kg_location_based"].sum()) if len(sel) else 0.0
-    cost_pct = 100 * cost_saved / t["cost_chf"]
-    co2_pct = 100 * co2_saved / t["co2_kg"] if t["co2_kg"] else None
-    pending = m is None or m.empty
+    co2_status = _bound_status(result["co2_pct"], CO2_TARGET, higher_is_better=True)
+    cost_status = _bound_status(result["cost_pct"], COST_TARGET, higher_is_better=True)
+    pd_status = _bound_status(result["pd"], PD_CAP, higher_is_better=False)
+    board = charts.gauge_board_html(
+        co2={"fill": (result["co2_pct"] or 0) / CO2_TARGET, "status": co2_status,
+             "center": _signed(result["co2_pct"] or 0), "sub": f"target −{CO2_TARGET:.0f} %",
+             "caption": "CO2 reduction"},
+        cost={"fill": (result["cost_pct"] or 0) / COST_TARGET, "status": cost_status,
+              "center": _signed(result["cost_pct"] or 0), "sub": f"target −{COST_TARGET:.0f} %",
+              "caption": "Cost reduction"},
+        effort={"fill": result["pd"] / PD_CAP, "status": pd_status,
+                "center": f"{result['pd']:.1f}", "sub": f"of {PD_CAP:.0f} PD",
+                "caption": "Budget"},
+    )
+    st.html(board)
+    pcol, ccol, ecol = st.columns(3)
+    with pcol.popover("How CO2 was calculated"):
+        st.markdown(
+            f"Sum of `{data.CO2_COL[level]}` on the ticked rows in `measures/candidates.csv`, "
+            f"divided by the sum of `co2_kg_{level}` on baseline rows in `out/fact_costs.csv` "
+            f"({result['co2_kg']:,.0f} kg of {result['base_co2_kg']:,.0f} kg = {result['co2_pct']:.1f} %). "
+            "Low, mid and high are three columns already stored on each measure. "
+            "Mid is `savings_co2_kg_location_based`. Market-based CO2 is blank in the file and is not shown."
+        )
+    with ccol.popover("How cost was calculated"):
+        st.markdown(
+            f"Sum of `savings_cost_chf_per_year` on the ticked rows "
+            f"({chf(result['cost_chf'])}) divided by baseline `cost_chf` in `out/fact_costs.csv` "
+            f"({chf(result['base_cost_chf'], 2)}). Cost does not change with the factor switch."
+        )
+    with ecol.popover("How the budget was calculated"):
+        st.markdown(
+            f"Sum of `effort_person_days` on the ticked rows ({result['pd']:.1f}). "
+            f"CHF {result['effort_chf']:,.0f} = person-days × CHF {data.PD_CHF:,.0f}. "
+            f"The cap is {PD_CAP:.0f} person-days (CHF {PD_CAP * data.PD_CHF:,.0f}), from the case rules."
+        )
+    st.markdown(
+        f"**{result['co2_kg']:,.0f} kg CO2 · {chf(result['cost_chf'])} · {result['pd']:.1f} PD "
+        f"(CHF {result['effort_chf']:,.0f}).** Energy saved, mid factor only: {result['kwh']:,.0f} kWh "
+        "(the measure file stores one energy column)."
+    )
+    if summary is not None:
+        st.caption(
+            "Chosen package in `measures/package_summary.csv`: "
+            f"CO2 low −{float(summary['co2_pct_low']):.1f} % · mid −{float(summary['co2_pct_mid']):.1f} % · "
+            f"high −{float(summary['co2_pct_high']):.1f} % · cost −{float(summary['chf_pct']):.1f} % · "
+            f"{float(summary['effort_pd']):.1f} PD. Unticking a row shows the trade-off against that package."
+        )
 
-    def st_min(v, target):
-        return "pending" if pending or v is None else ("good" if v >= target else "critical")
+    st.subheader("Tick measures on or off")
+    st.caption("Package rows are the chosen set. C1 and C2 are candidates and start off. "
+               "C2's stored CO2 already assumes M1 stays on; this page does not recalculate it. "
+               "A «Yes» in Needs a human means the row asks for a decision. Nothing here switches a protected resource off.")
+    if st.button("Reset to the chosen package"):
+        st.session_state.pop("pkg_editor", None)
+        st.session_state.pop("pkg_ids", None)
+        st.rerun()
 
-    rows = [
-        {"name": "CO2 reduction", "value": co2_pct or 0.0, "target": 40, "max": 60,
-         "value_txt": "pending" if co2_pct is None else _signed(co2_pct), "target_txt": "−40 %",
-         "status": "pending" if co2_pct is None else st_min(co2_pct, 40),
-         "note": "baseline CO2 pending (factors)" if t["co2_kg"] is None else f"{co2_saved / 1000:,.1f} t of {t['co2_kg'] / 1000:,.1f} t"},
-        {"name": "Cost reduction", "value": cost_pct, "target": 25, "max": 40,
-         "value_txt": _signed(cost_pct), "target_txt": "−25 %", "status": st_min(cost_pct, 25),
-         "note": f"{chf(cost_saved)} of {chf(t['cost_chf'])}"},
-        {"name": "Effort", "value": pd_used, "target": 15, "max": 20,
-         "value_txt": f"{pd_used:.1f} PD", "target_txt": "≤ 15 PD",
-         "status": "pending" if pending else ("good" if pd_used <= 15 else "critical"),
-         "note": f"{chf(pd_used * data.PD_CHF)} of CHF {15 * data.PD_CHF:,}"},
-    ]
-    st.subheader("Target bar")
-    st.html(charts.meter_list_html(rows))
-    st.caption("The tick marks the target. Cost and CO2: bar fills towards more savings; effort: must stay left of the tick.")
+    view = rows.copy()
+    view["include"] = view["measure_id"].astype(str).isin(selected_ids)
+    view["where"] = view["chosen"].map(lambda flag: "Package" if flag else "Candidate")
+    view["co2_kg"] = view[data.CO2_COL[level]]
+    view["co2_range_kg"] = view.apply(
+        lambda r: f"{r['savings_co2_kg_low']:,.0f}–{r['savings_co2_kg_high']:,.0f}", axis=1)
+    view["tickets"] = (view["risks_and_exceptions"].fillna("") + " " + view["assumptions_and_sources"].fillna("")).map(_tickets)
+    view["needs_human"] = view["risks_and_exceptions"].fillna("").str.contains("Needs human decision").map(
+        lambda flag: "Yes" if flag else "No")
+    view["protection"] = (view["resource_or_source"].fillna("") + " " + view["description"].fillna("")).map(
+        lambda text: ", ".join(_protection_hits(text)) or "—")
+    editor_cols = ["include", "measure_id", "needs_human", "description", "co2_kg",
+                   "savings_cost_chf_per_year", "effort_person_days", "responsible_role",
+                   "tickets", "where", "co2_range_kg"]
+    edited = st.data_editor(
+        view[editor_cols], hide_index=True, width="stretch", key=f"pkg_editor_{level}",
+        disabled=[c for c in editor_cols if c != "include"],
+        column_config={
+            "include": st.column_config.CheckboxColumn("On"),
+            "measure_id": "Id",
+            "where": "Set",
+            "description": st.column_config.TextColumn("Measure", width="large"),
+            "effort_person_days": st.column_config.NumberColumn("PD", format="%.1f"),
+            "savings_cost_chf_per_year": st.column_config.NumberColumn("CHF / year", format="%,.0f"),
+            "co2_kg": st.column_config.NumberColumn(f"CO2 kg ({level})", format="%,.0f"),
+            "co2_range_kg": "CO2 kg low–high",
+            "tickets": "Tickets",
+            "responsible_role": "Role",
+            "needs_human": "Needs a human",
+        },
+    )
+    # One extra run so the gauges, which are drawn above this table, pick up the tick change.
+    new_ids = sorted(edited.loc[edited["include"].astype(bool), "measure_id"].astype(str))
+    if set(new_ids) != selected_ids:
+        st.session_state["pkg_ids"] = new_ids
+        st.rerun()
+    with st.expander("Protection rule, change and the calculation on each row"):
+        detail = view.loc[view["measure_id"].astype(str).isin(selected_ids),
+                          ["measure_id", "change", "protection", "risks_and_exceptions", "assumptions_and_sources"]]
+        st.dataframe(detail, hide_index=True, width="stretch")
 
 
 # =============================================================================== 4 Needs a human

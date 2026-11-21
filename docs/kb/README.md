@@ -13,6 +13,7 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | [R0-team-setup.md](R0-team-setup.md) | R0 team workflow, local setup, Claude Code setup (skills, reviewer, hooks, /goal) | final |
 | [BUILD-overnight-brief.md](BUILD-overnight-brief.md) | Brief for an autonomous overnight agent: app v2 (package page, CO2 first, assistant, bonus) | final |
 | [QA-01-review-sat-0200.md](QA-01-review-sat-0200.md) | Independent QA against the jury criteria: 35 % complete, gaps, priorities | final |
+| [G-app-v2.md](G-app-v2.md) | G1 app v2: CO2-first overview and package gauges (M1); M2–M4 still open | draft |
 | [R0-vscode-prompt.md](R0-vscode-prompt.md) | R0 hand-over prompt for Claude Code in VS Code, with best practices | final |
 | R1-measures.md | R1 measures calculator | open |
 | R2-package.md | R2 chosen package vs target and budget | open |

@@ -8,22 +8,26 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+# Two accents only: green for the data, ink-blue when a second series is unavoidable.
+# Green / amber / red are reserved for pass, close and miss. They are not used as series colours.
 PALETTE = {
     "light": {
-        "surface": "#fcfcfb", "ink": "#0b0b0b", "ink2": "#52514e", "muted": "#898781",
-        "grid": "#e1e0d9", "axis": "#c3c2b7",
-        "series": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"],
-        "accent": "#2a78d6", "track": "#cde2fb", "other": "#c3c2b7",
+        "surface": "#f6f5f1", "ink": "#1a1a1a", "ink2": "#3d3d38", "muted": "#6b6a64",
+        "grid": "#e3e1d8", "axis": "#c4c2b6",
+        "series": ["#d7ebe3", "#a9d4c4", "#74b8a0", "#3e9278", "#1f6f58", "#0e3d30"],
+        "accent": "#0e6b57", "accent2": "#1f4b6e", "track": "#d5e6df", "other": "#c4c2b6",
     },
     "dark": {
-        "surface": "#1a1a19", "ink": "#f0efec", "ink2": "#c3c2b7", "muted": "#898781",
-        "grid": "#2c2c2a", "axis": "#383835",
-        "series": ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#0ca30c", "#9085e9", "#e66767"],
-        "accent": "#3987e5", "track": "#184f95", "other": "#52514e",
+        "surface": "#141816", "ink": "#f3f1ea", "ink2": "#c9c6bb", "muted": "#8e8b82",
+        "grid": "#2a312e", "axis": "#3a423e",
+        "series": ["#1c3f34", "#245c49", "#2f7a62", "#49a084", "#7dccb0", "#c6eadc"],
+        "accent": "#3dbe9a", "accent2": "#8eb4d4", "track": "#1e3330", "other": "#4a524e",
     },
 }
-STATUS = {"good": "#0ca30c", "warning": "#fab219", "serious": "#ec835a", "critical": "#d03b3b"}
+STATUS = {"good": "#1b7f4e", "warning": "#b8860b", "serious": "#b86a2a", "critical": "#b42318"}
 FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif'
+# Inline HTML styles cannot contain a double quote: Streamlit's sanitizer ends the attribute there.
+FONT_INLINE = "system-ui, -apple-system, Segoe UI, sans-serif"
 
 
 def mode() -> str:
@@ -43,10 +47,10 @@ def _style(chart: alt.Chart) -> alt.Chart:
         chart.configure(background="transparent", font=FONT)
         .configure_view(stroke=None)
         .configure_axis(
-            labelColor=p["muted"], titleColor=p["ink2"], gridColor=p["grid"], gridWidth=1,
-            domainColor=p["axis"], tickColor=p["axis"], labelFontSize=12, titleFontSize=12, titleFontWeight="normal",
+            labelColor=p["ink2"], titleColor=p["ink2"], gridColor=p["grid"], gridWidth=1,
+            domainColor=p["axis"], tickColor=p["axis"], labelFontSize=16, titleFontSize=16, titleFontWeight="normal",
         )
-        .configure_legend(labelColor=p["ink2"], titleColor=p["ink2"], orient="top", title=None, labelFontSize=12)
+        .configure_legend(labelColor=p["ink2"], titleColor=p["ink2"], orient="top", title=None, labelFontSize=16)
     )
 
 
@@ -54,28 +58,40 @@ def chf_axis(title: str = "CHF per year") -> alt.Axis:
     return alt.Axis(title=title, format="~s", labelExpr="datum.value == 0 ? '0' : replace(datum.label, 'k', 'K')", tickCount=5)
 
 
+def _amount_text(v: float, unit: str) -> str:
+    if unit == "CHF":
+        return f"CHF {v:,.0f}"
+    if unit == "kg":
+        return f"{v:,.0f} kg"
+    if unit == "kWh":
+        return f"{v:,.0f} kWh"
+    return f"{v:,.0f} {unit}"
+
+
 def ranked_bars(df: pd.DataFrame, label: str = "label", value: str = "cost_chf", highlight: set | None = None,
-                tooltip_extra: list | None = None, height_per_row: int = 30) -> alt.Chart:
+                tooltip_extra: list | None = None, height_per_row: int = 36, unit: str = "CHF",
+                axis_title: str | None = None) -> alt.Chart:
     """Ranked horizontal bars, one hue (magnitude). Optional emphasis: highlighted labels in accent, rest gray."""
     p = pal()
     d = df.copy()
-    d["_chf"] = d[value].map(lambda v: f"CHF {v:,.0f}")
+    d["_chf"] = d[value].map(lambda v: _amount_text(float(v), unit))
     d["_share"] = d["share"].map(lambda v: f"{v:.1%}") if "share" in d else ""
     if highlight:
         d["_hl"] = d[label].isin(highlight)
         color = alt.condition("datum._hl", alt.value(p["accent"]), alt.value(p["other"]))
     else:
         color = alt.value(p["accent"])
-    tips = [alt.Tooltip(f"{label}:N", title="Group"), alt.Tooltip("_chf:N", title="Cost"), alt.Tooltip("_share:N", title="Share")]
+    tips = [alt.Tooltip(f"{label}:N", title="Group"), alt.Tooltip("_chf:N", title=unit), alt.Tooltip("_share:N", title="Share")]
     tips += tooltip_extra or []
     order = list(d[label])
-    base = alt.Chart(d).encode(y=alt.Y(f"{label}:N", sort=order, title=None, axis=alt.Axis(labelLimit=260, domain=False, ticks=False, labelPadding=8, labelColor=PALETTE[mode()]["ink2"])))
+    base = alt.Chart(d).encode(y=alt.Y(f"{label}:N", sort=order, title=None, axis=alt.Axis(labelLimit=320, domain=False, ticks=False, labelPadding=8, labelColor=PALETTE[mode()]["ink2"], labelFontSize=16)))
+    axis = chf_axis(axis_title or ("CHF per year" if unit == "CHF" else f"{unit} per year"))
     bars = base.mark_bar(size=18, cornerRadiusEnd=4).encode(
-        x=alt.X(f"{value}:Q", axis=chf_axis(), scale=alt.Scale(nice=True)), color=color, tooltip=tips,
+        x=alt.X(f"{value}:Q", axis=axis, scale=alt.Scale(nice=True)), color=color, tooltip=tips,
     )
     # value at the tip: label only the top 3 (selective), rest via axis + tooltip + table
     top = d.head(3)
-    text = alt.Chart(top).mark_text(align="left", dx=6, color=p["ink2"], fontSize=12).encode(
+    text = alt.Chart(top).mark_text(align="left", dx=6, color=p["ink2"], fontSize=16).encode(
         y=alt.Y(f"{label}:N", sort=order), x=f"{value}:Q", text="_chf:N",
     )
     return _style((bars + text).properties(height=max(120, height_per_row * len(d))))
@@ -100,8 +116,49 @@ def monthly_stack(df: pd.DataFrame, order: list[str]) -> alt.Chart:
     return _style(chart.properties(height=300))
 
 
-STATUS_ICON = {"good": ("✓", "Target met"), "critical": ("✕", "Not met"), "warning": ("!", "Close"),
+STATUS_ICON = {"good": ("✓", "Pass"), "critical": ("✕", "Miss"), "warning": ("!", "Close"),
                "pending": ("…", "Pending")}
+
+
+def _ring(pct_fill: float, status: str, center: str, sub: str, size: int, caption: str) -> str:
+    """CSS donut. Streamlit's HTML sanitizer drops SVG, so the ring is a conic-gradient.
+
+    pct_fill is 0–1 of the track. The state colour is the arc; Pass/Miss is also written out.
+    """
+    p = pal()
+    fill = max(0.0, min(1.0, pct_fill)) * 100
+    state = STATUS.get(status, p["other"]) if status != "pending" else p["other"]
+    icon, label = STATUS_ICON.get(status, ("…", "Pending"))
+    hole = int(size * 0.68)
+    return (
+        f'<div style="flex:0 0 auto;text-align:center;font-family:{FONT_INLINE};color:{p["ink"]}">'
+        f'<div role="img" aria-label="{caption}: {center}, {label}" '
+        f'style="width:{size}px;height:{size}px;border-radius:50%;margin:0 auto;'
+        f'background:conic-gradient({state} 0 {fill:.1f}%, {p["track"]} {fill:.1f}% 100%);'
+        f'display:flex;align-items:center;justify-content:center;">'
+        f'<div style="width:{hole}px;height:{hole}px;border-radius:50%;background:{p["surface"]};'
+        f'display:flex;flex-direction:column;align-items:center;justify-content:center;">'
+        f'<div style="font-size:{28 if size > 220 else 22}px;font-weight:650;line-height:1">{center}</div>'
+        f'<div style="font-size:16px;color:{p["muted"]};margin-top:4px">{sub}</div></div></div>'
+        f'<div style="font-size:16px;font-weight:650;margin-top:8px">{caption}</div>'
+        f'<div style="font-size:16px;color:{p["ink2"]}"><span style="display:inline-block;min-width:22px;height:22px;'
+        f'border-radius:11px;background:{state};color:{"#1a1a1a" if status == "warning" else "#ffffff"};'
+        f'text-align:center;line-height:22px;font-size:13px;margin-right:6px">{icon}</span>{label}</div></div>'
+    )
+
+
+def gauge_board_html(co2: dict, cost: dict, effort: dict) -> str:
+    """CO2 ring first and about twice as wide as the cost and budget rings beside it."""
+    p = pal()
+    big = _ring(co2["fill"], co2["status"], co2["center"], co2["sub"], 300, co2["caption"])
+    small_cost = _ring(cost["fill"], cost["status"], cost["center"], cost["sub"], 180, cost["caption"])
+    small_effort = _ring(effort["fill"], effort["status"], effort["center"], effort["sub"], 180, effort["caption"])
+    return (
+        f'<div style="display:flex;flex-wrap:wrap;align-items:center;gap:28px;font-family:{FONT_INLINE};color:{p["ink"]}">'
+        f'<div style="flex:1.4 1 320px;display:flex;justify-content:center">{big}</div>'
+        f'<div style="flex:1 1 200px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center">{small_cost}{small_effort}</div>'
+        f'</div>'
+    )
 
 
 def meter_list_html(rows: list[dict]) -> str:
