@@ -19,5 +19,6 @@ for l in ["low", "mid", "high"]:
 t["tokens_in_total"] = t.tokens_in_fresh + t.tokens_cache_write + t.tokens_cache_read
 cols = ["tokens_in_total", "tokens_cache_read", "tokens_out"] + [f"{m}_{l}" for m in ["kwh", "co2_kg"] for l in ["low", "mid", "high"]]
 by = t.groupby("person")[cols].sum(); by.loc["TOTAL"] = by.sum()
+for c in ["tokens_in_total", "tokens_cache_read", "tokens_out"]: by[c] = by[c].astype(int)
 pd.set_option("display.width", 200); print(by.round(3).to_string())
 by.round(4).to_csv(ROOT / "factors/kb/V6-result.csv")
