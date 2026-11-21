@@ -124,6 +124,21 @@ class AssistantTests(unittest.TestCase):
         self.assertNotIn("Test account", departments)
         self.assertIn("IT", departments)
 
+    def test_next_year_uses_out_and_does_not_invent_the_node_step(self):
+        from app import data
+
+        months = data.dp_prod_months()
+        self.assertIsNotNone(months)
+        facts = data.facts_unallocated()
+        expected = facts.loc[facts["resource_id"].eq("dp-prod"), "cost_chf"].sum()
+        self.assertAlmostEqual(months["cost_chf"].sum(), expected, places=1)
+        self.assertIsNone(data.own_ai_note())
+        shift = data.job_shift()
+        self.assertIsNotNone(shift)
+        training = shift[shift["job"].astype(str).str.contains("Quarterly")]
+        self.assertFalse(training.empty)
+        self.assertTrue(training["note"].astype(str).str.contains("T-1053").all())
+
 
 class PageTests(unittest.TestCase):
     @classmethod
@@ -150,6 +165,9 @@ class PageTests(unittest.TestCase):
         ask = _open(human, "ask")
         self.assertFalse(ask.exception, ask.exception)
         self.assertIn("Ask the data", [t.value for t in ask.title])
+        nxt = _open(ask, "next-year")
+        self.assertFalse(nxt.exception, nxt.exception)
+        self.assertIn("Next year", [t.value for t in nxt.title])
 
 
 if __name__ == "__main__":

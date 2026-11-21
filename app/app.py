@@ -602,6 +602,62 @@ def page_human() -> None:
                    f"{as_of}. The role is `responsible_role` on the cost row. T-1128 still leaves AI seat cuts to the department heads.")
 
 
+# =============================================================================== 6 Next year
+def page_next() -> None:
+    st.title("Next year")
+    st.caption("What can be shown from `out/` and from `factors/kb/`, and what cannot. "
+               "Nothing on this page is added to the package.")
+    if not out_ready():
+        return
+
+    st.header("Production platform, baseline months")
+    st.markdown("**The step to 24 nodes is not calculated.** T-1261 says dp-prod grows from 20 to 24 nodes "
+                "on 1 Oct 2026. That sentence is in `docs/traps.md`. It is not a row in `out/` or `measures/`, "
+                "so this page does not multiply cost, kWh or CO2 by 24/20.")
+    months = data.dp_prod_months()
+    if months is None or months.empty:
+        st.info("`out/fact_costs.csv` has no baseline rows for dp-prod.")
+    else:
+        st.dataframe(months, hide_index=True, width="stretch",
+                     column_config={"cost_chf": st.column_config.NumberColumn("CHF", format="%,.0f"),
+                                    "node_hours": st.column_config.NumberColumn("Node-hours", format="%,.0f"),
+                                    "kwh_mid": st.column_config.NumberColumn("kWh, mid", format="%,.0f"),
+                                    "co2_kg_mid": st.column_config.NumberColumn("kg CO2, mid", format="%,.1f")})
+        st.caption("Each month is the sum of dp-prod baseline rows in `out/fact_costs.csv`. "
+                   "Quantity unit on those rows is node-hour. June 2026 costs less than the neighbouring months "
+                   "while the node-hours stay in the same band; the file is shown as stored, including that month. "
+                   "A package saving is not subtracted here.")
+
+    st.header("Notice dates")
+    cal = data.notice_calendar()
+    if cal is None or cal.empty:
+        st.info("No notice dates in `out/fact_costs.csv`.")
+    else:
+        due = cal[cal["state"].eq("due 2 Dec")]
+        st.markdown(f"Judged on **{cal['as_of'].iloc[0]}**. "
+                    f"**{len(due)}** contracts are due 2 Dec. The full list, with roles, is on Needs a human.")
+        show = due.assign(notice_by=pd.to_datetime(due["notice_by"]).dt.strftime("%Y-%m-%d"))
+        st.dataframe(show[["tool", "notice_by", "unused_chf", "responsible_role"]], hide_index=True, width="stretch",
+                     column_config={"unused_chf": st.column_config.NumberColumn("Unused CHF, baseline year", format="%,.0f")})
+
+    st.header("Carbon-aware job shift")
+    shift = data.job_shift()
+    if shift is None:
+        st.info("`factors/kb/V4-job-shift.csv` is missing. No shift saving is shown.")
+    else:
+        st.dataframe(shift, hide_index=True, width="stretch")
+        st.caption("Source: `factors/kb/V4-job-shift.csv`. The quarterly model-training row is excluded there "
+                   "(protected window T-1053). These reductions are not added to the package savings.")
+
+    st.header("Our own AI use")
+    note = data.own_ai_note()
+    if note is None:
+        st.info("`factors/kb/V6-our-ai-footprint.md` is not in the repo yet (Vinzenz, V6). "
+                "No kilograms are shown for the team's own AI use.")
+    else:
+        st.markdown(note)
+
+
 # =============================================================================== navigation
 pages = [
     st.Page(page_overview, title="Overall picture", icon="📊", default=True),
@@ -609,6 +665,7 @@ pages = [
     st.Page(page_package, title="Package", icon="🎯", url_path="package"),
     st.Page(page_human, title="Needs a human", icon="🙋", url_path="needs-a-human"),
     st.Page(assistant.render_assistant, title="Ask the data", icon="💬", url_path="ask"),
+    st.Page(page_next, title="Next year", icon="📅", url_path="next-year"),
 ]
 nav = st.navigation(pages)
 with st.sidebar:

@@ -477,6 +477,38 @@ def aws_zurich() -> dict | None:
     }
 
 
+def dp_prod_months() -> pd.DataFrame | None:
+    """Baseline months of dp-prod from out/fact_costs.csv. Node-hours are the quantity column (unit node-hour)."""
+    f = facts_unallocated()
+    if f.empty or "resource_id" not in f.columns:
+        return None
+    rows = f[f["resource_id"].eq("dp-prod")].copy()
+    if rows.empty:
+        return None
+    rows["month"] = rows["month"].astype(str).str[:7]
+    g = rows.groupby("month", dropna=False).agg(
+        cost_chf=("cost_chf", "sum"),
+        node_hours=("quantity", "sum"),
+        kwh_mid=("kwh_mid", "sum"),
+        co2_kg_mid=("co2_kg_mid", "sum"),
+    ).reset_index()
+    return g.sort_values("month").reset_index(drop=True)
+
+
+def job_shift() -> pd.DataFrame | None:
+    """Carbon-aware shift table. Read as stored; the quarterly training row stays excluded."""
+    path = ROOT / "factors" / "kb" / "V4-job-shift.csv"
+    if not path.exists():
+        return None
+    return pd.read_csv(path)
+
+
+def own_ai_note() -> str | None:
+    """Vinzenz's own-use note, if he has written it. None means the file is absent."""
+    path = ROOT / "factors" / "kb" / "V6-our-ai-footprint.md"
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
 def finding_cost(finding_id: str) -> float | None:
     """Baseline cost recorded for one finding in out/findings.csv, or None if that row has no cost."""
     table, _ = findings_table()
