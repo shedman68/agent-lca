@@ -37,7 +37,7 @@ MEASURES = [
   "T-1128: seats are ordered per department, so the cut is per cost centre. 30-day notice, monthly billing. 80 % of the unused value to keep a buffer. No energy saving claimed: idle seats send no messages. " + NH + ": each department head.", "Head of Finance (with each department head)"),
  ("M8", ["F11"], 0.6, 0.0, 2.5, True, "Cancel unused SaaS seats at each contract's notice date",
   "saas-*", "Reduce paid seats to active users plus a buffer, contract by contract, at the next notice date",
-  "Savings start at each contract's notice date; contracts whose deadline has passed are locked until the next term, so only 60 % of the unused value is counted. No energy claimed (no factor for SaaS). " + NH + ": contract owners.", "Head of Finance (with contract owners)"),
+  "Per contract (measures/m8_contracts.csv): notice given 1 Dec 2026; monthly-billed contracts save from 1 Dec + notice period, annual ones from the first contract end whose notice date is still open, otherwise one year later (CRM platform and Survey tool are locked until 2028). Counted: 90 % of the unused seat value (10 % buffer) for the months inside Dec 2026 - Nov 2027; the full run-rate is higher once every contract has renewed. No energy claimed (no factor for SaaS). " + NH + ": contract owners.", "Head of Finance (with contract owners)"),
  ("M9", ["F12"], 1.0, None, 1.5, False, "Use a small model with prompt caching for marketing text classification",
   "ai-marketing", "Route the Classify task to a small model and enable caching for the repeated prompt part",
   "T-1163: campaign-week peaks are expected use and stay. T-1212: the March script loop was a one-off and is excluded from the saving. " + NH + ": Marketing checks classification quality on a sample first.", "Head of Marketing"),
@@ -85,6 +85,26 @@ def main():
                 sh = token_saving_share(x, fa, l)
                 r[f"kwh_{l}"] = x[f"kwh_{l}"].sum() * (1 - loop) * sh; r[f"co2_{l}"] = x[f"co2_kg_{l}"].sum() * (1 - loop) * sh
             calc = f"CHF = F12 addressable; energy = ai-marketing energy x (1 - one-off loop share {loop:.1%}) x token-weighted saving share (input and output tokens, large -> small factors)"
+        elif mid == "M8":
+            sa = b[b.source == "saas"].copy()
+            sa["idle"] = (sa.quantity - sa.seats_active).clip(lower=0) / sa.quantity * sa.cost_chf
+            g = sa.groupby(["tool", "contract_end", "notice_period_days", "billing"], dropna=False).idle.sum().reset_index()
+            w0, w1 = pd.Timestamp("2026-12-01"), pd.Timestamp("2027-11-30")
+            def effective(row):
+                if row.billing == "monthly":
+                    return w0 + pd.Timedelta(days=row.notice_period_days)
+                end = pd.Timestamp(row.contract_end)
+                while end - pd.Timedelta(days=row.notice_period_days) < w0:
+                    end = end + pd.DateOffset(years=1)
+                return end + pd.Timedelta(days=1)
+            g["saves_from"] = g.apply(effective, axis=1).dt.date
+            g["share_of_contract_year"] = (((w1 - pd.to_datetime(g.saves_from)).dt.days + 1).clip(lower=0) / 365).round(3)
+            g["saving_chf_contract_year"] = (g.idle * 0.9 * g.share_of_contract_year).round(0)
+            g.assign(idle=g.idle.round(0)).rename(columns={"idle": "unused_chf_baseline_year"}).to_csv(ROOT / "measures" / "m8_contracts.csv", index=False)
+            r["chf"] = g.saving_chf_contract_year.sum()
+            calc = (f"Per contract from out/fact_costs.csv saas rows: unused = (seats bought - active) / bought x cost; saving = 90 % of unused "
+                    f"x share of Dec 2026 - Nov 2027 after the notice date (measures/m8_contracts.csv). Run-rate once all renewed: "
+                    f"CHF {g.idle.sum() * 0.9:,.0f} a year")
         elif mid == "C1":
             allr = res("ai-assistant"); x = allr[allr.model_class == "large"]; share = 0.5
             ratio_p = price_ratio_small_large(allr)

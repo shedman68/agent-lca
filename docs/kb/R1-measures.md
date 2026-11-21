@@ -5,7 +5,7 @@
 - **Sources:** `out/findings.csv`, `out/fact_costs.csv`, `factors/factors.csv`, `docs/protected.csv`, `docs/one_off_costs.csv`.
 
 ## Result (computed)
-**14.5 person-days (CHF 15,950) · cost −29.0 % (CHF 136,514 a year) · CO2 −43.0 % mid (2,664 kg) · −49.6 % low · −42.2 % high.**
+**14.5 person-days (CHF 15,950) · cost −28.6 % (CHF 134,306 a year) · CO2 −43.0 % mid (2,664 kg) · −49.6 % low · −42.2 % high.**
 Passes all three targets on low, mid and high factors. Checks: `verify_baseline` MATCH · `trap_guard --measures` TRAP GUARD: PASS.
 
 | ID | Measure | PD | CHF / year | CO2 kg low / mid / high | Decides |
@@ -17,15 +17,14 @@ Passes all three targets on low, mid and high factors. Checks: `verify_baseline`
 | M5 | Resize dp-prod in idle hours, never off (T-1029) | 3.0 | 29,127 | 141 / 378 / 632 | Head of Consulting with Finance |
 | M6 | Log retention 365 → 90 days; backups untouched (T-1039) | 1.0 | 8,566 | 37 / 120 / 269 | Head of IT |
 | M7 | Unused AI seats, per department (T-1128) | 1.0 | 10,983 | 0 | Head of Finance |
-| M8 | Unused SaaS seats at notice dates | 2.5 | 25,946 | 0 | Head of Finance |
+| M8 | Unused SaaS seats at each contract's notice date (Dec 2026 – Nov 2027; run-rate CHF 38,920) | 2.5 | 23,738 | 0 | Head of Finance |
 | C1 | Office AI assistant: simple tasks on a small model | 2.0 | 7,743 | 28 / 140 / 633 | Head of IT |
 
 Not in the package: M9 marketing small model (1.5 PD, 94 kg mid) · C2 move dp-dev to Zurich (5 PD, 404 kg mid, cost effect unknown).
 
 ## Assumptions (not from the data)
-Realisation shares (M2 energy 75 %, M4 8/12, M5 80 %, M7 80 %, M8 60 % placeholder), person-days per measure, C1: 50 % of large-model
+Realisation shares (M2 energy 75 %, M4 8/12, M5 80 %, M7 80 %, M8 90 % of unused seats, notice given 1 Dec 2026), person-days per measure, C1: 50 % of large-model
 office-assistant use can move. Everything else is computed from `out/`.
 
 ## Still open before 14:30
-- M8 per-contract notice dates (decision 2) instead of the 60 % placeholder.
 - Vinzenz's idle-power factors for dp-dev and GPU: rerun; margin on high factors is 2.2 points.
