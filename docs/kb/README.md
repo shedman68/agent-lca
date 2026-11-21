@@ -15,6 +15,7 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | [QA-01-review-sat-0200.md](QA-01-review-sat-0200.md) | Independent QA against the jury criteria: 35 % complete, gaps, priorities | final |
 | [G-app-v2.md](G-app-v2.md) | G1–G5 app v2: package, findings, assistant, submission drafts, next-year page (M1–M4). 24-node forecast not calculated | draft |
 | [G6-hardening.md](G6-hardening.md) | G6 robustness tests, demo script, offline page screenshots | draft |
+| [G-demo-deploy.md](G-demo-deploy.md) | Phone UAT of current main. Assistant offline. Link is a temporary public tunnel, not Streamlit Community Cloud | draft |
 | [R0-vscode-prompt.md](R0-vscode-prompt.md) | R0 hand-over prompt for Claude Code in VS Code, with best practices | final |
 | R1-measures.md | R1 measures calculator | open |
 | R2-package.md | R2 chosen package vs target and budget | open |
