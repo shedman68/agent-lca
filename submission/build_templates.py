@@ -85,6 +85,20 @@ def build_measures() -> list[str]:
     return ids
 
 
+def _baseline_cost() -> float:
+    if not FACT_COSTS.exists():
+        raise SystemExit("out/fact_costs.csv is missing. Run pipeline/pipeline.py before this script.")
+    total = 0.0
+    with FACT_COSTS.open(encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if str(row.get("in_baseline", "")).strip() != "True":
+                continue
+            raw = str(row.get("cost_chf", "")).strip()
+            if raw:
+                total += float(raw)
+    return total
+
+
 def _baseline_kwh() -> dict[str, float]:
     if not FACT_COSTS.exists():
         raise SystemExit("out/fact_costs.csv is missing. Run pipeline/pipeline.py before this script.")
@@ -132,14 +146,22 @@ def fill_baseline() -> None:
     by_name = _by_parameter(rows)
 
     cost = by_name["total_cost_baseline_year_chf"]
-    cost["value_low"] = NA
-    cost["value_high"] = NA
-    cost_note = (
+    cost_total = f"{_baseline_cost():.2f}"
+    cost["value_low"] = cost_total
+    cost["value_mid"] = cost_total
+    cost["value_high"] = cost_total
+    old_cost_note = (
         " value_low and value_high are n/a: the baseline cost is one reconciled total in value_mid, "
         "not a low/mid/high range."
     )
-    if "value_low and value_high are n/a" not in cost["calculation_or_assumption"]:
-        cost["calculation_or_assumption"] = cost["calculation_or_assumption"].rstrip() + cost_note
+    cost_text = cost["calculation_or_assumption"].replace(old_cost_note, "").rstrip()
+    cost_note = (
+        " Cost has no factor range, so low = mid = high: value_low, value_mid and value_high "
+        f"are the same reconciled total from out/fact_costs.csv ({cost_total})."
+    )
+    if "low = mid = high" not in cost_text:
+        cost_text += cost_note
+    cost["calculation_or_assumption"] = cost_text
 
     kwh = _baseline_kwh()
     factor = _market_factor()
@@ -162,24 +184,28 @@ def fill_baseline() -> None:
     growth = by_name["growth_per_year"]
     for level in ("low", "mid", "high"):
         growth[f"value_{level}"] = NA
-    growth["source"] = NA
+    growth["source"] = "docs/traps.md (T-1261)"
     growth["calculation_or_assumption"] = (
-        "n/a. out/ has no company-wide growth rate, so value_low, value_mid, value_high and source are n/a. "
-        "T-1261 (dp-prod 20 to 24 nodes from 1 Oct 2026) is after the baseline and is not a percent for the whole company."
+        "n/a in the value cells: out/ has no company-wide growth rate, and this note is not in the baseline. "
+        "T-1261: dp-prod 20 → 24 nodes from 1 Oct 2026, up to +20 % for dp-prod only (24/20 − 1). "
+        "Do not put 24 nodes in the baseline."
     )
 
     rule = by_name["allocation_rule_shared_costs"]
-    rule["value_low"] = NA
-    rule["value_high"] = NA
+    rule["value_low"] = "n/a (text rule)"
+    rule["value_mid"] = "n/a (text rule)"
+    rule["value_high"] = "n/a (text rule)"
     rule["source"] = (
         "pipeline/pipeline.py (allocation of shared costs); "
         "data/mapping_departments_tools.csv; data/extra/headcount.csv"
     )
     rule["calculation_or_assumption"] = (
-        "n/a for value_low and value_high: the rule is one text, not a low/mid/high range. "
-        "value_mid is the four steps pipeline/pipeline.py writes into the prefilled template: "
-        "department named on the row, else the row's cost centre, else mapping_departments_tools.csv by resource_id, "
-        "else Overhead (9000) by that month's FTE share from headcount.csv; the test account (9100) goes to IT."
+        "n/a (text rule) in value_low, value_mid and value_high. The rule, as pipeline/pipeline.py writes it: "
+        "1) Department named in the row (cloud tags; consuming department in the AI gateway); "
+        "2) else cost centre of the row (licences, hoster); "
+        "3) else mapping_departments_tools.csv by resource_id; "
+        "4) anything still on Overhead (9000) by monthly FTE share from headcount.csv; "
+        "test account (9100, sandboxes) 100% to IT."
     )
 
     for row in rows:
