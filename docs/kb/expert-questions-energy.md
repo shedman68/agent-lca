@@ -1,29 +1,44 @@
-# Questions for Andy (energy / LCA expert)
+# Questions for Andy (energy / LCA expert) – ready to send
 
-- **Task:** R4 / V-support · **Author:** Rashed (with Claude) · **Date:** 21.11.2026 · **Status:** draft – answers to be added with date
-- Context: Rashed, Hakim and Vinzenz worked together in the Sustainable Product Design team; Andy is the person for specific energy questions.
-- Each question says why it matters for the jury and what we assume today (`factors/factors.csv`, `factors/sources.md`).
+- **Task:** R4 / R9 · **Author:** Rashed (with Claude) · **Date:** 21.11.2026 02:45 · **Status:** ready to send – add Andy's answers below with date
+- Andy has no context on the case, so the message starts with a short brief, then our current recommendation for him to confirm or correct.
 
-## Must ask (they change our numbers or our claim)
-1. **Does pausing a cloud server really save the energy we claim?** We count energy = hours × factor and remove the paused hours
-   (attributional). The provider may reuse the capacity. Is that claim acceptable in an LCA review for Scope 3, and how would you word it?
-2. **Idle versus loaded power.** dp-dev runs at 8.7 % use, the GPU at ~6 %. We use one kWh factor per node-hour (assumes ~30 % load) and
-   0.133 kWh per GPU-hour (300-watt class). What idle share of peak power would you use for a cloud node and for a GPU server?
-3. **System boundary.** Our grid factors are life-cycle (incl. upstream), our energy per unit is operation only, and we leave out the
-   embodied emissions of hardware. Is that mix defensible if we say so, or must we align?
-4. **Swiss mix.** We use the consumption mix incl. imports, 0.090 kg CO2/kWh (range 0.057–0.098), not the production mix. Right choice for
-   location-based Scope 3? Which source would you cite?
-5. **Moving a workload from Frankfurt (0.330) to Zurich (0.090).** Can we claim the full difference under location-based accounting?
-6. **Percent reduction under uncertainty.** Baseline CO2 is 2.9 / 6.2 / 15.4 t (low / mid / high). Our package gives −49 / −42 / −40 %.
-   Is «at least −40 % across the range» the right way to state it?
+## Message to send
+Hi Andy, quick expert check for a hackathon this weekend (sprintd Basel, case by ALTYCA). We model a fictitious Basel SME (~112 people) and its
+cloud, servers, AI and SaaS for one year. Its CO2 is about **6.2 t/year** (range 2.9–15.4 t), location-based, Scope 3. We need a package of
+measures that cuts **CO2 by at least 40 %** and cost by 25 %, and a jury will **recalculate it with their own reference numbers**.
 
-## Good to ask (they strengthen the story)
-7. **PUE** 1.14 / 1.21 / 1.32 by provider: apply to storage and network too? Any better public value for Azure Switzerland North and a Swiss hoster?
-8. **AI tokens.** Our range is 0.000038–0.00052 kWh per 1,000 tokens (14×), split by model size and input/output. Which sources do you trust?
-9. **SaaS seats** have no energy factor, so they carry zero CO2 in our baseline. Acceptable, or use a spend-based factor and flag it as low quality?
-10. **Load shifting.** Annual average versus hourly factors: our hourly Swiss profile averages ~50 g, the annual factor is 90 g, so we use the
-    profile for shape only. Is average-hourly good enough, or does it need marginal factors?
-11. **Market-based view.** Every Swiss kWh carries a guarantee of origin and hosters claim «100 % renewable». How would you place that beside
-    the location-based result without greenwashing?
-12. **Data transfer:** 0.001–0.059 kWh/GB. Is a per-GB factor still state of the art, or should network be treated as fixed?
-13. **Our own AI use this weekend:** tokens × token factor – is that a fair estimate, and what would you add (devices, cloud dev tools)?
+**How we calculate:** CO2 = usage (hours, GB, tokens) × energy per unit (kWh) × PUE × grid factor of the data-centre country
+(Switzerland 0.090, Germany 0.330, Ireland 0.257 kg CO2/kWh, life-cycle, consumption mix). We give low / mid / high values for every factor.
+
+**Our risk:** our package saves 42 % on mid values but exactly 40 % on our high values. **Half of the saving comes from one measure:**
+pausing a development data cluster in Frankfurt (16 vCPU / 64 GB nodes) that is busy only **8.7 % of the time** and runs 24/7 today.
+A GPU server (300 W class) at **~6 % utilisation** is the second lever. If our energy per idle hour is wrong, the package may fall below 40 %.
+
+### Please confirm or correct (our recommendation in italics)
+1. **Idle power of a cloud node.** We use one kWh per node-hour (mid value assumes ~30 % average load) for every hour, busy or idle.
+   *Recommendation: keep one factor for the baseline, but for the pause measure count idle hours at ~50–60 % of the loaded node power.*
+   Is that idle share realistic for a cloud VM, or do hyperscalers' idle VMs cost far less because the host is shared?
+2. **Idle power of a GPU server.** *Recommendation: idle at ~25–30 % of peak (300 W card → ~80–100 W incl. its share of the host).*
+   Realistic, and do you know a citable source?
+3. **Does pausing count as a saving?** We remove the paused hours from the company's footprint (attributional). The provider may reuse the capacity.
+   *Recommendation: claim it as the company's Scope 3 reduction and say in one line that system-wide (consequential) savings may be smaller.* Fair?
+4. **Claim under uncertainty.** *Recommendation: say «at least −40 % on low, mid and high factors» and show all three, instead of one number.*
+   Is that the right way to present it to a jury that recalculates?
+5. **Moving the dev cluster from Frankfurt (0.330) to Zurich (0.090).** *Recommendation: claim the full grid difference under location-based
+   accounting, as our backup measure if the pause saves less.* Any catch?
+6. **System boundary.** Grid factors are life-cycle, energy per unit is operation only, hardware (embodied) is left out.
+   *Recommendation: keep it and state it.* Defensible?
+7. **Swiss mix.** *Recommendation: consumption mix incl. imports, 0.090 (range 0.057–0.098), production mix shown as a sensitivity.* Agree, and which source?
+
+### Only if you have time
+8. PUE 1.14 / 1.21 / 1.32 – apply to storage and network too?
+9. AI tokens: 0.000038–0.00052 kWh per 1,000 tokens (14× range) – which source do you trust?
+10. SaaS seats have no energy factor (zero CO2) – acceptable if stated, or use a spend-based factor flagged as low quality?
+11. Hourly Swiss CO2 profile averages ~50 g vs 90 g annual: OK to use it only for the *shape* when shifting jobs in time?
+12. Market-based view: every Swiss kWh carries a guarantee of origin – how to show it beside location-based without greenwashing?
+13. Our own AI use this weekend: tokens × token factor – fair, and what else to add?
+
+Thanks! Even short answers on 1, 2 and 4 would help a lot.
+
+## Answers (fill in with date)

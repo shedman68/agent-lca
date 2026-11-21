@@ -5,6 +5,7 @@
 
 | Date | Decision | Why | Who | Where |
 | --- | --- | --- | --- | --- |
+| 21.11. 02:45 | Rashed owns the app / dashboard (`app/`); Grok (xAI agent) builds it for him on a fork with draft PRs and takes delegated tasks G1–G5; Hakim focuses on analysis | Rashed is the strongest at AI-assisted software engineering; frees Hakim for the CO2 data the app needs | Rashed | chat |
 | 21.11. 00:40 | Every output updates the Notion task board; agents without Notion write «Board: …» in the PR | one place to see status for the team and for Rashed on the phone | Rashed | chat |
 | 21.11. 00:30 | Accept Vinzenz's follow-ups: all grid mids life-cycle (DE 0.344 → 0.330), GPU mid 0.18 → 0.13 from measured use, token split used for AI. CO2 baseline now **6.20 t** mid (was 6.47 t); −40 % target ≈ 2.48 t | consistent system boundary; GPU factor matches the data; smaller-model measure becomes measurable | Rashed | #19 |
 | 21.11. 00:15 | Hard rules enforced by Claude Code: deny edits to `data/` and pushes to `main`; Stop hook requires MATCH + trap guard PASS; `trap-reviewer` subagent before every PR | prompts cannot guarantee zero-exception rules | Rashed | this PR |
