@@ -1,0 +1,15 @@
+,value
+effort_pd,14.0
+effort_chf,15400.0
+chf,133427.0
+chf_pct,28.4
+kwh_mid,12423.0
+co2_low,1422.0
+co2_pct_low,49.0
+co2_mid,2614.0
+co2_pct_mid,42.2
+co2_high,6159.0
+co2_pct_high,40.0
+target_cost_ok,True
+target_co2_ok_mid,True
+budget_ok,True

@@ -40,8 +40,8 @@ The jury recalculates every package against its own reference baseline.
 
 ## Step 0 for every agent: identify who you work for
 Before doing anything else in a session:
-1. Run `git config user.name` and match it to Rashed, Hakim or Vinzenz.
-   If it matches none of them, **ask the human: "Am I working for Rashed, Hakim or Vinzenz?"** Do not guess.
+1. Run `git config user.name` and match it to Rashed, Hakim, Vinzenz or Grok (Grok works for Rashed).
+   If it matches none of them, **ask the human: "Am I working for Rashed, Hakim, Vinzenz or Grok?"** Do not guess.
 2. Open `docs/tasks.md`, read that person's section, and work on their first open task unless they say otherwise.
 3. Work on a branch named `<person>/<task-id>-<short-name>`, for example `vinzenz/V1-grid-mix`.
 4. Commit with that person's git identity. Touch only the folders that person owns (table below).
@@ -50,14 +50,16 @@ Before doing anything else in a session:
    Rashed reviews and merges. When merged, tick the task in `docs/tasks.md` in the same pull request.
 6. End every session with a three-line note in the pull request: done · learned · next.
 
-ChatGPT, Perplexity and Grok without repo access: the human pastes this file plus their section of
+Grok works on a fork of this repo and opens draft pull requests; his brief is `docs/kb/BUILD-overnight-brief.md`.
+Other chat assistants without repo access (ChatGPT, Perplexity): the human pastes this file plus their section of
 `docs/tasks.md` into the chat, and commits the result through Cursor or the GitHub website.
 
 ## Team and ownership
 | Person | Role | Tools | Owns folders | Branch prefix |
 | --- | --- | --- | --- | --- |
-| **Rashed** | Lead: measures package, submission, pitch, merges | Claude Code (cloud) + Cursor | `pipeline/`, `measures/`, `submission/`, `docs/`, `.claude/`, `.cursor/` | `rashed/` |
-| **Hakim** | Analysis and app | Claude Code in VS Code | `analysis/`, `app/` | `hakim/` |
+| **Rashed** | Lead: app / dashboard, measures package, submission, pitch, final review, merges | Claude Code (cloud) + Cursor | `app/`, `pipeline/`, `measures/`, `submission/`, `docs/`, `.claude/`, `.cursor/` | `rashed/` |
+| **Grok** | Software engineer agent working for Rashed (autonomous, xAI): builds the app and takes Rashed's delegated tasks; never merges | own Linux machine, fork of this repo | same folders as Rashed, except `pipeline/`, `.claude/`, `.cursor/` | `grok/` |
+| **Hakim** | Analysis: findings, CO2 per finding, reconciliation; answers for the assistant | Claude Code in VS Code | `analysis/` (changes to `app/` via a PR note to Rashed) | `hakim/` |
 | **Vinzenz** | Energy and CO2 factors with sources | Claude in VS Code (+ Perplexity for research) | `factors/` | `vinzenz/` |
 
 ## Skills: use them, every session
@@ -69,7 +71,7 @@ Project skills in `.claude/skills/` load automatically in Claude Code; Cursor ge
 | **trap-guard** | always, first – before reading free text, writing any number, and before every PR | everyone |
 | greenops-measure | measures and the package (R1, R2, R4) | Rashed |
 | factor-research | factors and sources (V1–V5) | Vinzenz |
-| greenops-app | the Streamlit app (H3–H5) | Hakim |
+| greenops-app | the Streamlit app (H3–H5, G1–G3) | Rashed, Grok |
 
 If your Claude Code has these plugin skills, use them too: `data:explore-data` and `data:validate-data`
 (Hakim, Rashed – checking numbers), `frontend-design` and `dataviz` (Hakim – the app),
@@ -86,6 +88,13 @@ Stop hook in `.claude/settings.json` (no edits to `data/`, no push to `main`; a 
 - Add a row to the folder's `README.md` index in the same pull request. Code and machine-readable files stay where they are
   (`out/`, `factors/factors.csv`, `measures/measures.csv`); the kb file explains them.
 - Decisions go into `docs/kb/decisions.md`, review follow-ups into `docs/kb/reviews.md`. After `git pull`, read the three kb indexes first.
+- **Every output also updates the Notion task board** (https://app.notion.com/p/41e23340962b813b8f16da05f2a90b97): tick what is done, add the PR or kb file, add new
+  open items and blockers, and refresh the status line at the top. Do it right after the kb file or PR, not at the end of the day.
+  If your agent has no Notion access (Hakim, Vinzenz, Grok): append one line per output to `board-notes.md` in your own kb
+  (`analysis/kb/board-notes.md`, `factors/kb/board-notes.md`) and repeat it in the PR description. Format:
+  `Board: <dd.mm. hh:mm> · <person> · <task id> · done | in progress | blocked · <what> · <PR or file> · next: <…> · blocker: <… or none>`
+  Your agent creates the file on first use. Rashed's agent reads these on every review and updates the board.
+  The repo stays the source of truth; the board is the summary.
 
 ## Baseline (verified)
 Baseline year Sep 2025 – Aug 2026: **CHF 470,289** (incl. CHF 6,631 imputed for missing costs).

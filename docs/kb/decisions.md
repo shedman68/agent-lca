@@ -5,6 +5,13 @@
 
 | Date | Decision | Why | Who | Where |
 | --- | --- | --- | --- | --- |
+| 21.11. 10:10 | Keep M5 (dp-prod resized in idle hours) in the package; its sign-off goes on the needs-a-human list | without it cost −22.2 %, CO2 −36.1 % | Rashed | chat |
+| 21.11. 10:10 | T-1261 (24 nodes from Oct 2026): sentence + up-to-+20 % range on the Next year page; baseline unchanged | case asks for the baseline year; jury recalculates on it | Rashed | chat |
+| 21.11. 10:10 | C1 decided after Vinzenz's idle-power factors (≈ 11:00) | margin on high factors is zero | Rashed | chat |
+| 21.11. 10:10 | Merge #26 (package v0) and #29 (Grok's app v2) into main | all checks pass; team works on one version | Rashed | chat; merged as #29 |
+| 21.11. 02:45 | Rashed owns the app / dashboard (`app/`); Grok (xAI agent) builds it for him on a fork with draft PRs and takes delegated tasks G1–G5; Hakim focuses on analysis | Rashed is the strongest at AI-assisted software engineering; frees Hakim for the CO2 data the app needs | Rashed | chat |
+| 21.11. 00:40 | Every output updates the Notion task board; agents without Notion write «Board: …» in the PR | one place to see status for the team and for Rashed on the phone | Rashed | chat |
+| 21.11. 00:30 | Accept Vinzenz's follow-ups: all grid mids life-cycle (DE 0.344 → 0.330), GPU mid 0.18 → 0.13 from measured use, token split used for AI. CO2 baseline now **6.20 t** mid (was 6.47 t); −40 % target ≈ 2.48 t | consistent system boundary; GPU factor matches the data; smaller-model measure becomes measurable | Rashed | #19 |
 | 21.11. 00:15 | Hard rules enforced by Claude Code: deny edits to `data/` and pushes to `main`; Stop hook requires MATCH + trap guard PASS; `trap-reviewer` subagent before every PR | prompts cannot guarantee zero-exception rules | Rashed | this PR |
 | 21.11. 00:00 | `analysis/findings.py` is official step 2 after `pipeline.py`; then verify_baseline and trap_guard. `anthropic` optional; demo runs offline | fast, keeps rule 2 (numbers only via `out/`); offline demo sends no case data anywhere | Rashed | #14, #15 |
 | 21.11. 00:00 | Findings get kWh and CO2 (low/mid/high); the assistant shows CO2 and reads seats from `out/` | needed for R1/R2; closes the review gap on #12 | Rashed | #14, #16 |

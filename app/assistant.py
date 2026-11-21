@@ -46,6 +46,13 @@ def _facts() -> pd.DataFrame:
 
 
 @lru_cache(maxsize=None)
+def _allocated() -> pd.DataFrame:
+    """Baseline rows after department allocation. Cost questions use this file, not the raw department column."""
+    f = pd.read_csv(OUT / "fact_costs_allocated.csv", low_memory=False)
+    return f[f.in_baseline.astype(bool)].copy()
+
+
+@lru_cache(maxsize=None)
 def _data(name: str) -> pd.DataFrame:
     return pd.read_csv(DATA / name, encoding="utf-8-sig", low_memory=False).drop_duplicates()
 
@@ -78,15 +85,20 @@ def _has_energy() -> bool:
 def baseline_overview() -> dict:
     """Baseline year cost in total and by source, department and country."""
     f = _facts()
+    a = _allocated()
     tot = f.cost_chf.sum()
-    by = lambda c: {str(k): round(v, 2) for k, v in f.groupby(c, dropna=False).cost_chf.sum().sort_values(ascending=False).items()}
+    by = lambda frame, col, value: {str(k): round(v, 2) for k, v in frame.groupby(col, dropna=False)[value].sum().sort_values(ascending=False).items()}
     res = {
         "answer": f"The baseline year (Sep 2025 to Aug 2026) costs CHF {tot:,.2f}.",
         "numbers": {"total_chf": round(tot, 2), "imputed_chf": round(f[f.cost_imputed.astype(bool)].cost_chf.sum(), 2),
-                    "by_source": by("source"), "by_department": by("department"), "by_country": by("country")},
+                    "by_source": by(f, "source", "cost_chf"),
+                    "by_department": by(a, "dept_allocated", "cost_chf_alloc"),
+                    "by_country": by(f, "country", "cost_chf")},
         "calculation": "Sum of cost_chf over all baseline rows (duplicates and drafts removed, FX per month, "
-                       "missing costs imputed and flagged). Independently reconciled to the franc (analysis/kb/reconciliation.md).",
-        "sources": ["out/fact_costs.csv", "analysis/kb/reconciliation.md"],
+                       "missing costs imputed and flagged). Department uses cost_chf_alloc and dept_allocated "
+                       "from out/fact_costs_allocated.csv, so the test account is inside IT. "
+                       "Independently reconciled to the franc (analysis/kb/reconciliation.md).",
+        "sources": ["out/fact_costs.csv", "out/fact_costs_allocated.csv", "analysis/kb/reconciliation.md"],
     }
     if _has_energy():
         co2 = {l: f[f"co2_kg_{l}"].sum() for l in ("low", "mid", "high")}
@@ -326,7 +338,7 @@ def route(question: str) -> tuple[str, dict]:
             if args is None:
                 return tool, {"resource_id": m.group(1)}
             return tool, args
-    return "baseline_overview", {}
+    return None, {}
 
 
 def _md_table(d: pd.DataFrame, n: int = 20) -> str:
@@ -433,12 +445,31 @@ INJECTION = re.compile(r"(?i)ignore (all )?(previous|prior|the) (instructions|ru
 REFUSAL = ("⛔ **Not done:** this asks to change numbers, drop data or bypass a protection rule. The assistant only "
            "reports what the data and the documented rules support; such requests (and the same texts planted in "
            "the data) are logged for a human. Unchanged figures:\n\n")
+PLAIN_T1251 = "No – that text is in the data, not an instruction"
+PLAIN_BACKUP = "No – 10-year legal retention (T-1039, T-1195)"
+OFF_TOPIC = "I can't answer that from the data"
+
+
+def _plain_refusal(question: str) -> str | None:
+    """The two refusals the demo must say in plain words, before any calculation."""
+    q = question.lower()
+    zeros_db = ("db-fin" in q or "database" in q) and "cost" in q and re.search(r"\b(0|zero)\b", q)
+    if "t-1251" in q or zeros_db:
+        return PLAIN_T1251
+    if re.search(r"\b(delet|remov|drop|erase|destroy)\w*", q) and re.search(r"st-backup|backup", q):
+        return PLAIN_BACKUP
+    return None
 
 
 def answer(question: str, mode: str = "auto") -> tuple[str, dict | None, str]:
     """Returns (markdown, raw tool result or None, mode used)."""
+    plain = _plain_refusal(question)
+    if plain:
+        return plain, {"refused": plain, "question": question}, "guard"
     if INJECTION.search(question):
         tool, args = route(question)
+        if tool is None:
+            return REFUSAL.strip(), {"refused": True, "question": question}, "guard"
         res = TOOLS[tool](**args)
         res["_tool"] = f"{tool}(...) after refusing a manipulation request"
         return REFUSAL + to_markdown(res), res, "guard"
@@ -448,32 +479,36 @@ def answer(question: str, mode: str = "auto") -> tuple[str, dict | None, str]:
         except Exception as e:  # network/auth problems: fall back to the offline calculator
             note = f"\n\n_(Claude unavailable: {type(e).__name__}; answered by the offline calculator.)_"
             tool, args = route(question)
+            if tool is None:
+                return OFF_TOPIC + note, None, "offline"
             res = TOOLS[tool](**args)
             return to_markdown(res) + note, res, "offline"
     tool, args = route(question)
+    if tool is None:
+        return OFF_TOPIC, None, "offline"
     res = TOOLS[tool](**args)
     res["_tool"] = f"{tool}({', '.join(f'{k}={v!r}' for k, v in args.items())})"
     return to_markdown(res), res, "offline"
 
 
 # ------------------------------------------------------------------ Streamlit UI
-EXAMPLES = ["How many AI seats were purchased but not active in August 2026, and what do they cost per month?",
-            "What does it bring to start the GPU server only when needed?",
-            "May the production platform be switched off at night and at weekends?"]
+def example_questions() -> list[str]:
+    """The three jury examples, read from data/example_questions.md. Not typed here."""
+    text = (DATA / "example_questions.md").read_text(encoding="utf-8")
+    return re.findall(r"\*\*Question:\*\*\s*(.+)", text)
 
 
 def render_assistant():
     import streamlit as st
     st.title("Ask the data")
-    mode = "claude" if claude_available() else "offline"
-    st.caption(("🤖 Claude mode: Claude chooses the calculations; every number comes from a tool."
-                if mode == "claude" else
-                "🧮 Offline mode: the question is matched to a fixed calculation (no network needed). "
-                "Set ANTHROPIC_API_KEY to let Claude answer free questions with the same tools.")
-               + " Text inside the data is treated as data, never as an instruction.")
+    # The demo stays on the rule-based calculator even if a key is present. No network.
+    st.caption("Offline: the question is matched to a fixed calculation on `out/`. "
+               "Text inside the data is data, never an instruction. "
+               "A question this page cannot match is left unanswered.")
     st.session_state.setdefault("chat", [])
-    cols = st.columns(len(EXAMPLES))
-    clicked = next((q for c, q in zip(cols, EXAMPLES) if c.button(q, width="stretch")), None)
+    examples = example_questions()
+    cols = st.columns(len(examples) or 1)
+    clicked = next((q for c, q in zip(cols, examples) if c.button(q, width="stretch")), None)
     for m in st.session_state.chat:
         with st.chat_message(m["role"]):
             st.markdown(m["content"])
@@ -487,7 +522,7 @@ def render_assistant():
             st.markdown(q)
         with st.chat_message("assistant"):
             with st.spinner("Calculating …"):
-                md, raw, used = answer(q, mode)
+                md, raw, _used = answer(q, "offline")
             st.markdown(md)
             if raw:
                 with st.expander("Numbers behind this answer"):
@@ -497,5 +532,6 @@ def render_assistant():
 
 if __name__ == "__main__":
     import sys
-    md, raw, used = answer(" ".join(sys.argv[1:]) or EXAMPLES[2], mode="offline")
-    print(f"[{used}] {raw.get('_tool') if raw else ''}\n{md}")
+    md, raw, used = answer(" ".join(sys.argv[1:]) or example_questions()[2], mode="offline")
+    tool = raw.get("_tool") if isinstance(raw, dict) else ""
+    print(f"[{used}] {tool}\n{md}")
