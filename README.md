@@ -24,7 +24,7 @@ The two case templates and the path-to-operation note are in `submission/` (see 
 
 Real: every cost, energy and CO2 number is computed from the case sample data by `pipeline/`, `analysis/` and `measures/`
 (baseline CHF 470,288.93, verified three ways). Assumptions: energy and grid factors (low / mid / high, sources in `factors/`),
-realisation shares and person-days per measure. Mocked: the «Ask the data» assistant runs offline with prepared answers from `out/`.
+realisation shares and person-days per measure. Limited: the «Ask the data» assistant runs offline as a keyword router that calls the same calculations on `out/`; a Claude mode exists in the code but is off for the demo. Nothing is mocked with invented numbers.
 
 ## AI tools and templates we started from
 
