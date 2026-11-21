@@ -97,7 +97,7 @@ def baseline_overview() -> dict:
         "calculation": "Sum of cost_chf over all baseline rows (duplicates and drafts removed, FX per month, "
                        "missing costs imputed and flagged). Department uses cost_chf_alloc and dept_allocated "
                        "from out/fact_costs_allocated.csv, so the test account is inside IT. "
-                       "Independently reconciled to the franc (analysis/kb/reconciliation.md).",
+                       "Checked against an independent recalculation: exact match (analysis/kb/reconciliation.md).",
         "sources": ["out/fact_costs.csv", "out/fact_costs_allocated.csv", "analysis/kb/reconciliation.md"],
     }
     if _has_energy():
@@ -344,10 +344,37 @@ def route(question: str) -> tuple[str, dict]:
     return None, {}
 
 
+# Plain column labels for answer tables (labels only: the values stay as computed). (English, German)
+COLUMN_LABELS = {
+    "product": ("Product", "Produkt"),
+    "purchased": ("Seats bought", "Gekaufte Lizenzen"),
+    "active_30d": ("Active (30 days)", "Aktiv (30 Tage)"),
+    "idle": ("Idle seats", "Ungenutzte Lizenzen"),
+    "price": ("List price", "Listenpreis"),
+    "chf_per_seat": ("CHF per seat", "CHF pro Lizenz"),
+    "idle_cost_chf_per_month": ("Idle cost (CHF/month)", "Kosten ungenutzt (CHF/Monat)"),
+    "contract_end": ("Contract ends", "Vertragsende"),
+    "notice_days": ("Notice (days)", "Kündigungsfrist (Tage)"),
+}
+
+
+def column_label(col: str) -> str:
+    """Known columns get a plain label (German in German mode); others lose their underscores."""
+    try:
+        import i18n
+        de = bool(i18n.is_de())
+    except Exception:  # outside Streamlit (CLI, tests without a session)
+        de = False
+    if col in COLUMN_LABELS:
+        return COLUMN_LABELS[col][1 if de else 0]
+    text = str(col).replace("_", " ")
+    return text[:1].upper() + text[1:]
+
+
 def _md_table(d: pd.DataFrame, n: int = 20) -> str:
     fmt = lambda v: (f"{v:.4f}" if isinstance(v, float) and abs(v) < 10 else f"{v:,.2f}" if isinstance(v, float)
                      else "" if v is None else str(v))
-    rows = ["| " + " | ".join(map(str, d.columns)) + " |", "|" + "---|" * len(d.columns)]
+    rows = ["| " + " | ".join(column_label(c) for c in d.columns) + " |", "|" + "---|" * len(d.columns)]
     rows += ["| " + " | ".join(fmt(v) for v in r) + " |" for r in d.head(n).itertuples(index=False)]
     return "\n".join(rows)
 
@@ -362,7 +389,7 @@ def to_markdown(res: dict) -> str:
     elif isinstance(nums, dict):
         for k, v in nums.items():            # lists of records and {label: CHF} breakdowns become tables
             if isinstance(v, list) and v and isinstance(v[0], dict) and k != "fixed_and_flexible_jobs":
-                md.append(f"_{k.replace('_', ' ')}_\n\n" + _md_table(pd.DataFrame(v).drop(columns=drop, errors="ignore")))
+                md.append(f"_{column_label(k)}_\n\n" + _md_table(pd.DataFrame(v).drop(columns=drop, errors="ignore")))
             elif isinstance(v, dict) and k.startswith("by_") and k != "by_month":
                 unit = "kg CO2" if "co2" in k else "CHF"
                 md.append(f"_{k.replace('_', ' ')} ({unit})_\n\n"
@@ -463,10 +490,10 @@ PLAIN_SANDBOX = ("No – the 16 sandbox rows in aws_costs.csv are real paid cost
 OFF_TOPIC = "I can't answer that from the data"
 
 PLAIN_GPU = ("No – it is not switched off for good: the quarterly training on days 1–3 of Jan, Apr, Jul and Oct needs the "
-             "GPU server (T-1101). On demand with automatic start before each window is possible (measure M2). "
+             "GPU server (T-1101). On demand with automatic start before each window is possible (optimisation M2). "
              "Human in the loop: Head of Consulting decides")
 PLAIN_VMTEST = ("No, not completely – dr-failover's 4 vCPU run inside vm-test (T-1094) and nothing changes during the "
-                "March release freeze (T-1204). Scaling back the extra project servers is measure M4. "
+                "March release freeze (T-1204). Scaling back the extra project servers is optimisation M4. "
                 "Human in the loop: Head of IT decides")
 
 # Verbs that retire or stop a resource. No bare "off" ("trade-off"), no "drop/remove" far from the resource.

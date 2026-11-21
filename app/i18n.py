@@ -18,9 +18,9 @@ DE: dict[str, str] = {
     # navigation and sidebar
     "Overall picture": "Gesamtbild",
     "Findings": "Befunde",
-    "Measures package": "Massnahmenpaket",
+    "Optimisation package": "Massnahmenpaket",
     "Package": "Paket",
-    "Needs a human": "Braucht einen Menschen",
+    "Human in the loop": "Mensch entscheidet (Human in the loop)",
     "Ask the data": "Frag die Daten",
     "Next year": "Nächstes Jahr",
     "Reload data": "Daten neu laden",
@@ -101,18 +101,18 @@ DE: dict[str, str] = {
     "How cost was calculated": "So wurden die Kosten berechnet",
     "How the budget was calculated": "So wurde das Budget berechnet",
     "Energy saved, mid factor only:": "Eingesparte Energie, nur mittlerer Faktor:",
-    "(the measure file stores one energy column)": "(die Massnahmendatei speichert eine Energiespalte)",
+    "(the optimisation file stores one energy column)": "(die Massnahmendatei speichert eine Energiespalte)",
     "Chosen package in": "Gewähltes Paket in",
     "Unticking a row shows the trade-off against that package.": "Abwählen einer Zeile zeigt den Zielkonflikt zu diesem Paket.",
     "Sensitivity: if paused hours count at idle power": "Sensitivität: pausierte Stunden mit Leerlaufleistung",
-    "Tick measures on or off": "Massnahmen an- oder abwählen",
+    "Tick optimisations on or off": "Massnahmen an- oder abwählen",
     "Reset to the chosen package": "Auf das gewählte Paket zurücksetzen",
     "Protection rule, change and the calculation on each row": "Schutzregel, Änderung und Berechnung pro Zeile",
     # needs a human
-    "Text that tries to steer an AI": "Text, der eine KI steuern will",
+    "Prompt injection: text that tries to steer an AI": "Prompt Injection: Text, der eine KI steuern will",
     "Looks idle, must not be switched off": "Wirkt ungenutzt, darf nicht abgeschaltet werden",
     "Sources that disagree": "Quellen, die sich widersprechen",
-    "One-off costs: real, but never a recurring saving": "Einmalkosten: echt, aber nie eine wiederkehrende Einsparung",
+    "One-time costs: real, but never a yearly saving": "Einmalkosten: echt, aber nie eine jährliche Einsparung",
     "Notice dates": "Kündigungstermine",
     "Also respect": "Ebenfalls beachten",
     # ask the data
@@ -130,7 +130,7 @@ DE: dict[str, str] = {
     "Cost saved": "Kosten eingespart",
     "Energy saved, mid": "Energie eingespart, mittel",
     "Effort": "Aufwand",
-    "Energy saved uses the mid factor only (the measure file stores one energy column).":
+    "Energy saved uses the mid factor only (the optimisation file stores one energy column).":
         "Energieeinsparung nur mit mittlerem Faktor (die Massnahmendatei speichert eine Energiespalte).",
     # phone polish: short labels and plain words. No digits, so German shows the same figures.
     "CO2 per year": "CO2 pro Jahr",
@@ -146,7 +146,7 @@ DE: dict[str, str] = {
         "Adressierbar meint diesen ungenutzten Teil.",
     "Country is where the work runs. CO2 uses that country's electricity mix, not a certificate. AI providers and SaaS are «EU mixed».":
         "Das Land ist dort, wo die Arbeit läuft. CO2 nutzt den Strommix dieses Landes, kein Zertifikat. KI-Anbieter und SaaS sind «EU mixed».",
-    "On a phone, swipe the measure table sideways. The gauges above follow the ticks.":
+    "On a phone, swipe the optimisation table sideways. The gauges above follow the ticks.":
         "Auf dem Telefon die Massnahmentabelle seitlich wischen. Die Anzeigen oben folgen den Häkchen.",
     "Our AI use during the sprint": "Unsere KI-Nutzung im Sprint",
     "location-based CO2, mid factors": "standortbasiertes CO2, mittlere Faktoren",
@@ -171,11 +171,11 @@ DE: dict[str, str] = {
     "Connect": "Verbinden",
     "Extra sources used:": "Weitere Quellen genutzt:",
     "Training days restart paused machines. Night jobs and month-end keep production at full size. "
-    "March keeps the test environment unchanged. Backups stay.":
+    "The test environment stays unchanged 1–31 March 2026 (T-1204): release freeze and acceptance test. Backups stay.":
         "Trainingstage starten pausierte Maschinen neu. Nachtjobs und Monatsende halten die Produktion auf voller Grösse. "
-        "Im März bleibt die Testumgebung unverändert. Sicherungen bleiben.",
-    "Flagged, not hidden. The plan keeps the detailed sources. A person decides.":
-        "Markiert, nicht versteckt. Der Plan behält die detaillierten Quellen. Ein Mensch entscheidet.",
+        "Vom 1. bis 31. März 2026 bleibt die Testumgebung unverändert (T-1204): Release-Freeze und Abnahmetest. Sicherungen bleiben.",
+    "Flagged, not hidden. The plan keeps the detailed sources. Human in the loop: a person decides.":
+        "Markiert, nicht versteckt. Der Plan behält die detaillierten Quellen. Human in the loop: ein Mensch entscheidet.",
     "How next year was calculated": "So wurde das nächste Jahr berechnet",
     "Source: the sentence is stored in the data. It was read as data and not followed.":
         "Quelle: der Satz steht in den Daten. Er wurde als Daten gelesen und nicht befolgt.",
@@ -186,7 +186,7 @@ DE: dict[str, str] = {
     "Story mode": "Story-Modus",
     "Light mode (projector)": "Heller Modus (Beamer)",
     "The plan meets all three targets.": "Der Plan erreicht alle drei Ziele.",
-    "Three places hold most of what you can save.": "Drei Stellen bringen den Grossteil der Einsparung.",
+    "Three places give most of the savings.": "Drei Stellen bringen den Grossteil der Einsparung.",
     "What we did not touch, and why": "Was wir nicht anfassen, und warum",
     "Next: GreenOps agents": "Als Nächstes: GreenOps-Agenten",
     "Roadmap · not built yet": "Roadmap · noch nicht gebaut",

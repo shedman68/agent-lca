@@ -46,6 +46,15 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+button[data-variant="segmented_control"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border-color:var(--line,#262b33) !important;min-height:44px;}
+button[data-variant="segmented_control"] *{color:inherit !important;}
+button[data-variant="segmented_control"][aria-checked="true"]{background:var(--teal,#00cc99) !important;color:var(--on-teal,#0d0f12) !important;border-color:var(--teal,#00cc99) !important;font-weight:700;}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"]{min-width:0;max-width:100%;}
+[data-testid="stChatMessage"] table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-collapse:collapse;font-size:14px;}
+[data-testid="stChatMessage"] th,[data-testid="stChatMessage"] td{white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:none;padding:6px 10px;vertical-align:top;}
+[data-testid="stChatMessage"] th{min-width:72px;color:var(--ink,#f2f4f5) !important;font-weight:700;border-bottom:1px solid var(--line,#262b33) !important;}
+[data-testid="stChatMessage"] td{color:var(--ink2,#c4cad1) !important;border-bottom:1px solid var(--line,#262b33) !important;}
+[data-testid="stChatMessage"] th,[data-testid="stChatMessage"] td{background:transparent !important;}
 [data-testid="stFileUploaderDropzone"]{background:var(--card2,#1c2026) !important;border:1px dashed var(--line,#262b33) !important;color:var(--ink2,#c4cad1) !important;}
 [data-testid="stFileUploaderDropzone"] span,[data-testid="stFileUploaderDropzone"] small,[data-testid="stFileUploaderDropzoneInstructions"] *{color:var(--ink2,#c4cad1) !important;}
 [data-testid="stFileUploaderDropzone"] button{background:var(--card,#16191e) !important;color:var(--ink,#f2f4f5) !important;border:1px solid var(--line,#262b33) !important;}

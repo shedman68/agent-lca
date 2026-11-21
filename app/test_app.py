@@ -713,7 +713,7 @@ class StoryTests(unittest.TestCase):
             for el in getattr(page, name, []) or []:
                 html_bits.append(getattr(el, "value", "") or getattr(el, "body", "") or "")
         blob = blob + " " + " ".join(html_bits)
-        self.assertIn("March keeps the test environment unchanged", blob)
+        self.assertIn("The test environment stays unchanged 1–31 March 2026 (T-1204)", blob)
         self.assertIn("Contradictions flagged", blob)
         self.assertNotIn("One contradiction flagged", blob)
         self.assertIn("provider monthly report", blob)
@@ -799,3 +799,104 @@ class CopyConnectRoadmapTests(unittest.TestCase):
         self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", blob)
         self.assertIn("Roadmap · not built yet", blob)
         self.assertFalse(any("connect" in b.label.lower() and "sample" not in b.label.lower() for b in page.button))
+
+
+class PlanSortTests(unittest.TestCase):
+    """Order of the optimisation cards on Your plan: sorting only, totals never change."""
+
+    def _ps(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import plan_sort
+        return plan_sort
+
+    def _rows(self):
+        import pandas as pd
+        return pd.DataFrame({
+            "measure_id": ["M2", "M1", "M3", "M8", "M7"],
+            "description": ["b", "a", "c", "licence x", "licence y"],
+            "savings_co2_kg_location_based": [100.0, 100.0, 50.0, None, 0.0],
+            "savings_cost_chf_per_year": [1000.0, 2000.0, 9000.0, 5000.0, 5000.0],
+        })
+
+    def test_co2_sort_breaks_ties_by_chf_then_id_and_keeps_licences(self):
+        ps = self._ps()
+        out = ps.sort_rows(self._rows(), "savings_co2_kg_location_based", "co2")
+        self.assertEqual(list(out["measure_id"]), ["M1", "M2", "M3", "M7", "M8"])  # licences last, kept
+
+    def test_cost_sort_breaks_ties_by_co2_then_id(self):
+        ps = self._ps()
+        out = ps.sort_rows(self._rows(), "savings_co2_kg_location_based", "cost")
+        self.assertEqual(list(out["measure_id"]), ["M3", "M7", "M8", "M1", "M2"])
+
+    def test_combined_share_is_co2_share_plus_chf_share(self):
+        ps = self._ps()
+        out = ps.sort_rows(self._rows(), "savings_co2_kg_location_based", "both").set_index("measure_id")
+        self.assertAlmostEqual(out.loc["M3", "_share"], 50 / 250 + 9000 / 22000)
+        self.assertAlmostEqual(out.loc["M8", "_share"], 0 + 5000 / 22000)
+        self.assertEqual(list(out.index)[0], "M3")
+
+    def test_input_rows_are_not_changed(self):
+        ps = self._ps()
+        rows = self._rows()
+        before = rows.copy()
+        ps.sort_rows(rows, "savings_co2_kg_location_based", "both")
+        self.assertTrue(rows.equals(before))
+
+    def test_toggle_keeps_gauges_and_budget(self):
+        import re
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
+        at.run()
+        page = _open(at, "your-plan")
+
+        def snapshot(p):
+            html = " ".join(h.proto.body for h in p.get("html"))
+            gauges = re.findall(r"−\d+\.\d %|\d+\.\d of 15|of 16,500 CHF|15,950", html)
+            cards = re.findall(r'<div class="gx-card "><h4>(.*?)</h4>', html)
+            return gauges, cards, html
+
+        g0, c0, _ = snapshot(page)
+        self.assertTrue(c0, "no optimisation cards")
+        self.assertIn("Pause the development data platform", c0[0])  # biggest CO2 saving first (default)
+        page.session_state["plan_sort"] = "both"
+        page = _open(page, "your-plan")
+        g1, c1, html1 = snapshot(page)
+        self.assertEqual(g0, g1)
+        self.assertEqual(sorted(c0), sorted(c1))
+        self.assertTrue(page.get("vega_lite_chart"), "the CO2 and cost map is missing")
+        page.session_state["plan_sort"] = "cost"
+        page = _open(page, "your-plan")
+        g2, c2, _ = snapshot(page)
+        self.assertEqual(g0, g2)
+        self.assertIn("Scale the production data platform down", c2[0])  # biggest CHF saving first
+
+
+class ReviewFixesTests(unittest.TestCase):
+    def test_seats_table_has_plain_labels_and_same_values(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        from assistant import answer, idle_ai_seats
+        md, _res, _mode = answer("How many AI subscription seats were purchased but not active in August 2026, "
+                                 "and what do they cost per month?", mode="offline")
+        header = "| Product | Seats bought | Active (30 days) | Idle seats | List price | CHF per seat | " \
+                 "Idle cost (CHF/month) | Contract ends | Notice (days) |"
+        self.assertIn(header, md)
+        for r in idle_ai_seats()["numbers"]["per_product"]:
+            self.assertIn(f"| {r['product']} | {r['purchased']} | {r['active_30d']} | {r['idle']} |", md)
+
+    def test_frankfurt_ratio_comes_from_factors(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        from streamlit.testing.v1 import AppTest
+        idx = data.factors_table().set_index("key")
+        ratio = float(idx.loc["grid_DE", "value_mid"]) / float(idx.loc["grid_CH", "value_mid"])
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
+        at.run()
+        page = _open(at, "where-you-stand")
+        blob = " ".join(h.proto.body for h in page.get("html"))
+        self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich", blob)
+        kwh = float(data.energy_totals()["kwh_mid"])
+        self.assertIn(f"{kwh / 1000:,.0f} MWh of electricity a year", blob)
