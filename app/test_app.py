@@ -914,3 +914,72 @@ class ReviewFixesGermanTests(unittest.TestCase):
             self.assertEqual(i18n.tr("Sort"), "Sortieren")
             self.assertEqual(i18n.tr("Biggest CO2 saving"), "Grösste CO2-Einsparung")
             self.assertTrue(i18n.tr(cap, label=False).startswith("Sortiert nach Anteil"))
+
+
+class PresenterModeTests(unittest.TestCase):
+    """Story mode = presenter mode: 21 beats, forward and back, never an exception."""
+
+    def _app(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
+        at.session_state["story_mode"] = True
+        return at.run()
+
+    def _url(self, at):
+        return at._registered_pages[at._page_hash].get("url_pathname") if getattr(at, "_page_hash", None) else ""
+
+    def test_walk_all_21_beats_forward_and_back(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import story
+        at = self._app()
+        self.assertFalse(at.exception, at.exception)
+        expected_url = {"about": "", "connect": "connect", "where-you-stand": "where-you-stand", "your-plan": "your-plan",
+                        "stay-on-track": "stay-on-track"}
+        seen = []
+        for n in range(1, story.TOTAL + 1):
+            self.assertEqual(at.session_state["story_beat"], n)
+            self.assertFalse(at.exception, f"beat {n}: {at.exception}")
+            html = " ".join(getattr(h.proto, "body", "") for h in at.get("html"))
+            self.assertIn(f"{n} / {story.TOTAL}", html)
+            seen.append(n)
+            b = story.beat(n)
+            if n == 6:
+                self.assertTrue(at.session_state["connected"])
+            if n in (11, 12):
+                self.assertEqual(at.session_state["factor_level_label"], {11: "Low factors", 12: "High factors"}[n])
+            if n == 15:
+                self.assertEqual(at.session_state["plan_sort"], "cost")
+            if n == 17:
+                shown = " ".join(m.value for m in at.markdown)
+                self.assertIn("Refused.", shown)
+                self.assertIn("Human in the loop", shown)
+            if n < story.TOTAL:
+                at = at.button(key="story_next").click().run()
+                at = at.run()  # the page switch lands on the next run
+        self.assertEqual(seen, list(range(1, story.TOTAL + 1)))
+        for n in range(story.TOTAL, 1, -1):
+            at = at.button(key="story_prev").click().run()
+            at = at.run()
+            self.assertFalse(at.exception, f"back to beat {n - 1}: {at.exception}")
+            self.assertEqual(at.session_state["story_beat"], n - 1)
+
+    def test_gauges_same_after_low_high_mid(self):
+        import re
+        at = self._app()
+        for _ in range(9):  # to beat 10
+            at = at.button(key="story_next").click().run().run()
+        snap = lambda a: re.findall(r"−\\d+\\.\\d %|\\d+\\.\\d of 15", " ".join(getattr(h.proto, "body", "") for h in a.get("html")))
+        g10 = snap(at)
+        for _ in range(3):  # 11 low, 12 high, 13 mid
+            at = at.button(key="story_next").click().run().run()
+        self.assertEqual(at.session_state["story_beat"], 13)
+        self.assertEqual(snap(at), g10)
+
+    def test_story_off_has_no_presenter_controls(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        keys = [getattr(b, "key", None) for b in at.button]
+        self.assertNotIn("story_next", keys)
+        html = " ".join(getattr(h.proto, "body", "") for h in at.get("html"))
+        self.assertNotIn("opacity:.35", html)

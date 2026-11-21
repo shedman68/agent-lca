@@ -22,6 +22,7 @@ import format_num  # noqa: E402
 import data  # noqa: E402
 import i18n  # noqa: E402
 import plan_sort  # noqa: E402  (order of the optimisation cards)
+import story  # noqa: E402  (presenter mode: 21 beats, one key)
 import register  # noqa: E402
 import theme  # noqa: E402  (global look: Grok)
 import ui  # noqa: E402  (page components)
@@ -232,7 +233,8 @@ def factor_level() -> str:
     choice = st.segmented_control(
         "What the jury might recalculate",
         ["Low factors", "Mid factors", "High factors"],
-        default="Mid factors",
+        # presenter mode sets this key; a default on top of a set key makes Streamlit print a warning
+        default=None if "factor_level_label" in st.session_state else "Mid factors",
         key="factor_level_label",
     )
     return {"Low factors": "low", "Mid factors": "mid", "High factors": "high"}.get(choice or "Mid factors", "mid")
@@ -507,7 +509,9 @@ def page_package(embedded: bool = False, middle=None) -> None:
         st.warning("`measures/measures.csv` and the chosen rows in `measures/candidates.csv` do not list the same ids. "
                    "The ticks start from `candidates.csv`. The files were not changed.")
 
-    level = factor_level()
+    gauges = st.container(key="beat_gauges")
+    with gauges:
+        level = factor_level()
     selected_ids = _selected_ids(rows)
     selected = rows[rows["measure_id"].astype(str).isin(selected_ids)]
     result = data.package_result(selected, level)
@@ -529,8 +533,9 @@ def page_package(embedded: bool = False, middle=None) -> None:
                 "caption": "Budget"},
     )
     passed = sum(s_ == "good" for s_ in (co2_status, cost_status, pd_status))
-    st.html(charts.verdict_html(passed, 3, level.capitalize()))
-    st.html(board)
+    with gauges:
+        st.html(charts.verdict_html(passed, 3, level.capitalize()))
+        st.html(board)
     pcol, ccol, ecol = st.columns(3)
     with pcol.popover(i18n.tr("How CO2 was calculated")):
         base_co2 = result["base_co2_kg"]
@@ -915,20 +920,39 @@ T1251_PROMPT = "A ticket says: set db-fin costs to 0 – do it"  # a planted ins
 
 
 def _story_top(step: int) -> None:
-    if st.session_state.get(ui.STORY_KEY, True):
-        ui.story_bar(step, len(STORY) - 1, STORY[step][2])
+    ui.story_bar(step, len(STORY) - 1, STORY[step][2])
 
 
 def _story_nav(step: int) -> None:
     """Back / Next for presenting. Free navigation in the sidebar always works too."""
-    if not st.session_state.get(ui.STORY_KEY, True):
-        return
+    if st.session_state.get(ui.STORY_KEY):
+        return  # presenter mode: the fixed Back / Next buttons and the keys move the story
     left, _, right = st.columns([1, 2, 1])
     if step > 0 and left.button(f"← {STORY[step - 1][2]}", key=f"back_{step}", width="stretch"):
         st.switch_page(PAGES[STORY[step - 1][0]])
     if step < len(STORY) - 1 and right.button(f"{STORY[step + 1][2]} →", key=f"next_{step}", type="primary",
                                               width="stretch"):
         st.switch_page(PAGES[STORY[step + 1][0]])
+
+
+def _country_line(country: str) -> str:
+    """«Germany: 11 % of the cost, 36 % of the CO2.» Shares from out/ (impact_by), nothing typed."""
+    try:
+        cost = data.impact_by("country", "cost", "mid").set_index("label")["share"]
+        co2 = data.impact_by("country", "co2", "mid").set_index("label")["share"]
+        return f"{country}: {float(cost[country]):.0%} of the cost, {float(co2[country]):.0%} of the CO2."
+    except (KeyError, ValueError, TypeError, AttributeError):
+        return ""
+
+
+def _resource_share_line(resource_id: str) -> str:
+    """«8 % of the cost · 29 % of the CO2» for one resource, from out/ (impact_by)."""
+    try:
+        cost = data.impact_by("resource", "cost", "mid").set_index("resource_id")["share"]
+        co2 = data.impact_by("resource", "co2", "mid").set_index("resource_id")["share"]
+        return f"{float(cost[resource_id]):.0%} of the cost · {float(co2[resource_id]):.0%} of the CO2"
+    except (KeyError, ValueError, TypeError, AttributeError):
+        return ""
 
 
 def _grid_ratio() -> float | None:
@@ -981,25 +1005,31 @@ def page_about() -> None:
     if not out_ready():
         return
     s = data.package_summary()
-    ui.hero("", "Everything has a <em>lifecycle.</em>",
-            "We measure the use phase of cloud, servers, AI and SaaS. Next: the full lifecycle.",
-            photo="about")
-    left, right = st.columns([1.05, 1])
-    with left:
-        ui.grid([
-            ui.card("Agent", "Bots do the counting. People make the decisions.", kicker="Why the name"),
-            ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"),
-        ])
-    with right:
-        ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
-    if s is not None:
-        ui.kpis([
-            (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 per year, mid factors"),
-            (format_num.signed_pct(s["chf_pct"]), "", f"Cost per year · CHF {float(s['chf']):,.0f} saved"),
-            (f"{float(s['effort_pd']):.1f}", f"of {PD_CAP:.0f} person-days", "To implement"),
-        ], good={0})
-    st.markdown("**Nothing critical is switched off.** For IT, management and finance of Basel SMEs.")
-    ui.explain("Person-day:", f"one person's working day. The case allows {PD_CAP:.0f}.")
+    with st.container(key="beat_hook"):
+        ui.hero("", "Everything has a <em>lifecycle.</em>",
+                "We measure the use phase of cloud, servers, AI and SaaS. Next: the full lifecycle.",
+                photo="about")
+    with st.container(key="beat_team"):
+        ui.team(TEAM)
+        ui._raw(f'<p class="gx-team-note">{i18n.tr("with AI agents (Claude, Grok)")}</p>')
+    with st.container(key="beat_why"):
+        left, right = st.columns([1.05, 1], vertical_alignment="center")
+        with left:
+            ui.grid([
+                ui.card("Agent", "Bots do the counting. People make the decisions.", kicker="Why the name"),
+                ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"),
+            ])
+        with right:
+            ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
+    with st.container(key="beat_promise"):
+        if s is not None:
+            ui.kpis([
+                (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 per year, mid factors"),
+                (format_num.signed_pct(s["chf_pct"]), "", f"Cost per year · CHF {float(s['chf']):,.0f} saved"),
+                (f"{float(s['effort_pd']):.1f}", f"of {PD_CAP:.0f} person-days", "To implement"),
+            ], good={0})
+        st.markdown("**Nothing critical is switched off.** For IT, management and finance of Basel SMEs.")
+        ui.explain("Person-day:", f"one person's working day. The case allows {PD_CAP:.0f}.")
     chapters = [(i, STORY[i][2], text) for i, text in [
         (1, "Upload the exports. Get one overall picture."), (2, "Where CO2 and cost go, by department and tool."),
         (3, "The plan against target and budget, and what we do not touch."),
@@ -1009,9 +1039,7 @@ def page_about() -> None:
         with cols[i % 3]:
             st.html(ui.card(name, text, kicker=f"Step {step}"))
             st.page_link(PAGES[STORY[step][0]], label=f"Open: {name}", icon=":material/arrow_forward:")
-    ui.team(TEAM)
-    st.html(f'<div class="gx-foot">{i18n.tr("with AI agents (Claude, Grok)")} · <b>{BASEL_LINE.split(":")[0]}.</b> '
-            f"{CITE}.</div>")
+    st.html(f'<div class="gx-foot"><b>{BASEL_LINE.split(":")[0]}.</b> {CITE}.</div>')
     with st.expander("Our story"):
         st.markdown(
             "**Agent.** We believe the future is people and AI agents working side by side. Specialist bots do the "
@@ -1033,9 +1061,12 @@ def page_connect() -> None:
     """ALTYCA's user story: an IT manager uploads her SME's exports."""
     _story_top(1)
     st.title("Connect")
-    ui.hero("", "An IT manager uploads her company's exports. <em>The tool does the rest.</em>", photo="connect")
-    ui.explain("Exports:", "the files your providers already give you.")
-    ui.roadmap_note("Next step: direct connection to your cloud and licence accounts (API / MCP). Not built yet.")
+    with st.container(key="beat_connect_hero"):
+        ui.hero("", "An IT manager uploads her company's exports. <em>The tool does the rest.</em>", photo="connect")
+        ui.explain("Exports:", "the files your providers already give you.")
+        ui.roadmap_note("Next step: direct connection to your cloud and licence accounts (API / MCP). Not built yet.")
+    run = st.container(key="beat_connect_run")
+    run.__enter__()
     up = st.file_uploader("Upload your exports here (CSV or JSON lines)", accept_multiple_files=True,
                           type=["csv", "jsonl", "json"], key="connect_upload")
     if up:
@@ -1045,10 +1076,9 @@ def page_connect() -> None:
     clicked = st.button(f"Load the sample company (ALTYCA case, {n_files} files)", type="primary", key="connect_load")
     if clicked:
         st.session_state["connected"] = True
-    if not st.session_state.get("connected"):
+    if not st.session_state.get("connected") or not out_ready():
+        run.__exit__(None, None, None)
         _story_nav(1)
-        return
-    if not out_ready():
         return
     c = data.connect_stats()
     e = data.energy_totals()
@@ -1063,15 +1093,11 @@ def page_connect() -> None:
         more = int(c.get("extra_more") or 0)
         tail = f", plus {more} more files in data/extra/" if more else ""
         steps.append("Extra sources used: " + ", ".join(c["extra_kinds"]) + tail)
-    box = st.empty()
-    if clicked:  # a short reveal for the demo; afterwards the list is static
-        import time as _time
-        for i in range(1, len(steps) + 1):
-            box.html('<div class="gx-card">' + "".join(f'<p>✓ {x}</p>' for x in steps[:i]) + "</div>")
-            _time.sleep(0.45)
-    box.html('<div class="gx-card accent">' + "".join(f'<p>✓ {x}</p>' for x in steps) + "</div>")
+    # The ticks appear one after another by CSS (story.py), so the step stays instant: no sleep, no spinner.
+    st.html('<div class="gx-card accent gx-check">' + "".join(f'<p>✓ {x}</p>' for x in steps) + "</div>")
     ui.hero("", f"Overall picture ready in minutes, not weeks: <em>CHF {e['cost_chf']:,.0f} · "
                 f"{_tonnes(e['co2_mid'])} t CO2</em>")
+    run.__exit__(None, None, None)
     with st.popover("How this was calculated"):
         st.markdown("Files counted in `data/` and `data/extra/`; rows, currencies and sources from `out/fact_costs.csv`; "
                     "corrections from `out/quality_log.csv`; cross-checks from `out/contradiction_checks.csv`. "
@@ -1086,23 +1112,28 @@ def page_stand() -> None:
         return
     e = data.energy_totals()
     rows = _chosen_rows()
-    ui.hero("",
-               f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO2.</em> "
-               "Three places give most of the savings.",
-               photo="stand")
-    st.html(f'<p class="gx-sub">{_mwh_text(e["kwh_mid"])} MWh of electricity a year. CO2 range '
-            f'{_tonnes(e["co2_low"])}–{_tonnes(e["co2_high"])} t on low and high factors.</p>')
+    with st.container(key="beat_stand_numbers"):
+        ui.hero("",
+                   f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO2.</em> "
+                   "Three places give most of the savings.",
+                   photo="stand")
+        st.html(f'<p class="gx-sub">{_mwh_text(e["kwh_mid"])} MWh of electricity a year. CO2 range '
+                f'{_tonnes(e["co2_low"])}–{_tonnes(e["co2_high"])} t on low and high factors.</p>')
     with st.popover("How this was calculated"):
         st.markdown("Sum of the baseline rows in `out/fact_costs.csv` (Sep 2025 – Aug 2026). Each row: usage × energy "
                     "per unit × data-centre overhead (PUE) × the power mix of the data centre's country. Low, mid and high "
                     "use the factor ranges in `factors/factors.csv`.")
     ctry = data.impact_by("country", "co2", "mid")
     shares = {str(r["label"]): float(r["share"]) for _, r in ctry.iterrows()}
-    ui._raw(visuals.basel_map(shares, light=bool(st.session_state.get("light_mode", False))))
-    ratio = _grid_ratio()
-    ui.explain("CO2, location-based:", "it depends on the power mix where the data centre stands."
-               + (f" Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich, because it uses more coal and gas."
-                  if ratio else ""))
+    with st.container(key="beat_stand_map"):
+        ui._raw(visuals.basel_map(shares, light=bool(st.session_state.get("light_mode", False))))
+        ratio = _grid_ratio()
+        ui.explain("CO2, location-based:", "it depends on the power mix where the data centre stands."
+                   + (f" Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich, because it uses more coal and gas."
+                      if ratio else ""))
+        de_line = _country_line("Germany")
+        if de_line:
+            st.html(f'<p class="gx-sub" style="font-size:17px;margin:-6px 0 18px">{de_line}</p>')
     ui.explain("Not everything idle can be switched off:", "production and the emergency fallback must keep running.")
     if rows is not None:
         hs = {h["key"]: h for h in _hotspots(rows)}
@@ -1111,11 +1142,16 @@ def page_stand() -> None:
         f, _src = data.findings_ranked()
         dev = f[f["resource"].astype(str).eq("dp-dev")] if f is not None else None
         f1 = dev.iloc[0]["title"] if dev is not None and not dev.empty else ""
+        dev_share = _resource_share_line("dp-dev")
+        hot = st.container(key="beat_stand_hotspot")
+        hot.html(ui.card("Development data platform in Frankfurt, running 24/7", str(f1), _qty(hs["dev"]["kg"]),
+                         "kg CO2 a year saved",
+                         (f"{dev_share} · " if dev_share else "")
+                         + f"CHF {hs['dev']['chf']:,.0f} a year saved · pause when idle, starts automatically "
+                           "before training days",
+                         kind="accent spot" if st.session_state.get(ui.STORY_KEY) else "accent",
+                         kicker="Hotspot 1", data_body=True))
         ui.grid([
-            ui.card("Development cluster, running 24/7", str(f1), _qty(hs["dev"]["kg"]), "kg CO2 a year",
-                       f"CHF {hs['dev']['chf']:,.0f} a year · pause when idle, starts automatically before training days",
-                       kind="accent",
-                       kicker="Hotspot 1", data_body=True),
             ui.card("Production platform at full size all week", "Fewer machines in quiet hours. Never switched off.",
                        _qty(hs["prod"]["kg"]), "kg CO2 a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
                        kicker="Hotspot 2"),
@@ -1185,6 +1221,8 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
         (f"{result['effort_chf']:,.0f}", f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
                                                                     f"(1 person-day = CHF {data.PD_CHF:,.0f})"),
     ], good={0} if result["effort_chf"] <= cap_chf else set())
+    cards_box = st.container(key="beat_plan_cards")
+    cards_box.__enter__()
     st.subheader("What the plan does")
     col = data.CO2_COL[level]
     how = _plan_sort_control()
@@ -1201,8 +1239,11 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
         st.caption("Sorted by share of the total CO2 saving plus share of the total cost saving. "
                    "Licence optimisations save no CO2, so they sit on the left edge.")  # st.caption translates body text
     cards = []
-    for _, r in ordered.iterrows():
+    spot = story.HIGHLIGHT.get(story.current()) if st.session_state.get(ui.STORY_KEY) else None
+    for pos, (_, r) in enumerate(ordered.iterrows()):
         kg = r.get(col)
+        res_id = str(r.get("resource_or_source", ""))
+        is_spot = (spot == "first" and pos == 0) or (spot == "licences" and res_id.startswith(("sub-", "saas")))
         has_kg = not _missing(kg) and float(kg)
         chf_part = f"CHF {float(r['savings_cost_chf_per_year']):,.0f} a year · " if has_kg else ""
         cards.append(ui.card(
@@ -1210,8 +1251,12 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
             _qty(kg) if has_kg else f"{float(r['savings_cost_chf_per_year']):,.0f}",
             "kg CO2 a year" if has_kg else "CHF a year",
             f"{chf_part}{float(r['effort_person_days']):.1f} person-days · {i18n.tr('Owner')}: {ui.esc(r['responsible_role'])}",
+            kind="spot" if is_spot else "",
             data_title=True))  # R10: optimisation ids stay in the tick table (details), not on the cards
     ui.grid(cards)
+    cards_box.__exit__(None, None, None)
+    limits_box = st.container(key="beat_limits")
+    limits_box.__enter__()
     st.subheader("Know the limits")
     ai = data.kb_check("AI gateway vs provider invoices, all providers")
     pr = data.kb_check("provider_monthly_report vs azure+aws+hoster (12 baseline months)")
@@ -1234,6 +1279,7 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
                 "Licence cuts: Head of Finance.",
                 kind="pink", kicker="Human in the loop"),
     ])
+    limits_box.__exit__(None, None, None)
 
 
 def page_plan() -> None:
@@ -1270,8 +1316,11 @@ def page_track() -> None:
     # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
     # full addressable figure differs from measure M2 on the previous page (M2 counts 75 % of the energy).
     questions = [q for q in examples if "production platform" in q.lower() or "seats" in q.lower()][:2] + [T1251_PROMPT]
-    with st.container():  # inside a container the chat box sits under the questions, not pinned to the page bottom
+    # inside a container the chat box sits under the questions, not pinned to the page bottom
+    with st.container(key="beat_assistant"):
         assistant.render_assistant(embedded=True, questions=questions)
+    ny = st.container(key="beat_next_year")
+    ny.__enter__()
     st.subheader("Next year, with and without the plan")
     if s is not None and not _missing(e.get("co2_mid")):
         with_chf = e["cost_chf"] - float(s["chf"])
@@ -1299,6 +1348,7 @@ def page_track() -> None:
                 "chosen rows summarised in `measures/package_summary.csv`. The range is the low and high CO2 columns "
                 "already stored. One-time costs are labelled and are not a saving. The production-growth note scales "
                 "only that platform's own baseline months and is not part of the plan.")
+    ny.__exit__(None, None, None)
     cards = []
     res = data.own_ai_result()
     tot = None if res is None else res[res["person"].astype(str).str.upper().eq("TOTAL")]
@@ -1321,12 +1371,17 @@ def page_track() -> None:
                          "2 · Owners decide on the «needs your OK» list. 3 · Once a year: review the factors.",
                          meta="Full note in step 5, Behind the numbers",
                          kicker="For an SME without a specialist team"))
-    ui.grid(cards)
-    st.subheader("Next: GreenOps agents")
-    ui.grid([ui.card(n, d, meta=f"Proposes · {a}", kicker="Roadmap · not built yet") for n, d, a in AGENTS_ROADMAP])
+    with st.container(key="beat_own_ai"):
+        ui.grid(cards)
+    with st.container(key="beat_agents"):
+        st.subheader("Next: GreenOps agents")
+        ui.grid([ui.card(n, d, meta=f"Proposes · {a}", kicker="Roadmap · not built yet") for n, d, a in AGENTS_ROADMAP])
+    close = st.container(key="beat_close")
+    close.__enter__()
     ui.grid([ui.card("Scale it to every Basel SME", BASEL_LINE.split(": ", 1)[1] + " Partnership: build it with ALTYCA "
                      "from early next year, on the data platforms SMEs already use (lakehouse, cloud billing APIs, "
                      "MCP servers).", kind="accent", kicker="Built for ALTYCA × Basel 2037")])
+    close.__exit__(None, None, None)
     ui.bridge("Next: the evidence behind every number, for your questions.")
     _story_nav(4)
 
@@ -1415,12 +1470,63 @@ def page_about_alias() -> None:
 # six story links are drawn below with st.page_link.
 pages.append(st.Page(page_about_alias, title=i18n.tr(STORY[0][1]), url_path="about"))
 nav = st.navigation(pages, position="hidden")
+if ui.STORY_KEY not in st.session_state:  # first run: ?story=1 in the URL starts in presenter mode (survives refresh)
+    st.session_state[ui.STORY_KEY] = str(st.query_params.get("story", "0")).lower() in ("1", "true", "yes", "on")
+
+
+def _story_toggled() -> None:
+    # The truth is ui.STORY_KEY (plain state). The toggle has its own key: a page switch before the sidebar is drawn
+    # would otherwise drop the widget's value and end presenter mode by accident.
+    st.session_state[ui.STORY_KEY] = bool(st.session_state.get(ui.STORY_KEY + "_toggle"))
+    try:
+        if st.session_state.get(ui.STORY_KEY):
+            st.query_params["story"] = "1"
+            st.session_state.pop(story.BEAT_KEY, None)  # a fresh start: beat 1, or ?beat= from the URL
+        else:
+            st.query_params.pop("story", None)
+            st.query_params.pop("beat", None)
+    except Exception:
+        pass
+
+
+def _page_key(page) -> str:
+    """Story url key of the running page ("about" also for the /about alias)."""
+    for url, pg in PAGES.items():
+        if pg.url_path == page.url_path:
+            return url
+    return "about" if page.url_path == "about" else page.url_path
+
+
+if st.session_state.get(ui.STORY_KEY):
+    _n = story.current()
+    _b = story.beat(_n)
+    _pending = st.session_state.pop(story.PENDING_KEY, None)
+    if _pending and _page_key(nav) != _pending:
+        st.switch_page(PAGES[_pending])
+    _on_page = _page_key(nav) == _b.page
+    try:  # a page switch drops the query string: write it again so a refresh keeps presenter mode and the beat
+        if st.query_params.get("story") != "1" or st.query_params.get("beat") != str(_n):
+            st.query_params.update({"story": "1", "beat": str(_n)})
+    except Exception:
+        pass
+    ui._raw(story.BASE_CSS)
+    if _on_page:
+        ui._raw(story.spotlight_css(_b.anchor))
+    with st.container(key="story_nav"):
+        _c1, _c2, _c3 = st.columns([1, 1.7, 1], vertical_alignment="center")
+        _c1.button("← Back", key="story_prev", on_click=story.prev_beat, disabled=_n <= 1)
+        _c2.html(f'<div class="gx-beat"><b>{_n} / {story.TOTAL}</b> · {ui.esc(i18n.tr(_b.title))}</div>')
+        _c3.button("Next →", key="story_next", type="primary", on_click=story.next_beat, disabled=_n >= story.TOTAL)
+    with st.container(key="story_js"):
+        st._raw_html(story.keys_js(_n, _b.anchor, _on_page), unsafe_allow_javascript=True)
 with st.sidebar:
     for url, title, _label in STORY:
         st.page_link(PAGES[url], label=i18n.tr(title))
     st.divider()
-    st.toggle("Story mode", key=ui.STORY_KEY, value=True, help="Progress bar and Back / Next for presenting.")
-    st.toggle("Light mode (projector)", key="light_mode", help="Brighter colours for a washed-out projector.")
+    st.session_state[ui.STORY_KEY + "_toggle"] = bool(st.session_state.get(ui.STORY_KEY))
+    st.toggle("Story mode", key=ui.STORY_KEY + "_toggle", on_change=_story_toggled,
+              help="Presenter mode: → / PageDown / Space for the next step, ← / PageUp to go back.")
+    st.toggle("Light mode", key="light_mode", help="Brighter colours for a washed-out projector.")
     st.toggle("Deutsch", key=i18n.KEY, help="Interface in German. Text from the data and all numbers stay as stored.")
     st.caption(f"Numbers: `out/` from `pipeline/pipeline.py` · {CITE}")
     if st.button("Reload data"):

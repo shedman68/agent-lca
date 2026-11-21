@@ -46,6 +46,8 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-hitl{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;border:1px solid var(--pink,#f84aa7);font-size:13px;font-weight:700;letter-spacing:.04em;white-space:nowrap;}
+.gx-team-note{font-size:14px;color:var(--muted,#9aa3ad);margin:4px 0 26px;text-align:center;}
 button[data-variant="segmented_control"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border-color:var(--line,#262b33) !important;min-height:44px;}
 button[data-variant="segmented_control"] *{color:inherit !important;}
 button[data-variant="segmented_control"][aria-checked="true"]{background:var(--teal,#00cc99) !important;color:var(--on-teal,#0d0f12) !important;border-color:var(--teal,#00cc99) !important;font-weight:700;}

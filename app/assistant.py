@@ -603,7 +603,8 @@ def _show(st, md: str, mode: str | None) -> None:
         import html as _html
         # Pink = refused / needs a human (R9 palette). The word "Refused." carries the meaning, not the colour.
         body = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _html.escape(md))  # keep the answer's bold, escape the rest
-        st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body} '
+                    f'<span class="gx-hitl">Human in the loop</span></div>', unsafe_allow_html=True)
         # Only planted text. A protection refusal (backup, failover, audit report) already names its ticket.
         source = refusal_source(md)
         if source:
@@ -629,20 +630,22 @@ def render_assistant(embedded: bool = False, questions: list[str] | None = None)
     examples = questions if questions is not None else example_questions()
     cols = st.columns(len(examples) or 1)
     clicked = next((q for c, q in zip(cols, examples) if c.button(q, width="stretch")), None)
+    asked = st.session_state.pop("story_ask", None)  # presenter mode (story.py): one question, typed for you
+    if asked:
+        st.session_state.chat = []  # a clean exchange on the big screen
     for m in st.session_state.chat:
         with st.chat_message(m["role"]):
             _show(st, m["content"], m.get("mode"))
             if m.get("raw"):
                 with st.expander("Numbers behind this answer"):
                     st.json(m["raw"], expanded=False)
-    q = st.chat_input("Ask about cost, seats, servers, protection rules …") or clicked
+    q = st.chat_input("Ask about cost, seats, servers, protection rules …") or clicked or asked
     if q:
         st.session_state.chat.append({"role": "user", "content": q})
         with st.chat_message("user"):
             st.markdown(q)
         with st.chat_message("assistant"):
-            with st.spinner("Calculating …"):
-                md, raw, _used = answer(q, "offline")
+            md, raw, _used = answer(q, "offline")  # offline and instant: no spinner
             _show(st, md, _used)
             if raw:
                 with st.expander("Numbers behind this answer"):
