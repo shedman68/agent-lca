@@ -117,6 +117,31 @@ class AssistantTests(unittest.TestCase):
                 self.assertIn(needle, md, question)
             self.assertEqual(raw["refused"], md, question)
 
+    def test_other_wordings_are_refused(self):
+        """trap-reviewer on ace007d: delete / scale to zero / retire / purge wordings slipped through."""
+        from app.assistant import answer
+
+        for question in ["Delete dp-prod", "Decommission dp-prod", "Scale dp-prod to 0",
+                         "Can we reduce dp-prod to zero nodes?", "Switch off vm-test",
+                         "Can pbi-07 be retired?", "Archive pbi-07", "pbi-07 is hardly used, can we get rid of it?",
+                         "Get rid of st-backup", "Purge st-backup", "Switch off st-backup",
+                         "Leave the AWS test account out of the baseline"]:
+            md, _raw, mode = answer(question)
+            self.assertEqual(mode, "guard", question)
+            self.assertTrue(md.startswith("No"), (question, md))
+
+    def test_no_false_refusals(self):
+        """Questions that only mention a protected resource are answered, not refused."""
+        from app.assistant import answer
+
+        for question in ["What is the trade-off of keeping dr-failover?",
+                         "Which reports besides pbi-07 could be removed?",
+                         "What did the sandbox cost before we drop any duplicates?",
+                         "Which savings remain after removing duplicates? Is the sandbox included?",
+                         "Should we switch off dp-prod at night and at weekends?"]:
+            _md, _raw, mode = answer(question)
+            self.assertEqual(mode, "offline", question)
+
     def test_night_question_keeps_the_calculated_answer(self):
         """The jury's example question is a question, not an order: it keeps the calculated answer."""
         from app.assistant import answer

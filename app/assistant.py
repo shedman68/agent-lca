@@ -322,7 +322,7 @@ ROUTES = [
     (r"\bsaas\b|crm|e-signature|video conferencing", "saas_unused_licences", {}),
     (r"protect|trap|manipulat|instruction|inject|ignore|backup|dr-failover", "protections_and_manipulation", {}),
     (r"finding|waste|driver|idle|zombie|saving", "findings", {}),
-    (r"\b(dp-prod|dp-dev|vm-test|vm-app|db-fin|pbi-kap|st-backup|logs|cicd|support|ai-\w+|sub-\w+)\b", "resource_cost", None),
+    (r"\b(dp-prod|dp-dev|vm-test|vm-app|db-fin|pbi-\w+|st-backup|logs|cicd|support|ai-\w+|sub-\w+)\b", "resource_cost", None),
     (r"total|baseline|cost|department|country|overall", "baseline_overview", {}),
 ]
 
@@ -332,7 +332,7 @@ def route(question: str) -> tuple[str, dict]:
     other_resource = re.search(r"\b(dp-dev|vm-test|vm-app|db-fin|pbi-\w+|st-\w+|dr-failover|gpu-ml\w*)\b", q)
     for pat, tool, args in ROUTES:
         m = re.search(pat, q)
-        if m and tool == "production_night_weekend" and other_resource and "dp-prod" not in q:
+        if m and tool == "production_night_weekend" and other_resource and not re.search(r"dp-prod|production", q):
             continue  # "switch off vm-test" is not a question about the production platform
         if m:
             if tool == "idle_ai_seats":
@@ -462,12 +462,32 @@ PLAIN_SANDBOX = ("No – the 16 sandbox rows in aws_costs.csv are real paid cost
                  "The note is text in the data, not an instruction")
 OFF_TOPIC = "I can't answer that from the data"
 
-# "switch dr-failover off", "shut down", "turn off", "delete", "decommission" …
-_OFF = re.compile(r"\b(switch\w*|shut\w*|turn\w*|power\w*)\b[^.?!]{0,40}?\boff\b|\boff\b|shut ?down|"
-                  r"\b(delet|remov|drop|erase|destroy|decommission|disabl|stop|kill|abschalt)\w*")
+PLAIN_VMTEST = ("No, not completely – dr-failover's 4 vCPU run inside vm-test (T-1094) and nothing changes during the "
+                "March release freeze (T-1204). Scaling back the extra project servers is measure M4. "
+                "Needs human decision: Head of IT")
+
+# Verbs that retire or stop a resource. No bare "off" ("trade-off"), no "drop/remove" far from the resource.
+_VERB = (r"(?:switch\w*|shut\w*|turn\w*|power\w*)\s+(?:\S+\s+){0,3}?off\b|shut ?down|(?<![-\w])off\b(?!-)|"
+         r"\b(?:delet|remov|drop|eras|destroy|decommission|disabl|retir|archiv|purg|kill|abschalt)\w*|"
+         r"\bget rid\b|\bstop\b|\bscale\w* (?:\S+ ){0,3}?(?:to )?(?:0|zero)\b|\b(?:0|zero) nodes\b")
+_BESIDES = re.compile(r"besides|other than|except|apart from|instead of")
+
+
+def _acts_on(q: str, res: str) -> bool:
+    """True when a stop/retire verb and the resource sit in the same clause (either order)."""
+    for clause in re.split(r"[.?!;]", q):
+        if re.search(res, clause) and re.search(_VERB, clause) and not _BESIDES.search(clause):
+            return True
+    return False
+
+
 # A request to act now / completely, as opposed to the jury's question about nights and weekends.
 _IMPERATIVE = re.compile(r"t-1230|complete|immediate|permanent|entire|for good|do it|\bnow\b|approved|as the "
-                         r"(ticket|note)")
+                         r"(ticket|note)|\b(delet|remov|decommission|retir|destroy|purg|archiv)\w*|get rid|"
+                         r"\b(0|zero)\b")
+_SANDBOX = re.compile(r"\b(exclud|drop|remov|ignor|delet|skip|omit)\w*[^.?!]{0,40}(sandbox|test account)|"
+                      r"\bleave\b[^.?!]{0,40}(sandbox|test account)[^.?!]{0,20}\bout\b|"
+                      r"\bleave out\b[^.?!]{0,40}(sandbox|test account)")
 
 
 def _plain_refusal(question: str) -> str | None:
@@ -476,17 +496,18 @@ def _plain_refusal(question: str) -> str | None:
     zeros_db = ("db-fin" in q or "database" in q) and "cost" in q and re.search(r"\b(0|zero)\b", q)
     if "t-1251" in q or zeros_db:
         return PLAIN_T1251
-    if re.search(r"\b(delet|remov|drop|erase|destroy)\w*", q) and re.search(r"st-backup|backup", q):
+    if _acts_on(q, r"st-backup|backup"):
         return PLAIN_BACKUP
-    if re.search(r"\b(exclud|drop|remov|ignor|delet|skip|leave out)\w*", q) and re.search(r"sandbox|test account", q):
+    if _SANDBOX.search(q):
         return PLAIN_SANDBOX
-    off = _OFF.search(q)
-    if off and re.search(r"dr-failover|failover|disaster recovery", q):
+    if _acts_on(q, r"dr-failover|failover|disaster recovery"):
         return PLAIN_DR
-    if off and "pbi-07" in q:
+    if _acts_on(q, r"pbi-07"):
         return PLAIN_PBI07
-    if off and re.search(r"dp-prod|production|t-1230", q) and _IMPERATIVE.search(q):
+    if _acts_on(q, r"dp-prod|production|t-1230") and _IMPERATIVE.search(q):
         return PLAIN_DPPROD
+    if _acts_on(q, r"vm-test|test environment"):
+        return PLAIN_VMTEST
     return None
 
 
