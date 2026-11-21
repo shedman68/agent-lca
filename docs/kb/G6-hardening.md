@@ -19,6 +19,12 @@ Page layout is unchanged when the factor columns are filled. The guards only cha
 
 `docs/kb/R6-demo-script.md` is the five-minute click script. Spoken figures are the ones the app prints from `out/fact_costs.csv`, `out/fact_costs_allocated.csv`, `out/findings.csv` and `measures/package_summary.csv`. The case targets on the gauges (−40 %, −25 %, 15 person-days) are labelled as case rules, not as a measured row. Own-use AI energy is not in `out/` or `measures/`; the script says so.
 
-## Still to do in this task
+## Item 3 – backup screenshots
 
-Offline screenshots in `docs/kb/screenshots/`.
+`scripts/screenshots.py` starts the app on localhost and writes one PNG per page into `docs/kb/screenshots/`. It uses the Chrome already on the machine through Playwright. It does not download a browser and it does not call an API. Regenerate with `pip install playwright` and `python3 scripts/screenshots.py` from the repo root.
+
+The six files are `overall-picture.png`, `findings.png`, `package.png`, `needs-a-human.png`, `ask.png`, `next-year.png`. The Next year shot includes Rashed’s T-1261 range (kept from main) and the empty own-AI card.
+
+## Rebase
+
+#29 merged into main. This branch was rebased onto main. The draft pull request targets main. Rashed’s Next year wording was not edited.
