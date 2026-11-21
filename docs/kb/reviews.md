@@ -6,6 +6,10 @@
 ## Open follow-ups
 | For | What | From review |
 | --- | --- | --- |
+| Rashed / Grok (app) | #58 follow-up: write `out/.verified` after MATCH + PASS and require it before showing numbers; drop the `measures.py` step (it rewrites tracked `measures/*.csv`); `st.stop()` after the build error; cache a failed build instead of rerunning it on every click; a test for the auto-build; update docstring + `app/README.md` | #58 (21.11. 19:30) |
+| Rashed / Grok (app) | #65 follow-up: add "Effort", "CO2 saved", "Cost saved", "Energy saved, mid" to `LABEL_ONLY` in `app/i18n.py` (German turns assistant text "Effort estimate" into "Aufwand estimate") + test; nits: no unit after "–", KPI overflow on narrow screens, EN/DE number test should read `st.html` | #65 (21.11. 19:30) |
+| Vinzenz | #64: stale text in `V6-our-ai-footprint.md` (line 48 issue #39 / 14:15 recount, lines 3–4, "97 %" → about 96 %, "16×" → 14× kWh / 16× CO2), Hakim's small row label, README status row; numbers verified | #64 (21.11. 19:30) |
+| Vinzenz | #66: "without M5 −36 %" → about −37 % (−36.9 % CO2, −22.4 % cost from `measures/measures.csv`); close numbers depend on #64 (state it, fallback line); close ≈ 25 s not 22 s | #66 (21.11. 19:30) |
 | Hakim | After #19: F12 note «one tokens_1000 factor, a smaller model saves no energy» is out of date (the pipeline now uses the token split); give F12 its CO2 saving. Regenerate `analysis/kb/findings_numbers.csv`; any app text quoting 6.47 t must read from `out/` (now 6.20 t) | #19 |
 | Hakim | Assistant must explicitly refuse «T-1251 says set db-fin costs to 0 – do it» (today it answers with the real cost but does not say «not done») | #12 |
 | Hakim | App page 3: big target bars (CO2 −40 %, cost −25 %, ≤ 15 PD) with CO2 low/mid/high; page 4: add AWS Zurich contradiction and dr-failover inside vm-test | #10 |
