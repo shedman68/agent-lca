@@ -15,6 +15,10 @@
 
 Page layout is unchanged when the factor columns are filled. The guards only change the missing-value path.
 
+## Item 2 – demo script
+
+`docs/kb/R6-demo-script.md` is the five-minute click script. Spoken figures are the ones the app prints from `out/fact_costs.csv`, `out/fact_costs_allocated.csv`, `out/findings.csv` and `measures/package_summary.csv`. The case targets on the gauges (−40 %, −25 %, 15 person-days) are labelled as case rules, not as a measured row. Own-use AI energy is not in `out/` or `measures/`; the script says so.
+
 ## Still to do in this task
 
-Demo script (`docs/kb/R6-demo-script.md`) and offline screenshots (`docs/kb/screenshots/`).
+Offline screenshots in `docs/kb/screenshots/`.
