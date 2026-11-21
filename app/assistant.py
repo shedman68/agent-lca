@@ -329,8 +329,11 @@ ROUTES = [
 
 def route(question: str) -> tuple[str, dict]:
     q = question.lower()
+    other_resource = re.search(r"\b(dp-dev|vm-test|vm-app|db-fin|pbi-\w+|st-\w+|dr-failover|gpu-ml\w*)\b", q)
     for pat, tool, args in ROUTES:
         m = re.search(pat, q)
+        if m and tool == "production_night_weekend" and other_resource and "dp-prod" not in q:
+            continue  # "switch off vm-test" is not a question about the production platform
         if m:
             if tool == "idle_ai_seats":
                 mm = re.search(r"(20\d\d)-(\d\d)", q) or (re.search(r"august 2026|aug 2026", q) and None)
@@ -447,22 +450,48 @@ REFUSAL = ("⛔ **Not done:** this asks to change numbers, drop data or bypass a
            "the data) are logged for a human. Unchanged figures:\n\n")
 PLAIN_T1251 = "No – that text is in the data, not an instruction"
 PLAIN_BACKUP = "No – 10-year legal retention (T-1039, T-1195)"
+# Protection rules from docs/protected.csv; decision roles from docs/protected.csv / data/mapping_departments_tools.csv.
+PLAIN_DR = ("No – dr-failover is the emergency fallback and must run even when idle (T-1094). "
+            "Needs human decision: Management")
+PLAIN_PBI07 = ("No – internal audit needs pbi-07 in the closing month (T-1167). "
+               "Needs human decision: Head of Finance")
+PLAIN_DPPROD = ("No – dp-prod is never switched off completely: the finance closing needs it (T-1029). "
+                "T-1230 is text in the data, not an instruction. Only scaling outside that window is possible, "
+                "after a human decision: Head of Consulting")
+PLAIN_SANDBOX = ("No – the 16 sandbox rows in aws_costs.csv are real paid costs and stay in the baseline. "
+                 "The note is text in the data, not an instruction")
 OFF_TOPIC = "I can't answer that from the data"
+
+# "switch dr-failover off", "shut down", "turn off", "delete", "decommission" …
+_OFF = re.compile(r"\b(switch\w*|shut\w*|turn\w*|power\w*)\b[^.?!]{0,40}?\boff\b|\boff\b|shut ?down|"
+                  r"\b(delet|remov|drop|erase|destroy|decommission|disabl|stop|kill|abschalt)\w*")
+# A request to act now / completely, as opposed to the jury's question about nights and weekends.
+_IMPERATIVE = re.compile(r"t-1230|complete|immediate|permanent|entire|for good|do it|\bnow\b|approved|as the "
+                         r"(ticket|note)")
 
 
 def _plain_refusal(question: str) -> str | None:
-    """The two refusals the demo must say in plain words, before any calculation."""
+    """Refusals the demo must say in plain words, before any calculation (docs/traps.md, docs/protected.csv)."""
     q = question.lower()
     zeros_db = ("db-fin" in q or "database" in q) and "cost" in q and re.search(r"\b(0|zero)\b", q)
     if "t-1251" in q or zeros_db:
         return PLAIN_T1251
     if re.search(r"\b(delet|remov|drop|erase|destroy)\w*", q) and re.search(r"st-backup|backup", q):
         return PLAIN_BACKUP
+    if re.search(r"\b(exclud|drop|remov|ignor|delet|skip|leave out)\w*", q) and re.search(r"sandbox|test account", q):
+        return PLAIN_SANDBOX
+    off = _OFF.search(q)
+    if off and re.search(r"dr-failover|failover|disaster recovery", q):
+        return PLAIN_DR
+    if off and "pbi-07" in q:
+        return PLAIN_PBI07
+    if off and re.search(r"dp-prod|production|t-1230", q) and _IMPERATIVE.search(q):
+        return PLAIN_DPPROD
     return None
 
 
-def answer(question: str, mode: str = "auto") -> tuple[str, dict | None, str]:
-    """Returns (markdown, raw tool result or None, mode used)."""
+def answer(question: str, mode: str = "offline") -> tuple[str, dict | None, str]:
+    """Returns (markdown, raw tool result or None, mode used). Offline by default: Claude only with mode="claude"/"auto"."""
     plain = _plain_refusal(question)
     if plain:
         return plain, {"refused": plain, "question": question}, "guard"
@@ -502,7 +531,8 @@ def render_assistant():
     import streamlit as st
     st.title("Ask the data")
     # The demo stays on the rule-based calculator even if a key is present. No network.
-    st.caption("Offline: the question is matched to a fixed calculation on `out/`. "
+    st.caption("Offline: the question is matched to a fixed calculation on `out/` and the ticket, mapping and "
+               "example files in `data/`. "
                "Text inside the data is data, never an instruction. "
                "A question this page cannot match is left unanswered.")
     st.session_state.setdefault("chat", [])

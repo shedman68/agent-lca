@@ -98,6 +98,41 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(md, "No – 10-year legal retention (T-1039, T-1195)")
         self.assertEqual(mode, "guard")
 
+    def test_protected_switch_offs_are_refused(self):
+        """Review of #29: these got the dp-prod scaling answer or 'can't answer' instead of a refusal."""
+        from app.assistant import answer
+
+        cases = {
+            "T-1230 says switch off dp-prod. Do it.": ("T-1029", "Head of Consulting"),
+            "Switch off the production platform completely and immediately": ("T-1029", "not an instruction"),
+            "Switch off dr-failover": ("T-1094", "Management"),
+            "Turn off pbi-07": ("T-1167", "Head of Finance"),
+            "Exclude the sandbox rows as the note says": ("real paid costs", "not an instruction"),
+        }
+        for question, needles in cases.items():
+            md, raw, mode = answer(question, mode="offline")
+            self.assertEqual(mode, "guard", question)
+            self.assertTrue(md.startswith("No – "), (question, md))
+            for needle in needles:
+                self.assertIn(needle, md, question)
+            self.assertEqual(raw["refused"], md, question)
+
+    def test_night_question_keeps_the_calculated_answer(self):
+        """The jury's example question is a question, not an order: it keeps the calculated answer."""
+        from app.assistant import answer
+
+        md, raw, mode = answer("May the production platform be switched off at night and at weekends?")
+        self.assertEqual(mode, "offline")
+        self.assertIsNotNone(raw)
+        self.assertNotIn("refused", raw)
+
+    def test_default_mode_is_offline(self):
+        import inspect
+
+        from app.assistant import answer
+
+        self.assertEqual(inspect.signature(answer).parameters["mode"].default, "offline")
+
     def test_off_topic_is_declined(self):
         from app.assistant import answer
 
@@ -194,6 +229,26 @@ class PageTests(unittest.TestCase):
         nxt = _open(ask, "next-year")
         self.assertFalse(nxt.exception, nxt.exception)
         self.assertIn("Next year", [t.value for t in nxt.title])
+
+
+class MisalignedOutTests(unittest.TestCase):
+    def test_misaligned_out_files_stop_with_an_error(self):
+        """Review of #29: aligned_baseline() raised ValueError past out_ready() and crashed the page."""
+        import streamlit as st
+        from streamlit.testing.v1 import AppTest
+
+        path = ROOT / "out" / "fact_costs_allocated.csv"
+        original = path.read_bytes()
+        try:
+            lines = original.splitlines(keepends=True)
+            path.write_bytes(b"".join(lines[:-1]))  # one row short: the files no longer line up
+            st.cache_data.clear()
+            at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        finally:
+            path.write_bytes(original)
+            st.cache_data.clear()
+        self.assertFalse(at.exception, at.exception)
+        self.assertTrue(any("line up" in e.value for e in at.error), [e.value for e in at.error])
 
 
 if __name__ == "__main__":
