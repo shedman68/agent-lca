@@ -2,7 +2,7 @@
 
 - **Task:** R9 · **Author:** Grok (for Rashed) · **Date:** 21.11.2026 22:30 Zurich · **Status:** draft, hand back
 - **Branch:** `grok/R9-pages` (from `rashed/R9-story-redesign` at `5dd5dba`)
-- **Draft PR:** into `rashed/R9-story-redesign`, not into `main`. URL is in the pull request this file ships with.
+- **Draft PR:** https://github.com/shedman68/agent-lca/pull/74 into `rashed/R9-story-redesign`, not into `main`.
 - **Sources:** `docs/kb/R9-plan.md`, `docs/kb/R9-requirements.md`, `docs/kb/R0-case-page.md`, `out/` and `measures/` via the app, `origin/grok/R9-theme` (read only).
 - **Checks on this branch:** `python -m unittest app.test_app` → **43 tests OK**. `verify_baseline.py` → **MATCH**. `trap_guard.py --measures measures/measures.csv` → **TRAP GUARD: PASS**. Streamlit opened all six pages with no exception (About, Connect after “Load the sample company”, Where you stand, Your plan, Stay on track including the T-1251 click, Behind the numbers).
 
