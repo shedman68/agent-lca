@@ -3,7 +3,7 @@
 - **Task:** V5 prepare two jury questions and answers on the factors (+ Question 3, added 21.11.2026)
 - **Author:** Vinzenz (with Claude Code)
 - **Date:** 2026-11-20, updated 2026-11-21 (baseline 6.20 t CO2 mid, package numbers from `measures/package_summary.csv`)
-- **Status:** draft – Question 3 depends on Rashed's decision on idle counting (PR #37)
+- **Status:** final – Question 3 follows Rashed's counting decision (21.11. 12:15, `docs/kb/decisions.md`): one factor per hour, idle power shown as a sensitivity
 - **Use:** 3 minutes of questions after the demo. Each answer takes about 30 seconds to say. The "If pushed" lines are follow-ups.
   All numbers come from `factors/factors.csv` and the pipeline (`out/`). Background: [`../sources.md`](../sources.md)
 
@@ -57,14 +57,15 @@ Numbers: `measures/package_summary.csv` (CO2 location-based −49.6 / −43.0 / 
 > It falls a little on high because the high values weigh the AI tokens and the GPU more, and we cut those less than the idle clusters.
 > We show all three numbers on the screen instead of one, and the package passes on each.
 
-**If pushed: "But an idle node uses less power than a busy one, so pausing saves less?"** (the honest answer – check Rashed's decision first)
-> Yes, an idle node needs about half the power of our average node-hour. We measured that with the Boavizta model: about 30 watts idle, against 64 at our average load.
-> We count every hour of the year the same way in the baseline and in the measure, so the percentage stays consistent with how the jury recalculates.
-> If you count paused hours at idle power, the development cluster saves about half as much.
-> - *If C2 (move dp-dev to Zurich) is in the package:* Moving the remaining cluster hours from Frankfurt to Zurich then keeps the package at about −48 % on mid and −41 % on high.
-> - *If C2 is not in the package:* Then we land at about −34 % on mid. That is why we show it as a sensitivity and not as a guaranteed number.
+**If pushed: "But an idle node uses less power than a busy one, so pausing saves less?"**
+> Yes, an idle node needs about half the power of our average node-hour. We modelled that with the Boavizta model: about 30 watts idle, against 64 at the 30 % load we assume for a busy node.
+> In the package we count every hour of the year with the same factor, in the baseline and in the measure. That is how a reference baseline is built, so the jury can recalculate our percentage directly.
+> We also show the physical view in the app as a sensitivity. If paused hours count at idle power, the package saves 40 % on low, 34 % on mid and 29 % on high factors.
+> Our labelled option for that view is to also move the development cluster from Frankfurt to Zurich. That brings it back to 48 % on mid and 41 % on high, but it needs about 5 person-days, which takes us over the 15-day budget, and the move may also change the cost (ticket T-1074). So we show it as an option and do not promise it.
 
-**Do not say** "−40 % is guaranteed on every factor set". Say "−40 % or more on low, mid and high as we count; with idle counting it depends on C2".
+Numbers: `factors/kb/V2-idle-impact.csv` (rows A_pct and A_plus_C2_pct), the same as the app's sensitivity panel.
+
+**Do not say** "−40 % is guaranteed on every factor set". Say "−42 % or more on low, mid and high with one factor per hour; with idle-power counting it is lower, and we show that openly".
 
 ---
 
