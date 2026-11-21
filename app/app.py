@@ -46,6 +46,19 @@ def chf(v: float | None, digits: int = 0) -> str:
     return "–" if v is None or pd.isna(v) else f"CHF {v:,.{digits}f}"
 
 
+def _missing(v) -> bool:
+    return v is None or pd.isna(v)
+
+
+def _tonnes(v) -> str:
+    """Tonnes from kg. A missing factor level stays an em dash, never a guessed 0."""
+    return "–" if _missing(v) else f"{float(v) / 1000:,.1f}"
+
+
+def _kwh_text(v) -> str:
+    return "–" if _missing(v) else f"{float(v):,.0f}"
+
+
 def compact_chf(v: float) -> str:
     return f"CHF {v / 1000:,.1f}K" if abs(v) < 1e6 else f"CHF {v / 1e6:,.2f}M"
 
@@ -90,18 +103,17 @@ def factor_level() -> str:
 
 def _hero_html(facts_now: dict, level: str) -> str:
     p = charts.pal()
-    co2_t = facts_now["co2_level"] / 1000
     return (
         f'<div style="font-family:{charts.FONT_INLINE};color:{p["ink"]}">'
         f'<div style="font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:{p["muted"]}">'
         f'Location-based CO2 per year · {level} factors</div>'
-        f'<div style="font-size:76px;font-weight:650;line-height:.95;letter-spacing:-.03em">{co2_t:,.1f} t</div>'
+        f'<div style="font-size:76px;font-weight:650;line-height:.95;letter-spacing:-.03em">{_tonnes(facts_now["co2_level"])} t</div>'
         f'<div style="font-size:18px;color:{p["ink2"]};margin-top:8px">Range '
-        f'{facts_now["co2_low"] / 1000:,.1f}–{facts_now["co2_high"] / 1000:,.1f} t on low and high factors</div>'
+        f'{_tonnes(facts_now["co2_low"])}–{_tonnes(facts_now["co2_high"])} t on low and high factors</div>'
         f'<div style="display:flex;flex-wrap:wrap;gap:32px;margin-top:18px">'
         f'<div><div style="font-size:16px;color:{p["muted"]}">Energy ({level})</div>'
-        f'<div style="font-size:28px;font-weight:650">{facts_now["kwh_level"]:,.0f} kWh</div>'
-        f'<div style="font-size:16px;color:{p["muted"]}">Range {facts_now["kwh_low"]:,.0f}–{facts_now["kwh_high"]:,.0f} kWh</div></div>'
+        f'<div style="font-size:28px;font-weight:650">{_kwh_text(facts_now["kwh_level"])} kWh</div>'
+        f'<div style="font-size:16px;color:{p["muted"]}">Range {_kwh_text(facts_now["kwh_low"])}–{_kwh_text(facts_now["kwh_high"])} kWh</div></div>'
         f'<div><div style="font-size:16px;color:{p["muted"]}">Cost, shown second</div>'
         f'<div style="font-size:28px;font-weight:650">{chf(facts_now["cost_chf"])}</div>'
         f'<div style="font-size:16px;color:{p["muted"]}">Same on every factor set</div></div>'
@@ -111,8 +123,8 @@ def _hero_html(facts_now: dict, level: str) -> str:
 
 def _overview_sentence(facts_now: dict) -> str:
     return (
-        f"Location-based CO2 is {facts_now['co2_level'] / 1000:,.1f} t a year "
-        f"(range {facts_now['co2_low'] / 1000:,.1f}–{facts_now['co2_high'] / 1000:,.1f} t). "
+        f"Location-based CO2 is {_tonnes(facts_now['co2_level'])} t a year "
+        f"(range {_tonnes(facts_now['co2_low'])}–{_tonnes(facts_now['co2_high'])} t). "
         f"{facts_now['top_country']} accounts for {facts_now['top_country_share']:.1%} of it, "
         f"and {facts_now['top_resource']} is the largest resource at {facts_now['top_resource_share']:.1%}."
     )
@@ -130,14 +142,19 @@ def page_overview() -> None:
     st.html(_hero_html(facts_now, level))
     with st.popover("How this number was calculated"):
         st.markdown(
-            f"**{facts_now['co2_level'] / 1000:,.1f} t** is the sum of `co2_kg_{level}` on baseline rows "
+            f"**{_tonnes(facts_now['co2_level'])} t** is the sum of `co2_kg_{level}` on baseline rows "
             f"in `out/fact_costs.csv` (Sep 2025–Aug 2026), divided by 1,000. "
             "Low and high are the same sum on `co2_kg_low` and `co2_kg_high`. "
             "Energy is the sum of `kwh_*`. Cost is the sum of `cost_chf` "
             f"({chf(facts_now['cost_chf'], 2)}). "
             "Each row is quantity × energy factor × PUE where that factor says so × the grid factor "
-            "of the row's country. Factors: `factors/factors.csv`. The pipeline writes the product; this page only adds it up."
+            "of the row's country. Factors: `factors/factors.csv`. The pipeline writes the product; this page only adds it up. "
+            "An em dash means that column is empty, so no figure is estimated."
         )
+    if _missing(facts_now["co2_level"]) or _missing(facts_now["kwh_level"]):
+        st.info(f"`out/fact_costs.csv` has no {level} energy or CO2. A factor value is missing. "
+                "Nothing is estimated on this page.")
+        return
     st.markdown(f"**{_overview_sentence(facts_now)}**")
 
     metric = st.segmented_control(
@@ -233,11 +250,15 @@ def _findings_structured(f: pd.DataFrame, source: str) -> None:
     bars = top.dropna(subset=["addressable_co2_kg_mid"]).copy()
     if not bars.empty:
         base_co2 = data.energy_totals()["co2_mid"]
-        bars = bars.assign(label=bars["finding_id"] + " · " + bars["title"].astype(str),
-                           share=bars["addressable_co2_kg_mid"] / base_co2)
-        st.altair_chart(charts.ranked_bars(bars, value="addressable_co2_kg_mid", unit="kg",
-                                            axis_title="kg CO2 per year, addressable, mid factors"),
-                        width="stretch", theme=None)
+        if _missing(base_co2) or not base_co2:
+            st.info("`out/fact_costs.csv` has no mid CO2 total, so the chart is not drawn. "
+                    "The rows below still come from the findings file.")
+        else:
+            bars = bars.assign(label=bars["finding_id"] + " · " + bars["title"].astype(str),
+                               share=bars["addressable_co2_kg_mid"] / base_co2)
+            st.altair_chart(charts.ranked_bars(bars, value="addressable_co2_kg_mid", unit="kg",
+                                                axis_title="kg CO2 per year, addressable, mid factors"),
+                            width="stretch", theme=None)
     for _, r in top.iterrows():
         _finding_card(r)
     with st.expander(f"The other {len(rest)} findings"):
@@ -346,12 +367,13 @@ def page_package() -> None:
     result = data.package_result(selected, level)
     summary = data.package_summary()
 
-    co2_status = _bound_status(result["co2_pct"], CO2_TARGET, higher_is_better=True)
+    co2_pct = result["co2_pct"]
+    co2_status = _bound_status(co2_pct, CO2_TARGET, higher_is_better=True)
     cost_status = _bound_status(result["cost_pct"], COST_TARGET, higher_is_better=True)
     pd_status = _bound_status(result["pd"], PD_CAP, higher_is_better=False)
     board = charts.gauge_board_html(
-        co2={"fill": (result["co2_pct"] or 0) / CO2_TARGET, "status": co2_status,
-             "center": _signed(result["co2_pct"] or 0), "sub": f"target −{CO2_TARGET:.0f} %",
+        co2={"fill": 0.0 if co2_pct is None else co2_pct / CO2_TARGET, "status": co2_status,
+             "center": "–" if co2_pct is None else _signed(co2_pct), "sub": f"target −{CO2_TARGET:.0f} %",
              "caption": "CO2 reduction"},
         cost={"fill": (result["cost_pct"] or 0) / COST_TARGET, "status": cost_status,
               "center": _signed(result["cost_pct"] or 0), "sub": f"target −{COST_TARGET:.0f} %",
@@ -363,12 +385,17 @@ def page_package() -> None:
     st.html(board)
     pcol, ccol, ecol = st.columns(3)
     with pcol.popover("How CO2 was calculated"):
+        base_co2 = result["base_co2_kg"]
+        pct = result["co2_pct"]
+        base_txt = "–" if _missing(base_co2) else f"{base_co2:,.0f} kg"
+        pct_txt = "–" if pct is None else f"{pct:.1f} %"
         st.markdown(
             f"Sum of `{data.CO2_COL[level]}` on the ticked rows in `measures/candidates.csv`, "
             f"divided by the sum of `co2_kg_{level}` on baseline rows in `out/fact_costs.csv` "
-            f"({result['co2_kg']:,.0f} kg of {result['base_co2_kg']:,.0f} kg = {result['co2_pct']:.1f} %). "
+            f"({result['co2_kg']:,.0f} kg of {base_txt} = {pct_txt}). "
             "Low, mid and high are three columns already stored on each measure. "
-            "Mid is `savings_co2_kg_location_based`. Market-based CO2 is blank in the file and is not shown."
+            "Mid is `savings_co2_kg_location_based`. Market-based CO2 is blank in the file and is not shown. "
+            "An em dash means that baseline column is empty, so the percent is not estimated."
         )
     with ccol.popover("How cost was calculated"):
         st.markdown(
@@ -417,7 +444,7 @@ def page_package() -> None:
             st.info("`factors/kb/V2-idle-impact.csv` could not be read; the sensitivity is not shown.")
 
     st.subheader("Tick measures on or off")
-    st.caption("Package rows are the chosen set. C1 and C2 are candidates and start off. "
+    st.caption("Package rows are the chosen set and start ticked. C1 is in that set. C2 is a candidate and starts off. "
                "C2's stored CO2 already assumes M1 stays on; this page does not recalculate it. "
                "A «Yes» in Needs a human means the row asks for a decision. Nothing here switches a protected resource off.")
     if st.button("Reset to the chosen package"):
