@@ -6,6 +6,7 @@ The machine-readable values stay in `factors/factors.csv` (read by the pipeline)
 
 | File | Task | Status |
 | --- | --- | --- |
+| [V7-pitch-parts.md](V7-pitch-parts.md) | Vinzenz's pitch parts (overall picture, close) and short jury answers for Sun 09:00 | draft for the 21:00 rehearsal |
 | [template-row-edits.md](template-row-edits.md) | Row edits for the submission files, ready to paste ([template-row-edits.csv](template-row-edits.csv)) | final for Rashed |
 | [V6-our-ai-footprint.md](V6-our-ai-footprint.md) | V6 energy and CO2 of our own AI use (tokens in [V6-tokens.csv](V6-tokens.csv), result [V6-result.csv](V6-result.csv)) | draft – Rashed and Grok missing |
 | [template-factor-check.md](template-factor-check.md) | Check of the factor rows in the submission template (PR #29) | done |
