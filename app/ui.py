@@ -101,7 +101,7 @@ background-color:#0d0f12;background-size:cover;background-position:center;border
 .gx-photo .gx-hero em,.gx-photo .gx-eyebrow{color:#00cc99;}
 .gx-photo .gx-sub{color:#d5dbe1;}
 .gx-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-@media (max-width:720px){.gx-sub{font-size:17px;}.gx-photo{padding:22px 16px 4px;min-height:180px;}}
+@media (max-width:720px){.gx-sub{font-size:17px;}.gx-photo{padding:22px 16px 4px;min-height:180px;box-shadow:inset 0 0 0 2000px rgba(13,15,18,.35);}}
 </style>"""
 
 

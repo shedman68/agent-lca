@@ -1034,7 +1034,8 @@ def page_connect() -> None:
     if up:
         st.info(f"Preview only: {len(up)} file(s) received and listed, not processed in this prototype. "
                 "The numbers below come from the sample company.")
-    clicked = st.button("Load the sample company (ALTYCA case, 28 files)", type="primary", key="connect_load")
+    n_files = data.connect_stats()["files"]
+    clicked = st.button(f"Load the sample company (ALTYCA case, {n_files} files)", type="primary", key="connect_load")
     if clicked:
         st.session_state["connected"] = True
     if not st.session_state.get("connected"):
@@ -1354,7 +1355,7 @@ def page_behind() -> None:
         st.markdown(text or "`submission/path_to_operation.md` is not in the repo yet.")
     with tabs[7]:
         st.markdown(
-            "**One pipeline, two checks.** `pipeline.py` harmonises 28 files (time, currency, names); `findings.py` "
+            f"**One pipeline, two checks.** `pipeline.py` harmonises {data.connect_stats()['files']} files (time, currency, names); `findings.py` "
             "finds the waste; `measures.py` builds the plan. The numbers are only accepted when the baseline matches an "
             "independent recalculation and the trap check passes (checked on every build).\n\n"
             "**Built by a team of three with AI agents** (Claude Code, Grok, Cursor). Their own energy use is counted in "
