@@ -1,6 +1,6 @@
 # R8 – Plan: path-to-operation note
 
-- **Task:** R8 · **Author:** Rashed (with Claude, cloud session) · **Date:** 21.11.2026 19:35 · **Status:** final (plan; all items done 21.11. 20:20, reviewer fixes applied)
+- **Task:** R8 · **Author:** Rashed (with Claude, cloud session) · **Date:** 21.11.2026 19:35 · **Status:** final (plan; all items done 21.11. 19:30, reviewer fixes applied)
 - **Sources:** `submission/path_to_operation.md` (draft v0, 21.11. 02:30), `measures/measures.csv`, `measures/package_summary.csv`,
   `measures/m8_contracts.csv`, `out/` (pipeline on main), `docs/protected.csv`, `docs/traps.md`, `data/mapping_departments_tools.csv`,
   `data/README.md` (file list), `data/business_calendar.csv`, `docs/kb/R6-pitch-script.md` (Q&A: Rashed answers path to operation).

@@ -1,6 +1,6 @@
 # Path to operation – AgentLCA GreenOps
 
-**Status:** final candidate, Sat 21 Nov 2026, 20:15 (R8). Sample data ALTYCA, sprintd Basel 2026.
+**Status:** final candidate, Sat 21 Nov 2026, 19:40 (R8). Sample data ALTYCA, sprintd Basel 2026.
 Every number below comes from `out/` (run of `pipeline/pipeline.py` and `analysis/findings.py`) or `measures/` and names its file.
 Anything else is a rule from a ticket or is marked *assumption*.
 
