@@ -1,7 +1,8 @@
 # H2 Findings: top cost drivers and waste (baseline Sep 2025 to Aug 2026)
 
 All numbers come from `python analysis/findings.py --data data --out out`, which writes
-`out/findings.csv` (read by the app) and the committed copy [findings_numbers.csv](findings_numbers.csv).
+`out/findings.csv` (read by the app). The committed copy [findings_numbers.csv](findings_numbers.csv) (the app's
+fallback) is refreshed only with `--update-kb`. Refreshed Sat 21 Nov, 11:30, on `main` 079bc11.
 Costs come from `out/fact_costs.csv` (baseline CHF 470,288.93, confirmed in [reconciliation.md](reconciliation.md)).
 Usage evidence comes from `data/`, because the pipeline does not export it. `findings.py` is the
 **official step 2 after `pipeline.py`** (Rashed, issue #14; `AGENTS.md` Workflow).
@@ -17,16 +18,21 @@ CHF. Exceptions are set to 0 with a reason in column `energy_note`:
 - **Idle AI seats send no messages.** AI subscription energy is counted per message, so cutting idle seats saves CHF, not CO2.
 - **Price changes save no energy** (F9, F10, F15).
 - **SaaS energy is excluded** (no `saas_licence_month` factor).
-- **F12:** `factors.csv` has one token factor for all model sizes, so a smaller model saves no energy in this method.
+- **F12 (model switch) is computed differently:** the same tokens on a small model, with the token split in
+  `factors.csv` (`tokens_in/out_1000_large` vs `_small`) and the pipeline's formula. The loop days 17–19 Mar 2026 (T-1212) are excluded.
 
 ## CO2: where the −40 % can come from
-- Baseline: **6,469 kg CO2** (range 2,905–15,412), **36,296 kWh**.
-- The compute findings **F1–F5 together address 3,025 kg = 46.8 % of all CO2** (range 1,592–6,618 kg). They are
+- Baseline: **6,197 kg CO2** (range 2,899–15,380), **35,783 kWh**.
+  The baseline was 6,469 kg on Friday night; it fell after Vinzenz's token split and the factor updates.
+- The compute findings **F1–F5 together address 2,781 kg = 44.8 % of all CO2** (range 1,588–6,618 kg). They are
   on different resources, so F1–F5 can be added; F4 and F5 are different servers inside vm-test.
-- **dp-dev (F1) alone is 19.7 %**, because it runs on the German grid (0.344 kg/kWh vs 0.090 in CH). A move to
-  Switzerland (T-1074, "technically possible") is a further CO2 lever on what remains.
-- dp-prod has the most idle hours (F2) but sits on the low-carbon Swiss grid: 7.3 % of CO2.
-- Seats, SaaS and the model switch bring CHF but **no CO2** in this method. The CO2 target needs the compute measures.
+- **dp-dev (F1) alone is 19.7 %** (1,221 kg), because it runs on the German grid (0.33 kg/kWh mid vs 0.09 in CH). A move
+  to Switzerland (T-1074, "technically possible") is a further CO2 lever on what remains.
+- dp-prod has the most idle hours (F2) but sits on the low-carbon Swiss grid: 7.6 % of CO2.
+- F12 (small model for marketing classification) now brings **93 kg** (range 12–293), 1.5 %.
+- Seats, SaaS and price changes bring CHF but **no CO2** in this method. The CO2 target needs the compute measures.
+- Open (QA-01 #1, Vinzenz): F3 uses the GPU's average energy per hour including training. Idle hours likely use
+  less, so 434 kg may be high.
 
 ## Overall picture
 | Source | CHF | Share |
@@ -48,18 +54,18 @@ tool names ("Data Platform Prod" / "Data platform production"). Group by `resour
 ## Summary
 | ID | Finding | Cost CHF | Addressable CHF | Addressable CO2 kg (low – mid – high) | Share of total CO2 | Status |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
-| F1 | dp-dev runs 24/7, used 8.7 % | 38,282 | 26,316 | 719 – **1,273** – 2,446 | 19.7 % | HUMAN_REVIEW |
-| F2 | dp-prod full size in evenings/weekends | 87,260 | 36,408 | 176 – **473** – 790 | 7.3 % | HUMAN_REVIEW |
-| F3 | GPU server on all year for 12 training days | 11,238 | 10,863 | 314 – **626** – 2,138 | 9.7 % | HUMAN_REVIEW |
-| F4 | 3 zombie servers in Dublin | 4,628 | 4,628 | 76 – **131** – 249 | 2.0 % | CANDIDATE |
-| F5 | Test environment still 64 vCPU after project end | 24,616 | 18,512 | 306 – **523** – 995 | 8.1 % | HUMAN_REVIEW |
+| F1 | dp-dev runs 24/7, used 8.7 % | 38,282 | 26,316 | 717 – **1,221** – 2,446 | 19.7 % | HUMAN_REVIEW |
+| F2 | dp-prod full size in evenings/weekends | 87,260 | 36,408 | 176 – **473** – 790 | 7.6 % | HUMAN_REVIEW |
+| F3 | GPU server on all year for 12 training days | 11,238 | 10,863 | 313 – **434** – 2,138 | 7.0 % | HUMAN_REVIEW |
+| F4 | 3 zombie servers in Dublin | 4,628 | 4,628 | 76 – **131** – 249 | 2.1 % | CANDIDATE |
+| F5 | Test environment still 64 vCPU after project end | 24,616 | 18,512 | 306 – **523** – 995 | 8.4 % | HUMAN_REVIEW |
 | F6 | ChatGPT Team 86 % seats unused | 5,482 | 4,707 | 0 | 0.0 % | CANDIDATE |
 | F7 | Copilot 41 % seats unused | 22,181 | 9,021 | 0 | 0.0 % | CANDIDATE |
 | F8 | Claude Team 15 % seats unused | 8,104 | 1,233 | 0 | 0.0 % | HUMAN_REVIEW |
 | F9 | Claude/ChatGPT monthly instead of annual billing | 13,586 | 1,529 | 0 | 0.0 % | HUMAN_REVIEW |
 | F10 | Copilot USD 21 vs. USD 18 promotion | 3,398 | 485 | 0 | 0.0 % | HUMAN_REVIEW |
 | F11 | SaaS licences without users | 114,158 | 43,244 | 0 | 0.0 % | CANDIDATE |
-| F12 | Large model for marketing classification, no caching | 11,537 | 4,595 | 0 | 0.0 % | CANDIDATE |
+| F12 | Large model for marketing classification, no caching | 11,537 | 4,595 | 12 – **93** – 293 | 1.5 % | CANDIDATE |
 | F13 | 365-day log retention | 13,721 | 8,566 | 37 – **120** – 269 | 1.9 % | HUMAN_REVIEW |
 | F14 | 25 Power BI reports refresh without readers | 23,753 | (load only) | (not claimed) | | HUMAN_REVIEW |
 | F15 | AWS support plan | 10,788 | (decision) | 0 | 0.0 % | HUMAN_REVIEW |
@@ -175,6 +181,8 @@ tool names ("Data Platform Prod" / "Data platform production"). Group by `resour
 - **Evidence:** ai-marketing "Classify", 7.2 M requests, all on a large model, 0 % cached input. Small models
   cost 44 % of large per input token in this data.
 - **Calculation:** (CHF 11,537 − one-off loop CHF 3,310) × 56 % = **CHF 4,595**.
+- **CO2:** with the same tokens on a small model, **93 kg** a year (range 12–293), 342 kWh mid. That is from the
+  token split in `factors.csv`; the loop days are excluded.
 - **Traps:**
   - T-1212: the three-day script loop is one-off and must not be counted as a recurring saving.
   - T-1163: campaign-week peaks are expected, not waste.
