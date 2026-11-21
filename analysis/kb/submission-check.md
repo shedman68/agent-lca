@@ -1,18 +1,28 @@
-# Submission check: both templates against out/ and measures/ (Sat 21 Nov, 13:05)
+# Submission check: both templates against out/, factors/ and measures/
 
-- **Task:** Rashed's task 2 (by 13:30) · **Author:** Hakim's agent · **Checked on:** `main` 760cdeb, after `pipeline.py` and `analysis/findings.py`
-- **Rerun:** `python analysis/check_submission.py`. The 77 checks with values are in [submission_checks.csv](submission_checks.csv).
+- **Task:** Rashed's task 2 (by 13:30) · **Author:** Hakim's agent · **Date:** 21.11.2026 12:55 · **Status:** final (independent review applied)
+- **Sources:** `submission/template_baseline_and_assumptions.csv`, `submission/template_measures_package.csv`, `data/template_*.csv`,
+  `out/fact_costs.csv`, `out/findings.csv`, `factors/factors.csv`, `measures/measures.csv`, `measures/package_summary.csv`
+  (`main` 760cdeb, after `pipeline.py` and `analysis/findings.py`)
+- **Rerun:** `python analysis/check_submission.py`. Every comparison is one row in [submission_checks.csv](submission_checks.csv).
+  Rows that cannot be compared are printed as notes and not counted.
 
-## Result: 77 checks, 0 mismatches
-| Area | Checks | What was compared |
+## Result: 188 comparisons, 0 mismatches
+| Area | Comparisons | What was compared |
 | --- | ---: | --- |
-| Format | 6 | Both files have the UTF-8 BOM, the exact columns and the 17 parameter rows in the template order, like `data/template_*.csv`. Every Must row has a value |
-| Baseline totals | 7 | Cost CHF 470,288.93; energy 19,365.9 / 35,782.8 / 69,223.9 kWh; CO2 2,899.1 / 6,197.5 / 15,379.6 kg = sums of `out/fact_costs.csv` (baseline rows) |
-| Factors | 33 | Every factor row (grid CH/DE/IE, vCPU, node, GPU, storage, tokens, message, PUE; low/mid/high) = `factors/factors.csv` |
-| Measures | 10 | The 9 rows M1–M8 + C1 = `measures/measures.csv` in every shared column (numbers, risks, changes) |
-| Package | 12 | Sums: 14.5 PD, CHF 134,306, 12,603 kWh, CO2 1,438 / 2,664 / 6,496 kg = `measures/package_summary.csv`; −49.6 / −43.0 / −42.2 % = sum ÷ baseline of the same level; −28.6 % cost; CHF 15,950 = 14.5 × 1,100; targets met |
-| vs findings | 6 | M1 = F1, M3 = F4, M6 = F13 in CHF and CO2 mid (`out/findings.csv`) |
-| Not in out/ | 3 | Market-based total 213 / 1,932.3 / 19,659.6 kg and market-based grid mix: bonus rows from Vinzenz (`factors/kb`); `growth_per_year` blank |
+| Format | 6 | Both files: UTF-8 BOM, exact columns, the 17 parameter rows in template order; every Must row has a value |
+| Baseline totals | 10 | Cost CHF 470,288.93 (to the rappen); energy 19,365.9 / 35,782.8 / 69,223.9 kWh and CO2 2,899.1 / 6,197.5 / 15,379.6 kg (within 0.05); market-based CO2 213.0 / 1,932.3 / 19,659.6 kg = kWh × `grid_market_based` (within 0.5) |
+| Factors | 44 | Every mapped factor row (grid CH/DE/IE/market, vCPU, node, GPU, storage, tokens, message, PUE; low/mid/high) **exactly** = `factors/factors.csv`, and each has a source |
+| Measures | 91 | M1–M8 + C1 vs `measures/measures.csv`: effort, CHF, kWh, CO2 **exact**; description, resource, change, risks **identical**; assumptions identical or plus the one allowed sentence ("Market-based CO2 stays blank: …"); market-based column blank |
+| Package | 16 | The template's own sums (14.5 PD, CHF 134,306, 12,603 kWh, 2,664 kg) and the measures' low/high (1,438 / 6,496 kg) = `package_summary.csv` exactly; −49.6 / −43.0 / −42.2 % and −28.6 % recomputed (within 0.05 pp); CHF 15,950 = 14.5 × 1,100; CO2 ≥ 40 % on low, mid and high, cost ≥ 25 %, ≤ 15 PD, all from the template sums |
+| vs findings | 14 | M1 = F1, M2 = F3 (CO2 × 75 %), M3 = F4, M4 = F5 × 8/12, M5 = F2 × 80 %, M6 = F13, M7 = (F6 + F7) × 80 %, in CHF and CO2 mid (within 1) |
+| Protection rules | 7 | Risks cite the ticket: M1 T-1053, M2 T-1101, M3 and M4 T-1204 + T-1094 (dr-failover stays, March freeze), M5 T-1029, M6 T-1039, M7 T-1128 |
+
+**Notes, not counted:** `growth_per_year` is blank (bonus; T-1261 is a sentence and range on the Next year page). M8 (per contract)
+and C1 (assumption: 50 % of large-model tasks) are not shares of one finding, so they are not compared with `out/findings.csv`.
+
+**Test of the check itself:** changing M1's effort from 2.0 to 2.5 PD in a copy of the template gives 3 mismatches (the M1 effort,
+the PD sum, CHF per PD). The file was restored afterwards (`git diff` empty).
 
 ## Observations (not errors; Rashed decides)
 1. **Market-based is half-filled.** The baseline template has the market-based total (bonus, 1,932 kg mid), but every
