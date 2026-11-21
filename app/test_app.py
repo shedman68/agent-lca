@@ -764,3 +764,24 @@ class R10RoutingTests(unittest.TestCase):
         page = _open(at, "about")
         self.assertFalse(page.exception, page.exception)
         self.assertIn("About AgentLCA", [t.value for t in page.title])
+
+
+class R10RobustnessLineTests(unittest.TestCase):
+    def test_line_reads_files(self):
+        """R10 item 4: low / high from package_summary.csv, idle power from V2-idle-impact.csv B_pct (mid)."""
+        import sys
+
+        import pandas as pd
+        from streamlit.testing.v1 import AppTest
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import format_num
+
+        summ = pd.read_csv(ROOT / "measures" / "package_summary.csv", index_col=0)["value"]
+        idle = pd.read_csv(ROOT / "factors" / "kb" / "V2-idle-impact.csv", index_col=0)
+        expected = (f"Low factors {format_num.signed_pct(summ['co2_pct_low'])} · High {format_num.signed_pct(summ['co2_pct_high'])}"
+                    f" · if paused servers count at idle power: {format_num.signed_pct(idle.loc['B_pct', 'mid'])}")
+        page = _open(AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run(), "your-plan")
+        self.assertFalse(page.exception, page.exception)
+        bodies = " ".join(getattr(e.proto, "body", "") for e in page.get("html"))
+        self.assertIn(expected, bodies)

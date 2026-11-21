@@ -1142,8 +1142,24 @@ def page_stand() -> None:
     _story_nav(2)
 
 
+def _robustness_line() -> str | None:
+    """R10: one line under the gauges. Low / high from measures/package_summary.csv, idle power (variant B, mid)
+    from factors/kb/V2-idle-impact.csv. Nothing typed."""
+    s = data.package_summary()
+    idle = data.idle_impact()
+    if s is None:
+        return None
+    parts = [f"Low factors {format_num.signed_pct(s['co2_pct_low'])}", f"High {format_num.signed_pct(s['co2_pct_high'])}"]
+    if idle is not None and "B_pct" in idle.index and "mid" in idle.columns:
+        parts.append(f"if paused servers count at idle power: {format_num.signed_pct(idle.loc['B_pct', 'mid'])}")
+    return " · ".join(parts)
+
+
 def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level: str) -> None:
     """Measures as plain cards, then what we did not touch. Called by page_package between hero and details."""
+    line = _robustness_line()
+    if line:
+        st.html(f'<p class="gx-sub" style="font-size:16px;margin:2px 0 22px">CO2 {line}</p>')
     cap_chf = PD_CAP * data.PD_CHF
     ui.kpis([
         (f"{result['effort_chf']:,.0f}", f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
