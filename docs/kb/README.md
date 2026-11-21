@@ -28,5 +28,6 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | handoff-vscode-to-cloud.md | Handoff VS Code → cloud: R1 decisions, review findings #26/#29, next steps | final |
 
 Other knowledge bases: [analysis/kb](../../analysis/kb/README.md) (Hakim) · [factors/kb](../../factors/kb/README.md) (Vinzenz).
-| [R9-plan.md](R9-plan.md) | R9 plan: app v2, one user story for the pitch (six steps, story mode) | in progress |
-| [R9-handover-grok.md](R9-handover-grok.md) | R9 handover: what Claude had built, what Grok added per page, what is left | draft |
+| [R9-plan.md](R9-plan.md) | R9 plan: app v2, one user story for the pitch (six steps, story mode) | done (merged in #71; review follow-ups in R10) |
+| [R9-handover-grok.md](R9-handover-grok.md) | R9 handover: what Claude had built, what Grok added per page, what is left | done (merged in #71) |
+| [R10-polish.md](R10-polish.md) | R10 final polish of app v2: checklist, checks, screenshots in `screenshots/r10/` | done, PR open |
