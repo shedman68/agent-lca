@@ -961,48 +961,62 @@ def _hotspots(rows: pd.DataFrame) -> list[dict]:
 
 
 def page_about() -> None:
+    """The opening of the pitch (no slides): brand story first, then the promise, then the four chapters."""
     _story_top(0)
     st.title("About AgentLCA")
     if not out_ready():
         return
     s = data.package_summary()
-    ui.hero("",
-               "Electricity is the new currency, and <em>hardly anyone keeps the books.</em>",
-               "Cloud, AI and software hide their cost, electricity and CO2 in many systems, three currencies and "
-               "data centres in Zurich, Frankfurt and Dublin. The decisions are made in Basel.")
+    # Brand block: ~60 words visible (Rashed, add-on 2). The rest is in "Our story".
+    ui.hero("", "Everything has a <em>lifecycle.</em>")
+    ui.grid([
+        ui.card("Agent", "People and AI agents side by side. Specialist bots do the counting; humans make the decisions.",
+                kicker="Why the name"),
+        ui.card("LCA", "Life-cycle assessment: every product assessed from start to end of life. Now for an SME's "
+                "digital footprint.", kicker="Why the name"),
+    ])
+    st.html('<p class="gx-sub" style="margin-top:-6px">Rashed · Hakim · Vinzenz, with AI agents.</p>')
     if s is not None:
         ui.kpis([
             (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 cut per year, mid factors"),
             (format_num.signed_pct(s["chf_pct"]), "", f"Cost saved per year · CHF {float(s['chf']):,.0f}"),
             (f"{float(s['effort_pd']):.1f}", f"of {PD_CAP:.0f} person-days", f"To implement · CHF {float(s['effort_chf']):,.0f}"),
         ], good={0})
-    ui.explain("CO2, location-based:", "counted with the power mix of the country where the data centre stands, "
-               "not with green-power certificates.")
-    ui.explain("Person-day:", f"one person's working day. The case allows {PD_CAP:.0f}, worth "
-               f"CHF {PD_CAP * data.PD_CHF:,.0f}.")
-    st.markdown("**Nothing critical is switched off.** Production, backups and the emergency fallback stay on.")
-    st.subheader("Who it is for")
-    ui.grid([
-        ui.card("IT managers", "Load the exports you already have. Get one picture from one pipeline run."),
-        ui.card("Management", "A plan with targets, budget and a named owner for every step."),
-        ui.card("Finance", "Francs on top: licences and contracts, with the notice dates that matter."),
-    ])
-    st.subheader("The story in four steps")
+        st.markdown("**Nothing critical is switched off.**")
+    ui.explain("CO2, location-based:", "counted with the power mix of the country where the data centre stands.")
+    ui.explain("Person-day:", f"one person's working day. The case allows {PD_CAP:.0f}.")
     chapters = [
         (1, "Where you stand", "Cost, electricity and CO2 in one picture, and the three places that matter."),
-        (2, "Your plan", "Measures that meet the targets, with what we refused to touch."),
-        (3, "Stay on track", "Ask the data, see next year, and the agents that come next."),
-        (4, "Behind the numbers", "Every factor, check and jury answer, for the questions."),
+        (2, "Your plan", "Measures that meet the targets, and what we refused to touch."),
+        (3, "Stay on track", "Ask the data, see next year, meet the agents that come next."),
+        (4, "Behind the numbers", "Every factor, check and answer, for your questions."),
     ]
     cols = st.columns(2)
     for i, (step, name, text) in enumerate(chapters):
         with cols[i % 2]:
             st.html(ui.card(name, text, kicker=f"Step {step}"))
             st.page_link(PAGES[STORY[step][0]], label=f"Open: {name}", icon=":material/arrow_forward:")
-    st.html('<div class="gx-foot"><b>Built for ALTYCA × Basel 2037: scale to every Basel SME.</b><br>'
-            "ALTYCA could deliver it to its SME clients on Fabric and Databricks. Basel 2037 could use it as the standard method "
-            "for advising and funding SMEs. Next: GreenOps agents that run the plan with human approval.<br>"
-            "Team: Rashed · Hakim · Vinzenz, with AI agents (Claude, Grok). " + CITE + ".</div>")
+    with st.expander("Our story"):
+        st.markdown(
+            "**Agent.** We believe the future is people and AI agents working side by side. Specialist bots do the "
+            "counting; humans make the decisions.\n\n"
+            "**LCA.** Life-cycle assessment. We came together through life-cycle assessments at Big Pharma, where every "
+            "product is assessed from start to end of life.\n\n"
+            "**Our belief.** Everything has a lifecycle that we all have to assess: materials, data, and the longevity "
+            "of SMEs themselves.\n\n"
+            "**AgentLCA** brings that lifecycle thinking to an SME's digital footprint. Today: the use phase of cloud, "
+            "servers, AI and SaaS (energy and CO2). Next: hardware and the full lifecycle, run by GreenOps agents with "
+            "human approval.\n\n"
+            "**The problem it solves.** «Electricity is the new currency, and hardly anyone keeps the books» (ALTYCA). "
+            "Cost, electricity and CO2 hide in many systems, providers and three currencies, in data centres in Zurich, "
+            "Frankfurt and Dublin, while the decisions are made in Basel. And not everything that looks unused may be "
+            "switched off: production, backups and the emergency fallback stay on.\n\n"
+            "**Who it serves.** IT managers (one picture from one pipeline run), management (a plan with targets, budget "
+            "and a named owner for every step) and finance (licences and contracts, with the notice dates that matter).\n\n"
+            "**Built for ALTYCA × Basel 2037: scale to every Basel SME.** ALTYCA could deliver it to its SME clients on "
+            "Fabric and Databricks. Basel 2037 could use it as the standard method for advising and funding SMEs. "
+            "Partnership: build it with ALTYCA from early next year.")
+    st.html(f'<div class="gx-foot">Team: Rashed · Hakim · Vinzenz, with AI agents (Claude, Grok). {CITE}.</div>')
     _story_nav(0)
 
 
