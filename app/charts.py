@@ -11,21 +11,25 @@ import streamlit as st
 # Two accents only: green for the data, ink-blue when a second series is unavoidable.
 # Green / amber / red are reserved for pass, close and miss. They are not used as series colours.
 PALETTE = {
-    # R9: ALTYCA case-slide palette (theme.TOKENS). Teal = data and PASS, pink only for refusals / needs a human.
+    # R9 palette, aligned with theme.py. Teal #00cc99 is the dark-mode data colour.
+    # Light bars use #007a5c: #00cc99 on white is 2.1:1, and the gauge paints white type on STATUS.
+    # Pink is not a series colour. Refusals use theme.PINK (#f84aa7) in theme.py only.
     "light": {
-        "surface": "#ffffff", "ink": "#0d0f12", "ink2": "#2d3640", "muted": "#4b5560",
-        "grid": "#e3e6ea", "axis": "#c3c9d0",
-        "series": ["#d3f3e9", "#9fe6d0", "#5fd4b2", "#00b386", "#00785a", "#004d3a"],
-        "accent": "#00a37a", "accent2": "#3a5a78", "track": "#e3f7f0", "other": "#c3c9d0",
+        "surface": "#ffffff", "ink": "#0d0f12", "ink2": "#24303a", "muted": "#3a4450",
+        "grid": "#d5dbe1", "axis": "#8b97a3",
+        "series": ["#d8f6ee", "#9ee8d4", "#4ecfb0", "#00a37c", "#007a5c", "#084e3c"],
+        "accent": "#007a5c", "accent2": "#1f4e73", "track": "#e5f6f1", "other": "#b7c0c8",
     },
     "dark": {
-        "surface": "#16191e", "ink": "#f2f4f5", "ink2": "#c4cad1", "muted": "#9aa3ad",
-        "grid": "#262b33", "axis": "#3a414b",
-        "series": ["#0f3a30", "#0f5c49", "#0a8063", "#00a37a", "#00cc99", "#8ff0d4"],
-        "accent": "#00cc99", "accent2": "#8eb4d4", "track": "#1c2a27", "other": "#3a414b",
+        "surface": "#16191e", "ink": "#f5f6f7", "ink2": "#d5dbe1", "muted": "#b4bec8",
+        "grid": "#2c333c", "axis": "#46505a",
+        "series": ["#0c3d32", "#0e5c48", "#0a8064", "#00a37c", "#00cc99", "#b8f6e4"],
+        "accent": "#00cc99", "accent2": "#9ec0dc", "track": "#1a2e2a", "other": "#46505a",
     },
 }
-STATUS = {"good": "#00cc99", "warning": "#b8860b", "serious": "#b86a2a", "critical": "#b42318"}
+# good is the darker teal: gauge pills set color:#ffffff on this fill, and white on #00cc99 is 2.1:1.
+# #007a5c with white is 5.3:1. The big PASS number stays #00cc99 via theme.TEAL on the near-black ground.
+STATUS = {"good": "#007a5c", "warning": "#b8860b", "serious": "#b86a2a", "critical": "#b42318"}
 FONT = 'Manrope, system-ui, -apple-system, "Segoe UI", sans-serif'
 # Inline HTML styles cannot contain a double quote: Streamlit's sanitizer ends the attribute there.
 FONT_INLINE = "Manrope, system-ui, -apple-system, Segoe UI, sans-serif"
