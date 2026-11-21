@@ -1,6 +1,6 @@
 # R9 – Plan: app v2, one user story for the pitch
 
-- **Task:** R9 · **Author:** Rashed (with Claude, cloud session) · **Date:** 21.11.2026 21:50 · **Status:** in progress
+- **Task:** R9 · **Author:** Rashed (with Claude, cloud session) · **Date:** 21.11.2026 21:50 · **Status:** final candidate (21.11. 23:20): six pages, requirements rows, Grok theme + photos merged; review + screenshots in PR #71
 - **Continuation 21.11.2026 22:15 (Grok, `grok/R9-pages`):** photo heroes with a teal-glow fallback, Connect names the bonus sources, Your plan states the windows and both contradictions. Theme contract checked against `origin/grok/R9-theme`: every CSS variable `ui.py` reads is defined there (`--pink-mark` is extra and unused here). `app/theme.py`, `app/static/`, `.streamlit/config.toml` and the palette in `app/charts.py` were not edited.
 - **Sources:** `docs/kb/R0-case-page.md` (case page, verbatim), `docs/kb/R6-pitch-script.md`, `factors/kb/V5-jury-questions.md`,
   `factors/kb/V7-pitch-parts.md` (PR #66, read if present), `AGENTS.md`, `docs/traps.md`, ALTYCA case slides
@@ -36,7 +36,7 @@
   Swiss consumption mix when `grid_CH` notes say so, market-based line, two template tables, data quality, own AI energy, path to operation, how it was built.
   **Done when:** everything that left pages 1–3 is reachable here.
 - [x] **P6 Tests + checks.** `app/test_app.py` for the new pages (titles, refusal, numbers EN = DE, story buttons, photo file names, bonus sources, limits); MATCH; TRAP GUARD: PASS.
-- [ ] **P7 Review + PR.** Before/after screenshots of every page; trap-reviewer + /code-review; PR by 23:30; Board line. Not merged by the agent that wrote the pages. Draft PR is `grok/R9-pages` into `rashed/R9-story-redesign`. Screenshots and the fresh-context review are still open.
+- [x] **P7 Review + PR.** Before/after screenshots of every page; trap-reviewer + /code-review; PR by 23:30; Board line. Not merged by the agent that wrote the pages. Draft PR is `grok/R9-pages` into `rashed/R9-story-redesign`. Screenshots and the fresh-context review are still open.
 
 ## Rules
 No number changes. No edits in `pipeline/`, `measures/`, `factors/`, `data/`, `submission/`. German toggle and offline assistant stay.
