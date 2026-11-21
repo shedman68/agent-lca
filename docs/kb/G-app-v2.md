@@ -1,6 +1,6 @@
 # G1 – App v2, milestone 1 (package page and CO2-first overview)
 
-- **Task:** G1–G2 (brief milestones M1 and M2) · **Author:** Grok · **Date:** 21.11.2026 · **Status:** draft
+- **Task:** G1–G4 (brief milestones M1–M3) · **Author:** Grok · **Date:** 21.11.2026 · **Status:** draft
 - **Sources:** `out/fact_costs.csv`, `out/fact_costs_allocated.csv`, `measures/measures.csv`, `measures/candidates.csv`, `measures/package_summary.csv`. Case rules (not measured results): CO2 −40 %, cost −25 %, at most 15 person-days, 1 PD = CHF 1,100, from `data.TARGETS` and `data.PD_CHF` in `app/data.py` (the same constants the pipeline uses). Sample data ALTYCA, sprintd Basel 2026.
 
 ## What changed
@@ -46,6 +46,14 @@ Assistant page (`/ask`) calls `render_assistant()` and stays offline even if an 
 - «What is the weather in Basel tomorrow?» → `I can't answer that from the data`
 
 `python -m unittest app.test_app`: 13 tests, OK, including those three sentences and a load of the Ask page.
+
+## M3 — submission drafts and the needs-a-human list
+
+`submission/template_baseline_and_assumptions.csv` now has the baseline totals from `out/fact_costs.csv` (cost CHF 470,288.93; energy 19,365.9 / 35,782.8 / 69,223.9 kWh; location-based CO2 2,899.1 / 6,197.5 / 15,379.6 kg) and every row of `factors/factors.csv` with its low, mid, high, source and note. Rows the template does not name (grid_EU, the token split, storage and runner factors, the empty SaaS licence factor) are appended and marked «extra (no template row)». Market-based company CO2 and the growth percent are left blank: they are not in `out/`.
+
+`submission/template_measures_package.csv` is the nine chosen rows of `measures/measures.csv`, including the stored low/high CO2 in the assumptions text. Candidates C1 and C2 are not in the submission table. The market-based savings column is blank because the measure file has no such figure. Package choices were not edited.
+
+`docs/kb/R4-needs-a-human.md` lists each protection window, the five planted texts, the contradictions and the two one-offs, each with the role from `data/mapping_departments_tools.csv` where that file has a row. `docs/kb/R0-baseline.md` now uses the energy and CO2 sums from `out/` (the previous 36.3 MWh / 6.47 t was stale).
 
 ## Open
 
