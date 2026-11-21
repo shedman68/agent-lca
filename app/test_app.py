@@ -1000,3 +1000,20 @@ class TeamPhotoTests(unittest.TestCase):
                 html = ui._avatar("Rashed")
                 self.assertIn('<img class="gx-avatar" src="data:image/jpeg;base64,', html)
                 self.assertNotIn("gx-initials", html)
+
+
+class StoryShareLinesTests(unittest.TestCase):
+    def test_germany_and_dev_platform_shares_come_from_out(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        from streamlit.testing.v1 import AppTest
+        cc = data.impact_by("country", "cost", "mid").set_index("label")["share"]["Germany"]
+        ck = data.impact_by("country", "co2", "mid").set_index("label")["share"]["Germany"]
+        rc = data.impact_by("resource", "cost", "mid").set_index("resource_id")["share"]["dp-dev"]
+        rk = data.impact_by("resource", "co2", "mid").set_index("resource_id")["share"]["dp-dev"]
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "where-you-stand")
+        blob = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO2.", blob)
+        self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO2", blob)

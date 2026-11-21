@@ -13,3 +13,9 @@
 - [x] **7 Simple English** pages 0–5 (Human in the loop, prompt injection, one-time, no «franc» idioms). Vinzenz's kb documents and `submission/path_to_operation.md` shown on page 5 are not edited (their owners' files).
 - [x] **8 Checks:** 55 tests OK · MATCH · TRAP GUARD: PASS · headline numbers unchanged · T-1251 refused in one click.
 - [x] **9 Screenshots** (1440×900, dark): `screenshots/pitch/` connect, where-you-stand, your-plan, your-plan-map, stay-on-track (.jpg).
+
+## Presenter mode and About (22.11.2026, after the first PR round)
+- [x] **A Presenter mode.** «Story mode» runs the pitch as 21 beats (`app/story.py`). Keys: → / PageDown / Space next, ← / PageUp back; fixed Back / Next buttons and a beat counter bottom right. Each beat spotlights one block (others at 35 %), scrolls it into view and sets the state itself (sample company, Low / High / Mid, sort, the T-1251 question). CSS-only animations (rise, ticks, ring reveal, button press, type-out), off under prefers-reduced-motion. Beat and mode live in the URL (`?story=1&beat=7`), so a refresh keeps the beat. Story mode off: the app as before. Tested: 21 beats forward and back (AppTest) and with real keys in Chromium. Close beat 21 = the «Scale it to every Basel SME» card on step 4.
+- [x] **B About.** Team cards with round photos from `app/static/team/<name>.jpg`; no photos are in the repo yet, so initials show. Roles: Product lead · Energy and environment expert · Data expert. Even 29 px rhythm between hook, team, why and promise.
+- New computed lines for the cue cards: «Germany: 11 % of the cost, 36 % of the CO2.» (map) and «8 % of the cost · 29 % of the CO2» (hotspot 1), both from `out/` via `data.impact_by` (test).
+- Screenshots (1920×1080, story mode, dark): `screenshots/story/beat-02.jpg` … `beat-19.jpg`.

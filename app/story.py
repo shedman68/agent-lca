@@ -111,7 +111,7 @@ def spotlight_css(anchor: str) -> str:
     """Dim the siblings on the path to the active block, outline the block. Story mode only."""
     a = f".st-key-beat_{anchor}"
     return f"""<style>
-[data-testid="stMain"] [data-testid="stVerticalBlock"]:has({a}) > div:not(:has({a})):not({a}):not(.st-key-story_nav):not(.st-key-story_js){{opacity:.35;transition:opacity .4s ease;}}
+[data-testid="stMain"] [data-testid="stVerticalBlock"]:has({a}) > div:not(:has({a})):not({a}):not(.st-key-story_nav):not(:has(.st-key-story_nav)):not(.st-key-story_js):not(:has(.st-key-story_js)){{opacity:.35;transition:opacity .4s ease;}}
 {a}{{border-radius:20px;box-shadow:0 0 0 2px var(--teal,#00cc99),0 0 34px 6px rgba(0,204,153,.28);padding:10px 12px;transition:box-shadow .4s ease;}}
 @media (prefers-reduced-motion: no-preference){{
   {a}{{animation:gxBeatIn .5s ease-out both;}}
@@ -141,13 +141,15 @@ BASE_CSS = """<style>
 .st-key-story_nav{position:fixed !important;right:24px !important;bottom:20px !important;top:auto !important;left:auto !important;z-index:1000;display:flex;flex-direction:row;align-items:center;gap:10px;
   background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:16px;padding:8px 10px;width:auto !important;}
 .st-key-story_nav [data-testid="stHorizontalBlock"]{gap:10px;flex-wrap:nowrap;align-items:center;}
+.st-key-story_nav [data-testid="stColumn"]{flex:0 0 auto !important;width:auto !important;min-width:0 !important;}
 .st-key-story_nav button{min-height:52px;min-width:96px;font-size:18px;font-weight:700;}
-.st-key-story_nav .gx-beat{min-width:170px;text-align:center;font-size:15px;color:var(--muted,#9aa3ad);font-weight:700;letter-spacing:.06em;white-space:nowrap;padding:0 6px;}
+.st-key-story_nav .gx-beat{white-space:nowrap;text-align:center;font-size:15px;line-height:1.3;color:var(--muted,#9aa3ad);font-weight:700;letter-spacing:.06em;padding:0 6px;}
 .st-key-story_nav .gx-beat b{color:var(--ink,#f2f4f5);font-size:18px;}
 .st-key-story_js{position:absolute;width:0;height:0;overflow:hidden;}
 [data-testid="stMain"] .block-container{padding-bottom:140px;}
 @media (max-width:720px){.st-key-story_nav{right:8px;left:8px;bottom:8px;justify-content:space-between;}
-  .st-key-story_nav button{min-width:72px;min-height:48px;font-size:16px;}}
+  .st-key-story_nav button{min-width:72px;min-height:48px;font-size:16px;}
+  .st-key-story_nav .gx-beat .t{display:none;}}
 </style>"""
 
 

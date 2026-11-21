@@ -940,7 +940,7 @@ def _country_line(country: str) -> str:
     try:
         cost = data.impact_by("country", "cost", "mid").set_index("label")["share"]
         co2 = data.impact_by("country", "co2", "mid").set_index("label")["share"]
-        return f"{country}: {float(cost[country]):.0%} of the cost, {float(co2[country]):.0%} of the CO2."
+        return f"{country}: {float(cost[country]) * 100:.0f} % of the cost, {float(co2[country]) * 100:.0f} % of the CO2."
     except (KeyError, ValueError, TypeError, AttributeError):
         return ""
 
@@ -950,7 +950,7 @@ def _resource_share_line(resource_id: str) -> str:
     try:
         cost = data.impact_by("resource", "cost", "mid").set_index("resource_id")["share"]
         co2 = data.impact_by("resource", "co2", "mid").set_index("resource_id")["share"]
-        return f"{float(cost[resource_id]):.0%} of the cost · {float(co2[resource_id]):.0%} of the CO2"
+        return f"{float(cost[resource_id]) * 100:.0f} % of the cost · {float(co2[resource_id]) * 100:.0f} % of the CO2"
     except (KeyError, ValueError, TypeError, AttributeError):
         return ""
 
@@ -1515,7 +1515,7 @@ if st.session_state.get(ui.STORY_KEY):
     with st.container(key="story_nav"):
         _c1, _c2, _c3 = st.columns([1, 1.7, 1], vertical_alignment="center")
         _c1.button("← Back", key="story_prev", on_click=story.prev_beat, disabled=_n <= 1)
-        _c2.html(f'<div class="gx-beat"><b>{_n} / {story.TOTAL}</b> · {ui.esc(i18n.tr(_b.title))}</div>')
+        _c2.html(f'<div class="gx-beat"><b>{_n} / {story.TOTAL}</b><span class="t"> · {ui.esc(i18n.tr(_b.title))}</span></div>')
         _c3.button("Next →", key="story_next", type="primary", on_click=story.next_beat, disabled=_n >= story.TOTAL)
     with st.container(key="story_js"):
         st._raw_html(story.keys_js(_n, _b.anchor, _on_page), unsafe_allow_javascript=True)
