@@ -996,8 +996,12 @@ class TeamPhotoTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with mock.patch.object(ui, "TEAM_DIR", Path(d)):
                 self.assertIn('gx-initials" aria-hidden="true">R<', ui._avatar("Rashed"))
-                (Path(d) / "rashed.jpg").write_bytes(b"\xff\xd8\xff\xe0fakejpeg")
+                (Path(d) / "hakim.png").write_bytes(b"not an image")
+                self.assertIn("gx-initials", ui._avatar("Hakim"))  # broken file: initials, no broken image
+                from PIL import Image
+                Image.new("RGB", (3000, 2000), (40, 120, 90)).save(Path(d) / "rashed.jpg", quality=95)
                 html = ui._avatar("Rashed")
+                self.assertLess(len(html), 140_000)  # shrunk to 400 px, page stays light
                 self.assertIn('<img class="gx-avatar" src="data:image/jpeg;base64,', html)
                 self.assertNotIn("gx-initials", html)
 

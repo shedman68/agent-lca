@@ -215,12 +215,29 @@ def grid(cards: list[str]) -> None:
 TEAM_DIR = Path(__file__).resolve().parent / "static" / "team"
 
 
+@st.cache_data(show_spinner=False)
+def _photo_b64(path_str: str, mtime: float) -> str | None:
+    """Any size photo → 400 px square JPEG (centre crop), base64. None when the file cannot be read."""
+    try:
+        import io
+        from PIL import Image, ImageOps
+        img = ImageOps.exif_transpose(Image.open(path_str)).convert("RGB")
+        img = ImageOps.fit(img, (400, 400))
+        buf = io.BytesIO()
+        img.save(buf, "JPEG", quality=82, optimize=True)
+        return base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return None
+
+
 def _avatar(name: str) -> str:
-    """Round photo from app/static/team/<name>.jpg, inlined. No file: the initials in a circle, never a broken image."""
-    path = TEAM_DIR / f"{name.lower()}.jpg"
-    if path.is_file() and path.stat().st_size < 150_000:
-        b64 = base64.b64encode(path.read_bytes()).decode()
-        return f'<img class="gx-avatar" src="data:image/jpeg;base64,{b64}" alt="{esc(name)}">'
+    """Round photo from app/static/team/<name>.jpg|.jpeg|.png (any size, shrunk here). No usable file: initials."""
+    for ext in ("jpg", "jpeg", "png", "JPG", "JPEG", "PNG"):
+        path = TEAM_DIR / f"{name.lower()}.{ext}"
+        if path.is_file():
+            b64 = _photo_b64(str(path), path.stat().st_mtime)
+            if b64:
+                return f'<img class="gx-avatar" src="data:image/jpeg;base64,{b64}" alt="{esc(name)}">'
     initials = "".join(w[0] for w in name.split()[:2]).upper()
     return f'<div class="gx-avatar gx-initials" aria-hidden="true">{esc(initials)}</div>'
 
