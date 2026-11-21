@@ -5,6 +5,8 @@
 
 | Date | Decision | Why | Who | Where |
 | --- | --- | --- | --- | --- |
+| 21.11. 12:15 | Counting of paused hours: official package keeps one factor per hour (consistent with the baseline and the jury's uniform reference baseline); idle-power result shown as a sensitivity; ask ALTYCA's mentor; C2 is the labelled «physical counting» option | Rashed delegated («complete all tasks», 12:11), Claude's 11:05 proposal | Rashed | chat |
+| 21.11. 12:15 | Merged #36 (app safety), #37 + #40 (idle factors, V6 draft, template check), #38 (Hakim QA + findings); closed #33 | all checks pass on the combined state | Rashed | chat |
 | 21.11. 10:40 | R1 final: swap M9 (marketing small model) for C1 (office assistant, simple tasks on a small model); AI savings weighted by input and output tokens; C1 price ratio computed from ai-assistant rows | token-weighted M9 left high factors at −39.94 %; with C1: 14.5 PD, cost −29.0 %, CO2 −49.6 / −43.0 / −42.2 % | Rashed | chat |
 | 21.11. 10:30 | Four R1 decisions (VS Code session, Rashed «trust your judgement»): (1) measures.csv holds the package only, candidates in candidates.csv, trap_guard unchanged; (2) contract year Dec 2026 – Nov 2027, notice 1 Dec 2026, per-contract dates for M8 (to do); (3) logs 365 → 90 days, db-audit and backups untouched; (4) AI CO2 weighted by input and output tokens | see docs/kb/handoff-vscode-to-cloud.md | Rashed | VS Code |
 | 21.11. 10:40 | Roles corrected to data/mapping_departments_tools.csv: M2 GPU → Head of Consulting; M7, M8 → Head of Finance | mapping file wins | Rashed | chat |

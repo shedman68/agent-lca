@@ -221,7 +221,12 @@ class AssistantTests(unittest.TestCase):
         facts = data.facts_unallocated()
         expected = facts.loc[facts["resource_id"].eq("dp-prod"), "cost_chf"].sum()
         self.assertAlmostEqual(months["cost_chf"].sum(), expected, places=1)
-        self.assertIsNone(data.own_ai_note())
+        note = data.own_ai_note()
+        own_ai = Path(__file__).resolve().parent.parent / "factors" / "kb" / "V6-our-ai-footprint.md"
+        if own_ai.exists():
+            self.assertIsNotNone(note)
+        else:
+            self.assertIsNone(note)
         shift = data.job_shift()
         self.assertIsNotNone(shift)
         training = shift[shift["job"].astype(str).str.contains("Quarterly")]
