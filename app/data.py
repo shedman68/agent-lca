@@ -509,6 +509,17 @@ def own_ai_note() -> str | None:
     return path.read_text(encoding="utf-8") if path.exists() else None
 
 
+def own_ai_result() -> pd.DataFrame | None:
+    """Vinzenz's V6 result table (one row per person plus TOTAL), as written by factors/scripts/own_ai.py."""
+    path = ROOT / "factors" / "kb" / "V6-result.csv"
+    if not path.exists():
+        return None
+    try:
+        return pd.read_csv(path)
+    except (OSError, ValueError):
+        return None
+
+
 def finding_cost(finding_id: str) -> float | None:
     """Baseline cost recorded for one finding in out/findings.csv, or None if that row has no cost."""
     table, _ = findings_table()

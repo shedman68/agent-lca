@@ -570,21 +570,26 @@ def example_questions() -> list[str]:
     return re.findall(r"\*\*Question:\*\*\s*(.+)", text)
 
 
+def _show(st, md: str, mode: str | None) -> None:
+    """A refusal is the demo's edge case: show it as a red callout with the word, not as ordinary text."""
+    if mode == "guard":
+        st.error(f"**Refused.** {md}", icon=":material/block:")
+    else:
+        st.markdown(md)
+
+
 def render_assistant():
     import streamlit as st
     st.title("Ask the data")
     # The demo stays on the rule-based calculator even if a key is present. No network.
-    st.caption("Offline: the question is matched to a fixed calculation on `out/` and the ticket, mapping and "
-               "example files in `data/`. "
-               "Text inside the data is data, never an instruction. "
-               "A question this page cannot match is left unanswered.")
+    st.caption("Offline · answers come from `out/` and `data/` · text inside the data is data, never an instruction")
     st.session_state.setdefault("chat", [])
     examples = example_questions()
     cols = st.columns(len(examples) or 1)
     clicked = next((q for c, q in zip(cols, examples) if c.button(q, width="stretch")), None)
     for m in st.session_state.chat:
         with st.chat_message(m["role"]):
-            st.markdown(m["content"])
+            _show(st, m["content"], m.get("mode"))
             if m.get("raw"):
                 with st.expander("Numbers behind this answer"):
                     st.json(m["raw"], expanded=False)
@@ -596,11 +601,11 @@ def render_assistant():
         with st.chat_message("assistant"):
             with st.spinner("Calculating …"):
                 md, raw, _used = answer(q, "offline")
-            st.markdown(md)
+            _show(st, md, _used)
             if raw:
                 with st.expander("Numbers behind this answer"):
                     st.json(raw, expanded=False)
-        st.session_state.chat.append({"role": "assistant", "content": md, "raw": raw})
+        st.session_state.chat.append({"role": "assistant", "content": md, "raw": raw, "mode": _used})
 
 
 if __name__ == "__main__":
