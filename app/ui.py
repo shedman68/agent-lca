@@ -88,6 +88,7 @@ background-color:#0d0f12;background-size:cover;background-position:center;border
 .gx-photo .gx-hero{color:#f5f6f7;}
 .gx-photo .gx-hero em,.gx-photo .gx-eyebrow{color:#00cc99;}
 .gx-photo .gx-sub{color:#d5dbe1;}
+.gx-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 @media (max-width:720px){.gx-sub{font-size:17px;}.gx-photo{padding:22px 16px 4px;min-height:180px;}}
 </style>"""
 
@@ -112,8 +113,9 @@ def photo_band(inner: str, slug: str) -> str:
         layers.insert(0, f"url(data:image/jpeg;base64,{b64})")
     style = f"background-image:{_SCRIM},{','.join(layers)},{_GLOW};"
     label = _html.escape(f"Opening photo {filename}. Teal glow until that file is served.")
-    return (f'<div class="gx-photo" style="{style}" role="img" aria-label="{label}" '
-            f'data-hero="{filename}">{inner}</div>')
+    # The headline stays real text. role=img would hide it from the accessibility tree.
+    return (f'<div class="gx-photo" style="{style}" data-hero="{filename}">'
+            f'<span class="gx-sr">{label}</span>{inner}</div>')
 
 
 def hero(eyebrow: str, line: str, sub: str = "", photo: str = "") -> None:

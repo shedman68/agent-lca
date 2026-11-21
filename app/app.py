@@ -974,18 +974,17 @@ def page_about() -> None:
     if not out_ready():
         return
     s = data.package_summary()
-    left, right = st.columns([1.15, 1])
+    ui.hero("", "Everything has a <em>lifecycle.</em>",
+            "We measure the use phase of cloud, servers, AI and SaaS. Next: the full lifecycle.",
+            photo="about")
+    left, right = st.columns([1.05, 1])
     with left:
-        ui.hero("", "Everything has a <em>lifecycle.</em>",
-                "We measure the use phase of cloud, servers, AI and SaaS. Next: the full lifecycle.",
-                photo="about")
+        ui.grid([
+            ui.card("Agent", "Bots do the counting. People make the decisions.", kicker="Why the name"),
+            ui.card("LCA", "Life-cycle assessment, our craft from pharma.", kicker="Why the name"),
+        ])
     with right:
         ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
-    ui.grid([
-        ui.card("Agent", "Bots do the counting. People make the decisions.",
-                kicker="Why the name"),
-        ui.card("LCA", "Life-cycle assessment, our craft from pharma.", kicker="Why the name"),
-    ])
     if s is not None:
         ui.kpis([
             (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 per year, mid factors"),
