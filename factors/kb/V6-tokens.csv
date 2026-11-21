@@ -1,0 +1,3 @@
+person,tool,model_class,tokens_in,tokens_out,web_searches,source,note
+Vinzenz,Claude Code (Anthropic Console usage),large,42109083,284662,35,"Anthropic Console usage page, screenshot 21.11.2026","Opus 5.5; Haiku share read off the chart (~1.2M, +-0.5M), all output assigned to Opus (conservative)"
+Vinzenz,Claude Code (Anthropic Console usage),small,1200000,0,0,"Anthropic Console usage page, screenshot 21.11.2026","Haiku 5.5, read off the chart"
