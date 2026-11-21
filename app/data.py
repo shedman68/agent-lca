@@ -170,10 +170,25 @@ def findings_table() -> tuple[pd.DataFrame | None, str | None]:
     for path, label in ((OUT / "findings.csv", "out/findings.csv"), (KB / "findings_numbers.csv", "analysis/kb/findings_numbers.csv")):
         f = _read(path)
         if f is not None and not f.empty:
-            for c in ("cost_chf", "share_of_total_pct", "addressable_chf"):
-                f[c] = pd.to_numeric(f[c], errors="coerce")
+            for c in ("cost_chf", "share_of_total_pct", "addressable_chf",
+                      "addressable_kwh_mid", "addressable_co2_kg_mid",
+                      "addressable_kwh_low", "addressable_co2_kg_low",
+                      "addressable_kwh_high", "addressable_co2_kg_high"):
+                if c in f.columns:
+                    f[c] = pd.to_numeric(f[c], errors="coerce")
             return f, label
     return None, None
+
+
+def findings_ranked() -> tuple[pd.DataFrame | None, str | None]:
+    """Findings ordered by addressable location-based CO2 (mid). Rows with no CO2 stay at the end."""
+    f, source = findings_table()
+    if f is None:
+        return None, None
+    out = f.copy()
+    out["_rank"] = out["addressable_co2_kg_mid"] if "addressable_co2_kg_mid" in out.columns else pd.NA
+    out = out.sort_values("_rank", ascending=False, na_position="last").reset_index(drop=True)
+    return out, source
 
 
 def findings_markdown() -> str | None:
@@ -458,6 +473,7 @@ def aws_zurich() -> dict | None:
         "co2_kg_mid": float(_num(z, "co2_kg_mid").sum()),
         "kwh_mid": float(_num(z, "kwh_mid").sum()),
         "role": _one_role(z["responsible_role"]) if "responsible_role" in z else "Head of IT",
+        "roles": sorted({str(x) for x in z["responsible_role"].dropna().unique()}) if "responsible_role" in z else [],
     }
 
 

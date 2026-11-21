@@ -14,6 +14,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import assistant  # noqa: E402
 import charts  # noqa: E402
 import data  # noqa: E402
 import register  # noqa: E402
@@ -189,50 +190,61 @@ FINDING_STATUS = {  # status never colour-only: badge = icon + label
 }
 
 
+def _kg(v) -> str:
+    return "–" if v is None or pd.isna(v) else f"{float(v):,.1f} kg"
+
+
+def _kwh(v) -> str:
+    return "–" if v is None or pd.isna(v) else f"{float(v):,.0f} kWh"
+
+
+def _finding_card(r: pd.Series) -> None:
+    label, icon, color = FINDING_STATUS.get(r["status"], (str(r["status"]), ":material/help:", "gray"))
+    with st.container(border=True):
+        st.markdown(f"**{r['finding_id']} · {r['title']}**")
+        st.badge(label, icon=icon, color=color)
+        a, b, c = st.columns(3)
+        a.metric("Idle or unused", chf(r["addressable_chf"]))
+        b.metric("Energy, mid", _kwh(r.get("addressable_kwh_mid")))
+        c.metric("CO2, location-based mid", _kg(r.get("addressable_co2_kg_mid")))
+        base = chf(r["cost_chf"])
+        st.caption(f"Baseline cost of the resource: {base}. Resource `{r['resource']}`.")
+        st.markdown(f"**Evidence:** {r['evidence']}  \n**Protection rule:** {r['protection_rule']}")
+        with st.popover("How this was calculated"):
+            st.markdown(f"{r['calculation']}  \n**Sources:** `{r['sources']}`")
+
+
 def _findings_structured(f: pd.DataFrame, source: str) -> None:
-    st.caption(f"Top drivers and waste (task H2). Source: `{source}`, computed by `analysis/findings.py` from `out/`. "
-               "«Idle or unused» is the baseline cost of the unused part: **not a saving claim**. "
-               "Savings and effort are decided in the package.")
-    counts = f["status"].value_counts()
-    cols = st.columns(len(FINDING_STATUS))
-    for col, (key, (label, _, _)) in zip(cols, FINDING_STATUS.items()):
-        col.metric(label, int(counts.get(key, 0)))
-
-    pick = st.pills("Show", [v[0] for v in FINDING_STATUS.values()], selection_mode="multi",
-                    default=[v[0] for v in FINDING_STATUS.values()])
-    keep = [k for k, v in FINDING_STATUS.items() if v[0] in (pick or [])]
-    sel = f[f["status"].isin(keep)].copy()
-    if sel.empty:
-        st.info("No finding matches this filter.")
+    st.caption(f"Ranked by addressable CO2 (location-based, mid factor) in `{source}`, "
+               "written by `analysis/findings.py`. «Idle or unused» is not a saving claim. "
+               "Findings overlap, so they are not added together. The package decides the savings.")
+    if f.empty:
+        st.info("The findings file has no rows.")
         return
-
-    bars = sel.dropna(subset=["addressable_chf"]).sort_values("addressable_chf", ascending=False)
+    top, rest = f.head(5), f.iloc[5:]
+    lead = top.iloc[0]
+    st.markdown(f"**Largest addressable CO2:** {lead['finding_id']} · {_kg(lead.get('addressable_co2_kg_mid'))} "
+                f"· {chf(lead['addressable_chf'])} · {_kwh(lead.get('addressable_kwh_mid'))}.")
+    bars = top.dropna(subset=["addressable_co2_kg_mid"]).copy()
     if not bars.empty:
-        st.subheader("Idle or unused cost per finding")
-        bars = bars.assign(label=bars["finding_id"] + " · " + bars["resource"].astype(str),
-                           share=bars["addressable_chf"] / data.baseline_totals()["cost_chf"])
-        st.altair_chart(charts.ranked_bars(bars, value="addressable_chf"), width="stretch", theme=None)
-        st.caption("Findings can overlap (for example AI seats by tool and by department), so the bars are not summed.")
-
-    for _, r in sel.iterrows():
-        label, icon, color = FINDING_STATUS.get(r["status"], (str(r["status"]), ":material/help:", "gray"))
-        with st.container(border=True):
-            st.markdown(f"**{r['finding_id']} · {r['title']}**")
-            st.badge(label, icon=icon, color=color)
-            a, b, c = st.columns(3)
-            share = "" if pd.isna(r["share_of_total_pct"]) else f" ({r['share_of_total_pct']:.1f} % of total)"
-            a.metric(f"Baseline cost{share}", chf(r["cost_chf"]))
-            b.metric("Idle or unused", chf(r["addressable_chf"]))
-            c.markdown(f"**Resource**  \n`{r['resource']}`")
-            st.markdown(f"**Evidence:** {r['evidence']}  \n**Calculation:** {r['calculation']}  \n"
-                        f"**Protection rule:** {r['protection_rule']}  \n**Sources:** `{r['sources']}`")
-
-    table_view(sel, "Table view: all findings shown")
+        base_co2 = data.energy_totals()["co2_mid"]
+        bars = bars.assign(label=bars["finding_id"] + " · " + bars["title"].astype(str),
+                           share=bars["addressable_co2_kg_mid"] / base_co2)
+        st.altair_chart(charts.ranked_bars(bars, value="addressable_co2_kg_mid", unit="kg",
+                                            axis_title="kg CO2 per year, addressable, mid factors"),
+                        width="stretch", theme=None)
+    for _, r in top.iterrows():
+        _finding_card(r)
+    with st.expander(f"The other {len(rest)} findings"):
+        st.caption("Same file. Cost-only findings (seats, SaaS) have 0 kg here and stay in this list.")
+        for _, r in rest.iterrows():
+            _finding_card(r)
+    table_view(f.drop(columns=["_rank"], errors="ignore"), "Table view: every finding")
 
 
 def page_findings() -> None:
     st.title("Findings")
-    f, source = data.findings_table()
+    f, source = data.findings_ranked()
     if f is not None:
         _findings_structured(f, source)
         return
@@ -454,11 +466,24 @@ def _contradictions(ql: pd.DataFrame | None) -> list[tuple[str, str, str, str]]:
                       "(see `analysis/kb/reconciliation.md`).",
                       "Not a reason to change the baseline (separate summary of unknown scope). Ask what the report includes.",
                       "Head of IT"))
-    cards.append(("T-1094 is about dr-failover but filed under vm-test",
-                  "The ticket protects the emergency fallback dr-failover, but its resource_id is `vm-test`. "
-                  "dr-failover has no own cost line in `out/`.",
+    p2 = data.finding_cost("P2")
+    billed = ("Finding P2 in `out/findings.csv` has no cost figure." if p2 is None
+              else f"Finding P2 in `out/findings.csv` records {chf(p2, 1)} for that server, billed inside vm-test.")
+    cards.append(("Disaster-recovery server is billed inside vm-test",
+                  "dr-failover has no own cost line (`cost_resource` is empty). " + billed +
+                  " Ticket T-1094 protects the emergency fallback, but its resource_id is `vm-test`.",
                   "Keep dr-failover running. Do not let T-1094 make vm-test protected all year: only T-1204 (March 2026) protects vm-test.",
                   "Head of IT"))
+    z = data.aws_zurich()
+    if z is not None and z["rows"]:
+        roles = ", ".join(z["roles"]) if z.get("roles") else z.get("role", "Head of IT")
+        cards.append(("AWS rows name Zurich; the locations file says that region is unused",
+                      f"`out/fact_costs.csv` baseline, source aws, region contains Zurich: "
+                      f"**{z['rows']} rows, {chf(z['cost_chf'], 2)}, {_kwh(z['kwh_mid'])}, {_kg(z['co2_kg_mid'])}** (mid). "
+                      "docs/traps.md §5 records that the locations file treats AWS Zurich as unused. "
+                      "The cost file is what the baseline sums. These rows were not dropped.",
+                      "Ask which file is right before anyone excludes the rows.",
+                      roles))
     if ql is not None:
         cp = ql[ql["check"].eq("price vs README")]
         if not cp.empty:
@@ -551,6 +576,31 @@ def page_human() -> None:
     st.dataframe(pd.DataFrame(one), hide_index=True, width="stretch")
     st.caption("A measure must not «save» these again. Source: `analysis/kb/reconciliation_checks.csv`.")
 
+    st.header("5 · Notice dates")
+    cal = data.notice_calendar()
+    if cal is None or cal.empty:
+        st.info("`out/fact_costs.csv` has no SaaS or AI-subscription rows with a contract end, so no notice date is shown.")
+    else:
+        as_of = str(cal["as_of"].iloc[0])
+        due = cal[cal["state"].eq("due 2 Dec")]
+        passed = cal[cal["state"].eq("passed")]
+        st.markdown(f"State is judged on **{as_of}** (draft-submission Saturday). "
+                    f"Notice by = contract end minus notice days, from the latest baseline month "
+                    f"(`{cal['last_month'].iloc[0]}`) in `out/fact_costs.csv`. "
+                    f"Unused CHF is the baseline-year sum of (purchased − active) / purchased × cost_chf.")
+        a, b = st.columns(2)
+        a.metric("Due 2 Dec, unused in the baseline year", chf(float(due["unused_chf"].sum()), 0))
+        b.metric("Notice already passed, unused in the baseline year", chf(float(passed["unused_chf"].sum()), 0))
+        show = cal.assign(notice_by=pd.to_datetime(cal["notice_by"]).dt.strftime("%Y-%m-%d"))
+        st.dataframe(show[["tool", "source", "state", "notice_by", "unused_chf", "month_idle_chf", "responsible_role"]],
+                     hide_index=True, width="stretch",
+                     column_config={"unused_chf": st.column_config.NumberColumn("Unused CHF, baseline year", format="%,.0f"),
+                                    "month_idle_chf": st.column_config.NumberColumn("Unused CHF, latest month", format="%,.0f"),
+                                    "state": st.column_config.TextColumn("State"),
+                                    "responsible_role": st.column_config.TextColumn("Role")})
+        st.caption("«due 2 Dec» is the notice date 2026-12-02. «passed» is a notice date before "
+                   f"{as_of}. The role is `responsible_role` on the cost row. T-1128 still leaves AI seat cuts to the department heads.")
+
 
 # =============================================================================== navigation
 pages = [
@@ -558,6 +608,7 @@ pages = [
     st.Page(page_findings, title="Findings", icon="🔎", url_path="findings"),
     st.Page(page_package, title="Package", icon="🎯", url_path="package"),
     st.Page(page_human, title="Needs a human", icon="🙋", url_path="needs-a-human"),
+    st.Page(assistant.render_assistant, title="Ask the data", icon="💬", url_path="ask"),
 ]
 nav = st.navigation(pages)
 with st.sidebar:
