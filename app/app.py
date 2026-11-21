@@ -6,6 +6,7 @@ Free text in the data is shown as data on the "Needs a human" page and never act
 """
 from __future__ import annotations
 
+import io
 import re
 import subprocess
 import sys
@@ -1217,20 +1218,48 @@ def page_track() -> None:
     st.subheader("Next year, with and without the plan")
     if s is not None and not _missing(e.get("co2_mid")):
         with_chf = e["cost_chf"] - float(s["chf"])
-        with_kg = e["co2_mid"] - float(s["co2_mid"])
+        rng = {lv: (e[f"co2_{lv}"], e[f"co2_{lv}"] - float(s[f"co2_{lv}"])) for lv in ("low", "mid", "high")}
+        months = data.dp_prod_months()
+        growth = ""
+        if months is not None and not months.empty:
+            up = 24 / 20 - 1  # T-1261: production grows from 20 to 24 nodes from October 2026
+            growth = (f"If production runs on 24 instead of 20 nodes all year: up to +CHF {months['cost_chf'].sum() * up:,.0f} "
+                      f"and +{months['co2_kg_mid'].sum() * up:,.0f} kg CO2.")
         ui.grid([
-            ui.card("Without the plan", "Usage as in the baseline year.", _tonnes(e["co2_mid"]), "t CO2",
-                       f"CHF {e['cost_chf']:,.0f} a year"),
-            ui.card("With the plan", "Same usage, measures in place for a full year.", _tonnes(with_kg), "t CO2",
-                       f"CHF {with_chf:,.0f} a year", kind="accent"),
+            ui.card("Without the plan", "Usage as in the baseline year.", _tonnes(rng["mid"][0]), "t CO2",
+                    f"Range {_tonnes(rng['low'][0])}–{_tonnes(rng['high'][0])} t · CHF {e['cost_chf']:,.0f} a year"),
+            ui.card("With the plan", "Same usage, measures in place for a full year.", _tonnes(rng["mid"][1]), "t CO2",
+                    f"Range {_tonnes(rng['low'][1])}–{_tonnes(rng['high'][1])} t · CHF {with_chf:,.0f} a year", kind="accent"),
         ])
         one_off = data.one_off_total()
-        st.caption("Mid factors. Assumes usage stays as in the baseline year; the production platform's growth from "
-                   "October 2026 is shown in step 4."
-                   + (f" The baseline includes CHF {one_off:,.0f} of one-off costs that will not recur "
-                      "(`docs/one_off_costs.csv`)." if one_off else ""))
+        st.caption("Forecast = the baseline year repeated, mid factors with the low–high range. " + growth
+                   + (f" The baseline includes CHF {one_off:,.0f} of one-off costs that will not recur." if one_off else ""))
+    cards = []
+    res = data.own_ai_result()
+    tot = None if res is None else res[res["person"].astype(str).str.upper().eq("TOTAL")]
+    if tot is not None and not tot.empty and s is not None:
+        t = tot.iloc[0]
+        hours = float(t["co2_kg_mid"]) / float(s["co2_mid"]) * 8760 if float(s["co2_mid"]) else None
+        cards.append(ui.card("Our own AI use this weekend", "Building this with AI agents, counted so far.",
+                             f"{float(t['co2_kg_mid']):,.1f}", "kg CO2",
+                             f"Range {float(t['co2_kg_low']):,.1f}–{float(t['co2_kg_high']):,.1f} kg · "
+                             f"{float(t['kwh_mid']):,.1f} kWh"
+                             + (f" · the plan saves that in about {hours:,.0f} hours" if hours else ""), kicker="Honest about us"))
+    shift = data.job_shift()
+    if shift is not None and "reduction_pct" in shift:
+        red = pd.to_numeric(shift["reduction_pct"], errors="coerce").dropna()
+        if not red.empty:
+            cards.append(ui.card("Shift jobs to cleaner hours", f"{len(red)} flexible jobs could run when the grid is cleaner.",
+                                 f"{red.min():,.0f}–{red.max():,.0f}", "% less CO2 per kWh",
+                                 "Not added to the plan. Training days stay protected.", kicker="Carbon-aware"))
+    cards.append(ui.card("Path to operation", "1 · Each month: drop the exports, run the pipeline; two checks must pass. "
+                         "2 · Owners decide on the «needs your OK» list. 3 · Once a year: review the factors.",
+                         meta="Full note: step 5", kicker="For an SME without a specialist team"))
+    ui.grid(cards)
     st.subheader("Next: GreenOps agents")
     ui.grid([ui.card(n, d, meta=f"Proposes · {a}", kicker="Roadmap · not built yet") for n, d, a in AGENTS_ROADMAP])
+    ui.grid([ui.card("Scale it to every Basel SME", BASEL_LINE.split(": ", 1)[1] + " Partnership: build it with ALTYCA "
+                     "on Fabric and Databricks from early next year.", kind="accent", kicker="Built for ALTYCA × Basel 2037")])
     ui.bridge("Next: the evidence behind every number, for your questions.")
     _story_nav(4)
 
@@ -1240,7 +1269,7 @@ def page_behind() -> None:
     st.title("Behind the numbers")
     ui.hero("", "Every figure is traced to a file. <em>Every factor is a range.</em>",
                "For the questions: answers, checks, factors and the path to operation.")
-    tabs = st.tabs(["Jury questions", "Needs a human", "Factors", "Data quality", "Next year & our AI energy",
+    tabs = st.tabs(["Jury questions", "Needs a human", "Factors", "Two tables", "Data quality", "Next year & our AI energy",
                     "Path to operation", "How it was built"])
     with tabs[0]:
         for rel in ("factors/kb/V7-pitch-parts.md", "factors/kb/V5-jury-questions.md"):
@@ -1260,17 +1289,27 @@ def page_behind() -> None:
         else:
             st.caption("Every factor with low / mid / high and its source (`factors/factors.csv`).")
             st.dataframe(fac, hide_index=True, width="stretch")
+            st.markdown("**Market-based view: not computed.** Every Swiss kWh can carry a guarantee of origin, which "
+                        "would make the footprint look almost zero. We show location-based on purpose: the power mix "
+                        "where the data centre stands.")
     with tabs[3]:
+        for name in ("template_baseline_and_assumptions.csv", "template_measures_package.csv"):
+            text = data.kb_text(f"submission/{name}")
+            if text:
+                st.download_button(f"Download {name}", text.encode("utf-8"), file_name=name, mime="text/csv",
+                                   key=f"dl_{name}")
+                st.dataframe(pd.read_csv(io.StringIO(text.lstrip("\ufeff"))), hide_index=True, width="stretch")
+    with tabs[4]:
         ql = data.quality_log()
         st.caption("Every correction the pipeline made: duplicates, drafts, currencies, units (`out/quality_log.csv`).")
         if ql is not None:
             st.dataframe(ql, hide_index=True, width="stretch")
-    with tabs[4]:
-        page_next(embedded=True)
     with tabs[5]:
+        page_next(embedded=True)
+    with tabs[6]:
         text = data.kb_text("submission/path_to_operation.md")
         st.markdown(text or "`submission/path_to_operation.md` is not in the repo yet.")
-    with tabs[6]:
+    with tabs[7]:
         st.markdown(
             "**One pipeline, two checks.** `pipeline.py` harmonises 28 files (time, currency, names); `findings.py` "
             "finds the waste; `measures.py` builds the plan. The numbers are only accepted when the baseline matches an "
