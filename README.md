@@ -23,7 +23,7 @@ The two case templates and the path-to-operation note are in `submission/` (see 
 ## What is real and what is mocked
 
 Real: every cost, energy and CO2 number is computed from the case sample data by `pipeline/`, `analysis/` and `measures/`
-(baseline CHF 470,288.93, verified three ways). Assumptions: energy and grid factors (low / mid / high, sources in `factors/`),
+(baseline CHF 470,288.93, checked by an independent recalculation). Assumptions: energy and grid factors (low / mid / high, sources in `factors/`),
 realisation shares and person-days per measure. Limited: the «Ask the data» assistant runs offline as a keyword router that calls the same calculations on `out/`; a Claude mode exists in the code but is off for the demo. Nothing is mocked with invented numbers.
 
 ## AI tools and templates we started from
@@ -31,6 +31,6 @@ realisation shares and person-days per measure. Limited: the «Ask the data» as
 Built during the sprint, from an empty repository and the case data. No code template.
 AI coding agents: Claude Code (Anthropic) and Claude in the claude.ai app for planning and review; Grok (xAI) through Cursor
 cloud agents for app development; teammates' Claude agents for analysis and factor research.
-Agent rules are in `AGENTS.md` and `CLAUDE.md`; every agent's output was checked by `pipeline/verify_baseline.py` and `pipeline/trap_guard.py`.
+Agent rules are in `AGENTS.md` and `CLAUDE.md`; `pipeline/verify_baseline.py` and `pipeline/trap_guard.py` run at the end of every Claude session (Stop hook) and by hand before merging; there is no CI yet.
 
 Data: «Sample data ALTYCA, sprintd Basel 2026».
