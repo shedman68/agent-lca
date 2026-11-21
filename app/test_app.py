@@ -615,6 +615,9 @@ class StoryTests(unittest.TestCase):
         c = appdata.connect_stats()
         self.assertEqual(c["files"], 28)  # 13 core + 15 extra, as the case page says
         self.assertEqual(c["currencies"], ["CHF", "EUR", "USD"])
+        blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(getattr(page, "html", [])))
+        self.assertIn("Bonus sources used:", blob)
+        self.assertIn("Power BI", blob)
 
     def test_story_buttons(self):
         page = _open(self._app(), "your-plan")
@@ -646,6 +649,59 @@ class StoryTests(unittest.TestCase):
         shown = " ".join(c.value for c in page.caption)
         self.assertIn(f"{co2_share:.0%} of the plan's CO2 cut", shown)
         self.assertIn(f"{chf_share:.0%} of its francs", shown)
+
+    def test_ui_css_stays_inside_the_theme_contract(self):
+        """grok/R9-theme's contract: ui.py may only read these CSS variables."""
+        import re
+        import sys
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+
+        contract = {"bg", "card", "card2", "line", "ink", "ink2", "muted", "teal", "teal-ink",
+                    "pink", "pink-bg", "teal-bg", "on-teal"}
+        used = set(re.findall(r"var\(--([a-z0-9-]+)", ui.CSS))
+        self.assertTrue(used <= contract, sorted(used - contract))
+
+    def test_photo_heroes_name_files_and_keep_the_glow(self):
+        """Hero photos are referenced by the agreed file names. A missing file still paints the teal glow."""
+        import sys
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+
+        for slug, filename in ui.HERO_FILES.items():
+            html = ui.photo_band("<p>line</p>", slug)
+            self.assertIn(filename, html)
+            self.assertIn(f"/app/static/img/{filename}", html)
+            self.assertIn("radial-gradient", html)
+            style = html.split('style="', 1)[1].split('"', 1)[0]
+            self.assertNotIn('"', style)
+
+    def test_connect_names_bonus_sources_from_filenames(self):
+        from app import data
+
+        stats = data.connect_stats()
+        for kind in ("web", "development pipelines", "logs", "backups", "data catalogue", "Power BI"):
+            self.assertIn(kind, stats["extra_kinds"])
+        self.assertEqual(stats["extra"], len(stats["extra_kinds"]) + stats["extra_more"])
+        self.assertGreater(stats["extra_more"], 0)
+
+    def test_plan_shows_windows_and_both_contradictions(self):
+        """Requirement 4: protection windows and both flagged contradictions are on Your plan."""
+        page = _open(self._app(), "your-plan")
+        self.assertFalse(page.exception, page.exception)
+        blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(page.caption))
+        # Cards are st.html. AppTest keeps that markup on the element body when present.
+        html_bits = []
+        for name in ("html", "markdown"):
+            for el in getattr(page, name, []) or []:
+                html_bits.append(getattr(el, "value", "") or getattr(el, "body", "") or "")
+        blob = blob + " " + " ".join(html_bits)
+        self.assertIn("March keeps the test environment unchanged", blob)
+        self.assertIn("provider monthly report", blob)
+        self.assertIn("AI invoices are", blob)
+        self.assertIn("plan.jpg", blob)
 
 
 class UiDataTextTests(unittest.TestCase):

@@ -3,14 +3,35 @@
 Presentation only: every number is passed in by app.py, which reads it from app/data.py (out/, measures/).
 The global look (fonts, colour variables, hidden Streamlit chrome) is Grok's app/theme.py; these styles read its
 CSS variables and fall back to ALTYCA's colours if a variable is missing.
+
+Theme contract (grok/R9-theme, app/theme.py): --bg --card --card2 --line --ink --ink2 --muted --teal
+--teal-ink --pink --pink-bg --teal-bg --on-teal. This file uses only those, plus its own fallbacks.
 """
 from __future__ import annotations
 
+import base64
 import html as _html
+from pathlib import Path
 
 import streamlit as st
 
 import i18n
+
+# Hero photos are owned by grok/R9-theme and land in app/static/img/. Missing file = teal glow.
+HERO_FILES = {
+    "about": "about.jpg",
+    "connect": "connect.jpg",
+    "stand": "stand.jpg",
+    "plan": "plan.jpg",
+    "track": "track.jpg",
+}
+_IMG_DIR = Path(__file__).resolve().parent / "static" / "img"
+_GLOW = (
+    "radial-gradient(920px 440px at 82% 12%, rgba(0,204,153,.38), transparent 62%),"
+    "radial-gradient(640px 360px at 6% 100%, rgba(0,204,153,.16), transparent 58%),"
+    "linear-gradient(165deg, #10241e 0%, #0d0f12 72%)"
+)
+_SCRIM = "linear-gradient(105deg, rgba(13,15,18,.90) 0%, rgba(13,15,18,.66) 52%, rgba(13,15,18,.42) 100%)"
 
 STORY_KEY = "story_mode"
 
@@ -62,7 +83,12 @@ CSS = """<style>
 .gx-explain{font-size:15px;color:var(--muted,#9aa3ad);border-left:3px solid var(--teal,#00cc99);padding:2px 0 2px 12px;margin:0 0 18px;max-width:70ch;}
 .gx-explain b{color:var(--ink2,#c4cad1);}
 .gx-bridge{font-size:16px;color:var(--ink2,#c4cad1);margin:28px 0 8px;}
-@media (max-width:720px){.gx-sub{font-size:17px;}}
+.gx-photo{position:relative;border-radius:20px;padding:32px 28px 12px;margin:0 0 22px;min-height:210px;
+background-color:#0d0f12;background-size:cover;background-position:center;border:1px solid var(--line,#262b33);overflow:hidden;}
+.gx-photo .gx-hero{color:#f5f6f7;}
+.gx-photo .gx-hero em,.gx-photo .gx-eyebrow{color:#00cc99;}
+.gx-photo .gx-sub{color:#d5dbe1;}
+@media (max-width:720px){.gx-sub{font-size:17px;}.gx-photo{padding:22px 16px 4px;min-height:180px;}}
 </style>"""
 
 
@@ -70,11 +96,38 @@ def inject() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
 
 
-def hero(eyebrow: str, line: str, sub: str = "") -> None:
-    """One summary line in big type. The line may wrap a phrase in <em> for the accent colour."""
+def photo_band(inner: str, slug: str) -> str:
+    """Opening band. Uses app/static/img/<file> when that file is present, otherwise a dark teal glow.
+
+    The static URL is always named, so the photo appears once grok/R9-theme serves app/static/.
+    A file already on disk is also inlined, so the demo works before static serving is on.
+    Style values stay free of double quotes: Streamlit's sanitiser would cut the attribute there.
+    """
+    filename = HERO_FILES[slug]
+    url = f"/app/static/img/{filename}"
+    path = _IMG_DIR / filename
+    layers = [f"url({url})"]
+    if path.is_file():
+        b64 = base64.b64encode(path.read_bytes()).decode()
+        layers.insert(0, f"url(data:image/jpeg;base64,{b64})")
+    style = f"background-image:{_SCRIM},{','.join(layers)},{_GLOW};"
+    label = _html.escape(f"Opening photo {filename}. Teal glow until that file is served.")
+    return (f'<div class="gx-photo" style="{style}" role="img" aria-label="{label}" '
+            f'data-hero="{filename}">{inner}</div>')
+
+
+def hero(eyebrow: str, line: str, sub: str = "", photo: str = "") -> None:
+    """One summary line in big type. The line may wrap a phrase in <em> for the accent colour.
+
+    photo is a key of HERO_FILES (about, connect, stand, plan, track). Empty keeps a plain line.
+    """
     sub_html = f'<p class="gx-sub">{sub}</p>' if sub else ""
     eye = f'<p class="gx-eyebrow">{eyebrow}</p>' if eyebrow else ""
-    _raw(f'<div>{eye}<p class="gx-hero">{i18n.tr(line, label=False)}</p>{i18n.tr(sub_html, label=False)}</div>')
+    inner = f'{eye}<p class="gx-hero">{i18n.tr(line, label=False)}</p>{i18n.tr(sub_html, label=False)}'
+    if photo:
+        _raw(photo_band(inner, photo))
+    else:
+        _raw(f"<div>{inner}</div>")
 
 
 def explain(term: str, text: str) -> None:

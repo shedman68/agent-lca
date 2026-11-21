@@ -577,6 +577,7 @@ def _show(st, md: str, mode: str | None) -> None:
         # Pink = refused / needs a human (R9 palette). The word "Refused." carries the meaning, not the colour.
         body = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _html.escape(md))  # keep the answer's bold, escape the rest
         st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body}</div>', unsafe_allow_html=True)
+        st.caption("Source: the sentence is stored in the data. It was read as data and not followed.")
     else:
         st.markdown(md)
 

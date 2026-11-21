@@ -557,6 +557,18 @@ def connect_stats() -> dict:
     """
     core = [p for p in sorted((ROOT / "data").glob("*")) if p.suffix in (".csv", ".jsonl") and not p.name.startswith("template_")]
     extra = [p for p in sorted((ROOT / "data" / "extra").glob("*")) if p.suffix in (".csv", ".jsonl")]
+    # Case-page bonus groups, matched on the filename only. File text is not read.
+    highlight = (
+        ("web_traffic", "web"),
+        ("ci_pipeline_runs", "development pipelines"),
+        ("log_volume", "logs"),
+        ("backup_chains", "backups"),
+        ("data_catalog_tables", "data catalogue"),
+        ("powerbi_usage", "Power BI"),
+    )
+    stems = {p.stem for p in extra}
+    extra_kinds = [label for stem, label in highlight if stem in stems]
+    extra_more = len(extra) - len(extra_kinds)
     f = facts_unallocated()
     q = quality_log()
     flags = int(len(q)) if q is not None else None
@@ -565,4 +577,5 @@ def connect_stats() -> dict:
     return {"core": len(core), "extra": len(extra), "files": len(core) + len(extra),
             "currencies": sorted(f["currency"].dropna().astype(str).unique()) if "currency" in f else [],
             "rows": int(len(f)), "sources": int(f["source"].nunique()) if "source" in f else None,
-            "flags": flags, "planted": traps, "contradictions": int(len(c)) if c is not None else None}
+            "flags": flags, "planted": traps, "contradictions": int(len(c)) if c is not None else None,
+            "extra_kinds": extra_kinds, "extra_more": extra_more}

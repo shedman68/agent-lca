@@ -158,10 +158,26 @@ DE: dict[str, str] = {
     # R9 story pages
     "About AgentLCA": "Über AgentLCA",
     "0 · About": "0 · Über",
+    "1 · Connect": "1 · Verbinden",
+    "2 · Where you stand": "2 · Wo Sie stehen",
+    "3 · Your plan": "3 · Ihr Plan",
+    "4 · Stay on track": "4 · Auf Kurs bleiben",
+    "5 · Behind the numbers": "5 · Hinter den Zahlen",
     "1 · Where you stand": "1 · Wo Sie stehen",
     "2 · Your plan": "2 · Ihr Plan",
     "3 · Stay on track": "3 · Auf Kurs bleiben",
     "4 · Behind the numbers": "4 · Hinter den Zahlen",
+    "Connect": "Verbinden",
+    "Bonus sources used:": "Bonusquellen genutzt:",
+    "Training days restart paused machines. Night jobs and month-end keep production at full size. "
+    "March keeps the test environment unchanged. Backups stay.":
+        "Trainingstage starten pausierte Maschinen neu. Nachtjobs und Monatsende halten die Produktion auf voller Grösse. "
+        "Im März bleibt die Testumgebung unverändert. Sicherungen bleiben.",
+    "Flagged, not hidden. The plan keeps the detailed sources. A person decides.":
+        "Markiert, nicht versteckt. Der Plan behält die detaillierten Quellen. Ein Mensch entscheidet.",
+    "How next year was calculated": "So wurde das nächste Jahr berechnet",
+    "Source: the sentence is stored in the data. It was read as data and not followed.":
+        "Quelle: der Satz steht in den Daten. Er wurde als Daten gelesen und nicht befolgt.",
     "Where you stand": "Wo Sie stehen",
     "Your plan": "Ihr Plan",
     "Stay on track": "Auf Kurs bleiben",
