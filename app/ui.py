@@ -72,6 +72,10 @@ CSS = """<style>
 .gx-card .n span{font-size:15px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:4px;letter-spacing:0;}
 .gx-card .meta{font-size:13.5px;color:var(--muted,#9aa3ad);margin-top:10px;font-weight:600;}
 .gx-card .k{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);font-weight:700;margin:0 0 8px;}
+.gx-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px;margin:6px 0 6px;}
+.gx-team .gx-card{padding:14px 18px;}
+.gx-team .gx-card h4{font-size:17px;margin:0 0 2px;}
+.gx-team .gx-card p{font-size:14.5px;color:var(--muted,#9aa3ad);}
 .gx-card.accent{border-color:var(--teal,#00cc99);}
 .gx-card.pink{border-color:var(--pink,#f84aa7);background:var(--pink-bg,#2a1421);}
 .gx-card.pink h4{color:var(--pink,#f84aa7);}
@@ -174,6 +178,11 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
 
 def grid(cards: list[str]) -> None:
     _raw(f'<div class="gx-grid">{"".join(cards)}</div>')
+
+
+def team(members: list[tuple[str, str]]) -> None:
+    """Small equal-weight name cards: name in bold, role underneath. No photos."""
+    _raw(f'<div class="gx-team">{"".join(card(n, r) for n, r in members)}</div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:
