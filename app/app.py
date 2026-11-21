@@ -430,18 +430,18 @@ def page_package() -> None:
             idle = pd.read_csv(idle_file, index_col=0)
             with st.expander("Sensitivity: if paused hours count at idle power", expanded=False):
                 st.markdown(
-                    "The package counts every server hour with one factor, as the baseline does. "
+                    "The package counts every server hour with one factor, in the baseline and in the savings alike. "
                     "A server that sits idle draws about half of an average hour (Vinzenz, `factors/kb/V2-idle-factors.md`). "
-                    "Counted that way, the same package saves less CO2. This is a sensitivity, not the package.")
+                    "Counted that way on both sides, baseline and savings both shrink. This is a sensitivity, not the package.")
                 idle_rows = [("Package as counted (official)", "pkg_now_pct"),
-                        ("Paused hours at idle power", "A_pct"),
-                        ("Idle power + move dp-dev to Zurich (C2)", "A_plus_C2_pct")]
+                             ("Idle power in baseline and savings", "B_pct")]
                 idle_tab = pd.DataFrame([{"Counting": n, **{lvl: f"−{idle.loc[k, lvl]:.1f} %" for lvl in ["low", "mid", "high"]}}
                                          for n, k in idle_rows])
                 st.dataframe(idle_tab, hide_index=True, width="stretch")
-                st.caption("Source: `factors/kb/V2-idle-impact.csv`, written by `factors/scripts/idle_impact.py` from `out/`, "
-                           "`measures/candidates.csv` and `factors/factors.csv`. Which counting the jury uses is open; "
-                           "C2 needs about 5 person-days and is outside the 15 PD budget.")
+                st.caption("Source: `factors/kb/V2-idle-impact.csv` (rows `pkg_now_pct`, `B_pct`), written by "
+                           "`factors/scripts/idle_impact.py` from `out/`, `measures/candidates.csv` and `factors/factors.csv`. "
+                           "Not shown: idle power in the savings only (baseline and savings counted differently), and "
+                           "moving dp-dev to Zurich (C2, about 5 person-days, outside the 15 PD budget). Decision: Rashed, 21.11.")
         except (OSError, ValueError, KeyError):
             st.info("`factors/kb/V2-idle-impact.csv` could not be read; the sensitivity is not shown.")
 

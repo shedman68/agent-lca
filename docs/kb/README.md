@@ -22,6 +22,7 @@ Machine-readable outputs stay where the code reads them (`out/`, `measures/measu
 | [R6-demo-script.md](R6-demo-script.md) | R6 five-minute click script (overall picture, one finding, package, refused edge, own AI) | draft |
 | R6-pitch.md | R6 pitch script | open |
 | [R7-submission-pack.md](R7-submission-pack.md) | G7 index of files to submit, line check against out/ and measures/, what Rashed still decides before 15:00 | draft |
+| [G8-template-gaps.md](G8-template-gaps.md) | G8 baseline template: cost low = mid = high, allocation text rule, T-1261 note | draft |
 | handoff-vscode-to-cloud.md | Handoff VS Code → cloud: R1 decisions, review findings #26/#29, next steps | final |
 
 Other knowledge bases: [analysis/kb](../../analysis/kb/README.md) (Hakim) · [factors/kb](../../factors/kb/README.md) (Vinzenz).

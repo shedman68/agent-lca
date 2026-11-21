@@ -528,3 +528,20 @@ class I18nTests(unittest.TestCase):
             self.assertIn(title, [t.value for t in page.title], url)
         pkg_en, pkg_de = _open(en, "package"), _open(de, "package")
         self.assertEqual(numbers(pkg_en), numbers(pkg_de))
+
+
+class IdleDecisionTests(unittest.TestCase):
+    def test_sensitivity_shows_official_and_b_only(self):
+        """Rashed's decision 21.11: headline = one factor per hour; sensitivity = idle power on both sides (B)."""
+        import pandas as pd
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "package")
+        self.assertFalse(page.exception, page.exception)
+        tables = [d.value for d in page.dataframe if "Counting" in getattr(d.value, "columns", [])]
+        self.assertEqual(len(tables), 1)
+        shown = tables[0]
+        self.assertEqual(list(shown["Counting"]), ["Package as counted (official)", "Idle power in baseline and savings"])
+        idle = pd.read_csv(ROOT / "factors" / "kb" / "V2-idle-impact.csv", index_col=0)
+        self.assertEqual(shown.iloc[1]["mid"], f"−{idle.loc['B_pct', 'mid']:.1f} %")
