@@ -55,3 +55,10 @@ Real baseline cost. Not a recurring saving, and not subtracted again by a measur
 From `out/fact_costs.csv`. Notice by = contract end minus notice days. Unused CHF is the baseline-year sum of (purchased − active) / purchased × cost_chf. The role on these rows is Head of Finance. T-1128 still leaves an AI seat cut to the department heads.
 
 Two contracts are **due 2 Dec** (notice date 2026-12-02): E-signature, unused CHF 5,675 in the baseline year; Project scheduling, unused CHF 3,203.89. Notice dates before 21.11.2026 are **passed**. The full list is on the Needs a human page, which reads the file rather than this note.
+
+## Decisions the package depends on (Rashed, 21.11. 10:10)
+| Item | Why a human | Decides | Status |
+| --- | --- | --- | --- |
+| M5 dp-prod resized in idle hours (never off) | Without M5 the package gives cost −22.2 % and CO2 −36.1 %: both targets fail. Night jobs 02:00–08:00 and month-end close stay at full size (T-1029). | Head of Consulting with Finance | Kept in the package; sign-off needed before go-live |
+| dp-prod growth to 24 nodes from 1 Oct 2026 (T-1261) | After the baseline year; changes next year's totals, not the baseline | Head of IT | Shown as a sentence and an up-to-+20 % range on the Next year page |
+| C1 (office assistant on a small model) as CO2 safety margin | Package is exactly −40.0 % on high factors | Rashed, after Vinzenz's idle-power factors (11:00) | Open |
