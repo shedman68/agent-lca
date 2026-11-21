@@ -19,11 +19,11 @@ MEASURES = [
   "T-1053: quarterly training on days 1-3 of Jan, Apr, Jul, Oct needs the cluster continuously, so the schedule starts it automatically beforehand. " + NH + ": Head of IT.", "Head of IT"),
  ("M2", ["F3"], 1.0, 0.75, 1.0, True, "Run the GPU server on demand instead of 24/7",
   "gpu-ml-01", "Stop outside training; automatic start before the quarterly training window",
-  "T-1101: quarterly training days 1-3 of Jan, Apr, Jul, Oct use the GPU with the development platform; auto-start covers them. Energy share 75 % because idle hours draw less than the average GPU-hour factor. " + NH + ": owner of the AI pilot.", "Head of IT"),
+  "T-1101: quarterly training days 1-3 of Jan, Apr, Jul, Oct use the GPU with the development platform; auto-start covers them. Energy share 75 % because idle hours draw less than the average GPU-hour factor. " + NH + ": owner of the AI pilot.", "Head of Consulting"),
  ("M3", ["F4"], 1.0, 1.0, 0.5, True, "Retire three unused servers in Dublin after the owners confirm",
   "migration-alt; poc-ki-2024; build-agent-old (billed inside vm-test)", "Snapshot, stop for 30 days, then retire if nobody objects",
   "No login for 17-20 months, CPU under 0.5 %. T-1204: nothing changes during the March release freeze. The fourth idle-looking server is the emergency fallback (T-1094) and stays untouched. " + NH + ": each server owner confirms.", "Head of IT"),
- ("M4", ["F5"], 0.67, 0.67, 1.5, True, "Scale the test environment back after the finished portal project",
+ ("M4", ["F5"], 8 / 12, 8 / 12, 1.5, True, "Scale the test environment back after the finished portal project",
   "vm-test", "Reduce 8 of the 12 project servers added for the customer portal relaunch (P-009, completed 31.03.2026); keep 4 for regression tests",
   "T-1204: no change during the release freeze 1-31 March. T-1058 planned this scale-back after go-live. The emergency fallback server (T-1094) keeps running. " + NH + ": Head of IT with the portal team.", "Head of IT"),
  ("M5", ["F2"], 0.8, 0.8, 3.0, True, "Scale the production data platform down in idle hours",
@@ -34,14 +34,14 @@ MEASURES = [
   "Logs are not backups: the 10-year backup retention (T-1039) is untouched. " + NH + ": Head of IT confirms no compliance need for 365 days.", "Head of IT"),
  ("M7", ["F6", "F7"], 0.8, 0.0, 1.0, True, "Cancel unused AI seats, per department",
   "sub-chatgpt; sub-copilot", "Reduce seats to active users plus a buffer at the next monthly notice date, by cost centre",
-  "T-1128: seats are ordered per department, so the cut is per cost centre. 30-day notice, monthly billing. 80 % of the unused value to keep a buffer. No energy saving claimed: idle seats send no messages. " + NH + ": each department head.", "Department heads"),
+  "T-1128: seats are ordered per department, so the cut is per cost centre. 30-day notice, monthly billing. 80 % of the unused value to keep a buffer. No energy saving claimed: idle seats send no messages. " + NH + ": each department head.", "Head of Finance (with each department head)"),
  ("M8", ["F11"], 0.6, 0.0, 2.5, True, "Cancel unused SaaS seats at each contract's notice date",
   "saas-*", "Reduce paid seats to active users plus a buffer, contract by contract, at the next notice date",
-  "Savings start at each contract's notice date; contracts whose deadline has passed are locked until the next term, so only 60 % of the unused value is counted. No energy claimed (no factor for SaaS). " + NH + ": contract owners.", "Contract owners"),
- ("M9", ["F12"], 1.0, None, 1.5, True, "Use a small model with prompt caching for marketing text classification",
+  "Savings start at each contract's notice date; contracts whose deadline has passed are locked until the next term, so only 60 % of the unused value is counted. No energy claimed (no factor for SaaS). " + NH + ": contract owners.", "Head of Finance (with contract owners)"),
+ ("M9", ["F12"], 1.0, None, 1.5, False, "Use a small model with prompt caching for marketing text classification",
   "ai-marketing", "Route the Classify task to a small model and enable caching for the repeated prompt part",
   "T-1163: campaign-week peaks are expected use and stay. T-1212: the March script loop was a one-off and is excluded from the saving. " + NH + ": Marketing checks classification quality on a sample first.", "Head of Marketing"),
- ("C1", [], None, None, 2.0, False, "Route simple office-assistant tasks to a small model",
+ ("C1", [], None, None, 2.0, True, "Route simple office-assistant tasks to a small model",
   "ai-assistant", "Summarise, Translate and simple questions go to a small model; complex tasks stay on the large one",
   "Share of tasks that can move is an assumption (50 %). " + NH + ": quality check per task type.", "Head of IT"),
  ("C2", [], None, None, 5.0, False, "Move the development data platform from Frankfurt to Switzerland",
@@ -49,6 +49,21 @@ MEASURES = [
   "T-1074 says the move is technically possible and that Frankfurt was chosen for price, so cost may rise (not quantified). T-1053 training windows apply. " + NH + ": Head of IT with Finance.", "Head of IT"),
 ]
 LV = ["low", "mid", "high"]
+
+
+def token_saving_share(rows, fa, level):
+    """Share of AI energy saved by moving these rows from the large to the small model, weighted by input AND output tokens."""
+    tin, tout = rows.tokens_in.sum(), rows.tokens_out.sum()
+    big = tin * fa.loc["tokens_in_1000_large", f"value_{level}"] + tout * fa.loc["tokens_out_1000_large", f"value_{level}"]
+    small = tin * fa.loc["tokens_in_1000_small", f"value_{level}"] + tout * fa.loc["tokens_out_1000_small", f"value_{level}"]
+    return 1 - small / big if big else 0.0
+
+
+def price_ratio_small_large(rows):
+    """CHF per token of the small model divided by the large model, from the same resource's own rows."""
+    g = rows.groupby("model_class")[["cost_chf", "tokens_in", "tokens_out"]].sum()
+    per = g.cost_chf / (g.tokens_in + g.tokens_out)
+    return float(per["small"] / per["large"])
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--out", default="out"); a = ap.parse_args()
@@ -67,17 +82,19 @@ def main():
             x = res("ai-marketing"); loop = oneoff[oneoff.resource_id == "ai-marketing"].extra_cost_chf.sum() / x.cost_chf.sum()
             r["chf"] = fn.loc["F12", "addressable_chf"] * cs
             for l in LV:
-                ratio = fa.loc["tokens_out_1000_small", f"value_{l}"] / fa.loc["tokens_out_1000_large", f"value_{l}"]
-                r[f"kwh_{l}"] = x[f"kwh_{l}"].sum() * (1 - loop) * (1 - ratio); r[f"co2_{l}"] = x[f"co2_kg_{l}"].sum() * (1 - loop) * (1 - ratio)
-            calc = f"CHF = F12 addressable; energy = ai-marketing energy x (1 - one-off loop share {loop:.1%}) x (1 - small/large token factor)"
+                sh = token_saving_share(x, fa, l)
+                r[f"kwh_{l}"] = x[f"kwh_{l}"].sum() * (1 - loop) * sh; r[f"co2_{l}"] = x[f"co2_kg_{l}"].sum() * (1 - loop) * sh
+            calc = f"CHF = F12 addressable; energy = ai-marketing energy x (1 - one-off loop share {loop:.1%}) x token-weighted saving share (input and output tokens, large -> small factors)"
         elif mid == "C1":
-            x = res("ai-assistant"); x = x[x.model_class == "large"]; share = 0.5
-            ratio_p = 0.44   # small/large price per input token in this data (finding F12 evidence)
+            allr = res("ai-assistant"); x = allr[allr.model_class == "large"]; share = 0.5
+            ratio_p = price_ratio_small_large(allr)
             r["chf"] = x.cost_chf.sum() * share * (1 - ratio_p)
             for l in LV:
-                ratio = fa.loc["tokens_out_1000_small", f"value_{l}"] / fa.loc["tokens_out_1000_large", f"value_{l}"]
-                r[f"kwh_{l}"] = x[f"kwh_{l}"].sum() * share * (1 - ratio); r[f"co2_{l}"] = x[f"co2_kg_{l}"].sum() * share * (1 - ratio)
-            calc = "ASSUMPTION 50 % of large-model use can move; CHF = cost x 50 % x (1 - 0.44 price ratio); energy by token factors"
+                sh = token_saving_share(x, fa, l)
+                r[f"kwh_{l}"] = x[f"kwh_{l}"].sum() * share * sh; r[f"co2_{l}"] = x[f"co2_kg_{l}"].sum() * share * sh
+            calc = (f"ASSUMPTION 50 % of large-model use (Summarise, Translate, simple questions) can move; "
+                    f"CHF = large-model cost x 50 % x (1 - small/large price per token {ratio_p:.2f}, from ai-assistant rows); "
+                    "energy = token-weighted saving share (input and output tokens)")
         elif mid == "C2":
             x = res("dp-dev"); left = 1 - fn.loc["F1", "addressable_kwh_mid"] / x.kwh_mid.sum()
             for l in LV:
