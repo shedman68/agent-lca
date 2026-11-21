@@ -28,6 +28,10 @@ Tick a box only in the pull request that finishes the task. Times are Europe/Zur
 - [ ] R5 **Final templates** in `submission/` (Sun 07:30) and submit (Sun 08:30).
 - [ ] R6 **Pitch**: script for the 5-minute demo, rehearse twice Saturday evening.
 - [ ] R7 Review and merge pull requests at least every 2 hours.
+- [ ] R8 **Path-to-operation note** (required by the case page, by Sat 18:00): about one page in `submission/path_to_operation.md` –
+      how an SME runs this monthly, who owns it, what data exports it needs, what stays a human decision.
+- [ ] R9 In R1: treat **CO2 as the binding target** (tight: 2,919 kg addressable vs 2,479 needed); add dp-dev auto-terminate / move to
+      Switzerland (T-1074), ai-assistant smaller model, notice dates with a «from» date. See `docs/kb/QA-01-review-sat-0200.md`.
 
 `/goal` lines for R1, R2, H4 and V4/V6: `docs/kb/R0-team-setup.md`.
 
@@ -61,6 +65,6 @@ Fill `factors/factors.csv`: value_low, value_mid, value_high, source (link + dat
 - [x] V4 Bonus (by Sat 18:00): market-based factors (guarantees of origin) and the hourly CO2 profile for
       Switzerland and Germany, for shifting flexible jobs in time (`data/extra/data_platform_jobs.csv`).
 - [x] V5 Prepare two jury questions and answers on the factors (for example: why this Swiss mix?).
-- [ ] V6 Bonus (by Sat 18:00): estimate the energy and CO2 of **our own AI use** during the sprint (the case presentation asks
+- [ ] V6 **Required for the pitch** (by Sat 18:00): estimate the energy and CO2 of **our own AI use** during the sprint (the case presentation asks
       teams that build with AI to do this). Ask each person for their session token totals; apply the token factors; write
       `factors/kb/V6-our-ai-footprint.md`.
