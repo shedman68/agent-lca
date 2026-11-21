@@ -1,17 +1,24 @@
 [theme]
-base = "light"
-primaryColor = "#0E6B57"
-backgroundColor = "#F6F5F1"
-secondaryBackgroundColor = "#E7EFEA"
-textColor = "#0F1512"
+base = "dark"
+primaryColor = "#00CC99"
+backgroundColor = "#0D0F12"
+secondaryBackgroundColor = "#16191E"
+textColor = "#F5F6F7"
 font = "sans serif"
-baseFontSize = 16
+baseFontSize = 17
 
-[theme.dark]
-primaryColor = "#3DBE9A"
-backgroundColor = "#141816"
-secondaryBackgroundColor = "#1C2622"
-textColor = "#F3F1EA"
+[theme.light]
+primaryColor = "#006B4F"
+backgroundColor = "#F3F5F6"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0D0F12"
+
+[client]
+toolbarMode = "minimal"
+
+[server]
+# Serves app/static (Manrope woff2 + OFL) at /app/static/. The demo stays offline.
+enableStaticServing = true
 
 [browser]
 gatherUsageStats = false

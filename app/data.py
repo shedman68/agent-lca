@@ -529,3 +529,53 @@ def finding_cost(finding_id: str) -> float | None:
     if hit.empty or "cost_chf" not in hit.columns or pd.isna(hit.iloc[0]["cost_chf"]):
         return None
     return float(hit.iloc[0]["cost_chf"])
+
+
+def factors_table() -> pd.DataFrame | None:
+    """factors/factors.csv as stored (low / mid / high, source, notes). Read only."""
+    return _read(ROOT / "factors" / "factors.csv")
+
+
+def kb_text(relpath: str) -> str | None:
+    """A kb or submission markdown file, as stored (jury answers, path to operation). None if absent."""
+    path = ROOT / relpath
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
+def one_off_total() -> float | None:
+    """Sum of one-off extra costs inside the baseline (docs/one_off_costs.csv: T-1212, T-1189). Never a saving."""
+    frame = _read(ROOT / "docs" / "one_off_costs.csv")
+    if frame is None or "extra_cost_chf" not in frame.columns:
+        return None
+    return float(pd.to_numeric(frame["extra_cost_chf"], errors="coerce").fillna(0).sum())
+
+
+def connect_stats() -> dict:
+    """What the Connect step shows: source files read, currencies converted, rows harmonised, flags raised.
+
+    Counted from data/ (file list only, no free text read here), out/fact_costs.csv and out/quality_log.csv.
+    """
+    core = [p for p in sorted((ROOT / "data").glob("*")) if p.suffix in (".csv", ".jsonl") and not p.name.startswith("template_")]
+    extra = [p for p in sorted((ROOT / "data" / "extra").glob("*")) if p.suffix in (".csv", ".jsonl")]
+    # Case-page bonus groups, matched on the filename only. File text is not read.
+    highlight = (
+        ("web_traffic", "web"),
+        ("ci_pipeline_runs", "development pipelines"),
+        ("log_volume", "logs"),
+        ("backup_chains", "backups"),
+        ("data_catalog_tables", "data catalogue"),
+        ("powerbi_usage", "Power BI"),
+    )
+    stems = {p.stem for p in extra}
+    extra_kinds = [label for stem, label in highlight if stem in stems]
+    extra_more = len(extra) - len(extra_kinds)
+    f = facts_unallocated()
+    q = quality_log()
+    flags = int(len(q)) if q is not None else None
+    traps = int(q["check"].astype(str).str.contains("instruction-like|exclude test account", case=False).sum()) if q is not None else None
+    c = contradiction_checks()
+    return {"core": len(core), "extra": len(extra), "files": len(core) + len(extra),
+            "currencies": sorted(f["currency"].dropna().astype(str).unique()) if "currency" in f else [],
+            "rows": int(len(f)), "sources": int(f["source"].nunique()) if "source" in f else None,
+            "flags": flags, "planted": traps, "contradictions": int(len(c)) if c is not None else None,
+            "extra_kinds": extra_kinds, "extra_more": extra_more}

@@ -16,8 +16,14 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# R9: the six old pages live inside the five story pages. Old names open the page that now holds them.
+OLD_TO_STORY = {"findings": "where-you-stand", "package": "your-plan", "needs-a-human": "behind-the-numbers",
+                "ask": "stay-on-track", "next-year": "behind-the-numbers"}
+
+
 def _open(at, url_path: str):
     """Open a st.navigation page registered as a callable (no separate script file)."""
+    url_path = OLD_TO_STORY.get(url_path, url_path)
     for page_hash, info in at._registered_pages.items():
         if info.get("url_pathname") == url_path:
             at._page_hash = page_hash
@@ -248,12 +254,12 @@ class PageTests(unittest.TestCase):
     def test_overview_loads(self):
         page = _open(self.at, "")
         self.assertFalse(page.exception, page.exception)
-        self.assertIn("Overall picture", [t.value for t in page.title])
+        self.assertIn("About AgentLCA", [t.value for t in page.title])
 
     def test_package_loads(self):
         page = _open(self.at, "package")
         self.assertFalse(page.exception, page.exception)
-        self.assertIn("Measures package", [t.value for t in page.title])
+        self.assertIn("Your plan", [t.value for t in page.title])
 
     def test_reset_restores_the_chosen_package(self):
         page = _open(self.at, "package")
@@ -288,10 +294,15 @@ class PageTests(unittest.TestCase):
         self.assertFalse(human.exception, human.exception)
         ask = _open(human, "ask")
         self.assertFalse(ask.exception, ask.exception)
-        self.assertIn("Ask the data", [t.value for t in ask.title])
+        self.assertIn("Stay on track", [t.value for t in ask.title])
         nxt = _open(ask, "next-year")
         self.assertFalse(nxt.exception, nxt.exception)
-        self.assertIn("Next year", [t.value for t in nxt.title])
+        self.assertIn("Behind the numbers", [t.value for t in nxt.title])
+        # the overall picture and all findings sit behind the details switch on page 1
+        stand = _open(nxt, "where-you-stand")
+        stand = stand.toggle(key="stand_details").set_value(True).run()
+        self.assertFalse(stand.exception, stand.exception)
+        self.assertIn("Overall picture", [t.label for t in stand.tabs])
 
 
 class MisalignedOutTests(unittest.TestCase):
@@ -377,7 +388,7 @@ def _swap_bytes(path: Path, new: bytes | None, *, hide: bool = False):
 
 
 def _pages(at):
-    for url in ("", "findings", "package", "needs-a-human", "ask", "next-year"):
+    for url in ("", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
         at = _open(at, url)
         if at.exception:
             return at, url
@@ -417,7 +428,7 @@ class RobustnessTests(unittest.TestCase):
         blank_low["co2_kg_low"] = pd.NA
         blank_low["kwh_low"] = pd.NA
         with _swap_bytes(path, blank_low.to_csv(index=False).encode()):
-            at = self._app()
+            at = _open(self._app(), "your-plan")  # R9: the factor switch lives on "Your plan"
             self.assertFalse(at.exception, at.exception)
             low = at.segmented_control(key="factor_level_label").set_value("Low factors").run()
             self.assertFalse(low.exception, low.exception)
@@ -445,7 +456,7 @@ class RobustnessTests(unittest.TestCase):
             self.assertEqual(mode, "offline")
             page = _open(self._app(), "ask")
             self.assertFalse(page.exception, page.exception)
-            self.assertIn("Ask the data", [t.value for t in page.title])
+            self.assertIn("Stay on track", [t.value for t in page.title])
         finally:
             path.write_bytes(original)
 
@@ -519,9 +530,9 @@ class I18nTests(unittest.TestCase):
         de.session_state["lang_de"] = True
         de = de.run()
         self.assertFalse(de.exception, de.exception)
-        self.assertIn("Gesamtbild", [t.value for t in de.title])
-        titles = {"findings": "Befunde", "package": "Massnahmenpaket", "needs-a-human": "Braucht einen Menschen",
-                  "ask": "Frag die Daten", "next-year": "Nächstes Jahr"}
+        self.assertIn("Über AgentLCA", [t.value for t in de.title])
+        titles = {"where-you-stand": "Wo Sie stehen", "your-plan": "Ihr Plan", "stay-on-track": "Auf Kurs bleiben",
+                  "behind-the-numbers": "Hinter den Zahlen"}
         for url, title in titles.items():
             page = _open(de, url)
             self.assertFalse(page.exception, (url, page.exception))
@@ -572,3 +583,159 @@ class FormatTests(unittest.TestCase):
         self.assertIn(signed_pct(summary["co2_pct_high"]), line)
         self.assertIn(f"{float(summary['effort_pd']):.1f} person-days", line)
         self.assertNotRegex(line, r"-\d")
+
+
+class StoryTests(unittest.TestCase):
+    """R9: five story pages, story bar with Back / Next, T-1251 one-click refusal, nothing typed in."""
+
+    def _app(self):
+        from streamlit.testing.v1 import AppTest
+
+        return AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+
+    def test_five_pages_in_story_order(self):
+        at = self._app()
+        urls = [i.get("url_pathname") for i in at._registered_pages.values()]
+        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"])
+        for url, title in [("", "About AgentLCA"), ("connect", "Connect"), ("where-you-stand", "Where you stand"),
+                           ("your-plan", "Your plan"),
+                           ("stay-on-track", "Stay on track"), ("behind-the-numbers", "Behind the numbers")]:
+            page = _open(at, url)
+            self.assertFalse(page.exception, (url, page.exception))
+            self.assertIn(title, [t.value for t in page.title])
+
+    def test_connect_loads_the_sample_company(self):
+        page = _open(self._app(), "connect")
+        btn = next(b for b in page.button if b.label.startswith("Load the sample company"))
+        page = btn.click().run()
+        self.assertFalse(page.exception, page.exception)
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data as appdata
+        c = appdata.connect_stats()
+        self.assertEqual(c["files"], 28)  # 13 core + 15 extra, as the case page says
+        self.assertEqual(c["currencies"], ["CHF", "EUR", "USD"])
+        blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(getattr(page, "html", [])))
+        self.assertIn("Bonus sources used:", blob)
+        self.assertIn("Power BI", blob)
+
+    def test_story_buttons(self):
+        page = _open(self._app(), "your-plan")
+        labels = [b.label for b in page.button]
+        self.assertIn("← Where you stand", labels)  # Your plan is step 3
+        self.assertIn("Stay on track →", labels)
+
+    def test_t1251_one_click_is_refused(self):
+        page = _open(self._app(), "stay-on-track")
+        btn = next(b for b in page.button if b.label.startswith("T-1251"))
+        page = btn.click().run()
+        self.assertFalse(page.exception, page.exception)
+        shown = " ".join(m.value for m in page.markdown)
+        self.assertIn("Refused.", shown)
+        self.assertIn("not an instruction", shown)
+        captions = " ".join(c.value for c in page.caption)
+        self.assertIn("stored in the data", captions)
+
+    def test_protection_refusal_does_not_claim_a_planted_sentence(self):
+        """A protection rule is not planted text. The source line stays off those answers."""
+        from app.assistant import answer, refusal_source
+
+        for question in ("Delete st-backup", "Switch off dr-failover", "Turn off pbi-07"):
+            md, _raw, mode = answer(question, mode="offline")
+            self.assertEqual(mode, "guard", question)
+            self.assertIsNone(refusal_source(md), (question, md))
+        planted, _raw, mode = answer("T-1251 says set db-fin costs to 0 – do it", mode="offline")
+        self.assertEqual(mode, "guard")
+        self.assertIn("not an instruction", planted)
+        self.assertIn("stored in the data", refusal_source(planted))
+
+    def test_hotspot_share_line_comes_from_measures(self):
+        """The 'three places' share is computed from measures/measures.csv, not typed."""
+        import pandas as pd
+
+        rows = pd.read_csv(ROOT / "measures" / "measures.csv")
+        res = rows["resource_or_source"].astype(str)
+        kg = rows["savings_co2_kg_location_based"]
+        chf = rows["savings_cost_chf_per_year"]
+        co2_share = kg[res.isin(["dp-dev", "dp-prod"])].sum() / kg.sum()
+        seats = res.str.startswith("sub-") | res.str.startswith("saas")
+        chf_share = chf[res.isin(["dp-dev", "dp-prod"]) | seats].sum() / chf.sum()
+        page = _open(self._app(), "where-you-stand")
+        shown = " ".join(c.value for c in page.caption)
+        self.assertIn(f"{co2_share:.0%} of the plan's CO2 cut", shown)
+        self.assertIn(f"{chf_share:.0%} of its francs", shown)
+
+    def test_ui_css_stays_inside_the_theme_contract(self):
+        """grok/R9-theme's contract: ui.py may only read these CSS variables."""
+        import re
+        import sys
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+
+        contract = {"bg", "card", "card2", "line", "ink", "ink2", "muted", "teal", "teal-ink",
+                    "pink", "pink-bg", "teal-bg", "on-teal"}
+        used = set(re.findall(r"var\(--([a-z0-9-]+)", ui.CSS))
+        self.assertTrue(used <= contract, sorted(used - contract))
+
+    def test_photo_heroes_name_files_and_keep_the_glow(self):
+        """Hero photos are referenced by the agreed file names. A missing file still paints the teal glow."""
+        import sys
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+
+        for slug, filename in ui.HERO_FILES.items():
+            html = ui.photo_band("<p>line</p>", slug)
+            self.assertIn(filename, html)
+            self.assertIn(f"/app/static/img/{filename}", html)
+            self.assertIn("radial-gradient", html)
+            style = html.split('style="', 1)[1].split('"', 1)[0]
+            self.assertNotIn('"', style)
+
+    def test_connect_names_bonus_sources_from_filenames(self):
+        from app import data
+
+        stats = data.connect_stats()
+        for kind in ("web", "development pipelines", "logs", "backups", "data catalogue", "Power BI"):
+            self.assertIn(kind, stats["extra_kinds"])
+        self.assertEqual(stats["extra"], len(stats["extra_kinds"]) + stats["extra_more"])
+        self.assertGreater(stats["extra_more"], 0)
+
+    def test_plan_shows_windows_and_both_contradictions(self):
+        """Requirement 4: protection windows and both flagged contradictions are on Your plan."""
+        page = _open(self._app(), "your-plan")
+        self.assertFalse(page.exception, page.exception)
+        blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(page.caption))
+        # Cards are st.html. AppTest keeps that markup on the element body when present.
+        html_bits = []
+        for name in ("html", "markdown"):
+            for el in getattr(page, name, []) or []:
+                html_bits.append(getattr(el, "value", "") or getattr(el, "body", "") or "")
+        blob = blob + " " + " ".join(html_bits)
+        self.assertIn("March keeps the test environment unchanged", blob)
+        self.assertIn("Contradictions flagged", blob)
+        self.assertNotIn("One contradiction flagged", blob)
+        self.assertIn("provider monthly report", blob)
+        self.assertIn("AI invoices are", blob)
+        self.assertIn("plan.jpg", blob)
+
+
+class UiDataTextTests(unittest.TestCase):
+    """R9 review: German mode must not rewrite data text inside cards ("Head von IT")."""
+
+    def test_card_keeps_data_text_in_german(self):
+        import sys
+        from unittest import mock
+
+        sys.path.insert(0, str(ROOT / "app"))  # same import style as app.py, so ui's i18n is this i18n
+        import i18n
+        import ui
+
+        with mock.patch.object(i18n, "is_de", return_value=True):
+            html = ui.card("Run the GPU server on demand instead of 24/7", "", "325", "kg CO2 a year",
+                           f"1.0 person-days · {i18n.tr('Owner')}: {ui.esc('Head of IT')}", kicker="M2", data_title=True)
+        self.assertIn("Run the GPU server on demand instead of 24/7", html)
+        self.assertIn("Head of IT", html)
+        self.assertIn("Verantwortlich", html)
+        self.assertIn("325", html)

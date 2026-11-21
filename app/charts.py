@@ -11,30 +11,36 @@ import streamlit as st
 # Two accents only: green for the data, ink-blue when a second series is unavoidable.
 # Green / amber / red are reserved for pass, close and miss. They are not used as series colours.
 PALETTE = {
+    # R9 palette, aligned with theme.py. Teal #00cc99 is the dark-mode data colour.
+    # Light bars use #007a5c: #00cc99 on white is 2.1:1, and the gauge paints white type on STATUS.
+    # Pink is not a series colour. Refusals use theme.PINK (#f84aa7) in theme.py only.
     "light": {
-        "surface": "#f6f5f1", "ink": "#1a1a1a", "ink2": "#3d3d38", "muted": "#6b6a64",
-        "grid": "#e3e1d8", "axis": "#c4c2b6",
-        "series": ["#d7ebe3", "#a9d4c4", "#74b8a0", "#3e9278", "#1f6f58", "#0e3d30"],
-        "accent": "#0e6b57", "accent2": "#1f4b6e", "track": "#d5e6df", "other": "#c4c2b6",
+        "surface": "#ffffff", "ink": "#0d0f12", "ink2": "#24303a", "muted": "#3a4450",
+        "grid": "#d5dbe1", "axis": "#8b97a3",
+        "series": ["#d8f6ee", "#9ee8d4", "#4ecfb0", "#00a37c", "#007a5c", "#084e3c"],
+        "accent": "#007a5c", "accent2": "#1f4e73", "track": "#e5f6f1", "other": "#b7c0c8",
     },
     "dark": {
-        "surface": "#141816", "ink": "#f3f1ea", "ink2": "#c9c6bb", "muted": "#8e8b82",
-        "grid": "#2a312e", "axis": "#3a423e",
-        "series": ["#1c3f34", "#245c49", "#2f7a62", "#49a084", "#7dccb0", "#c6eadc"],
-        "accent": "#3dbe9a", "accent2": "#8eb4d4", "track": "#1e3330", "other": "#4a524e",
+        "surface": "#16191e", "ink": "#f5f6f7", "ink2": "#d5dbe1", "muted": "#b4bec8",
+        "grid": "#2c333c", "axis": "#46505a",
+        "series": ["#0c3d32", "#0e5c48", "#0a8064", "#00a37c", "#00cc99", "#b8f6e4"],
+        "accent": "#00cc99", "accent2": "#9ec0dc", "track": "#1a2e2a", "other": "#46505a",
     },
 }
-STATUS = {"good": "#1b7f4e", "warning": "#b8860b", "serious": "#b86a2a", "critical": "#b42318"}
-FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif'
+# good is the darker teal: gauge pills set color:#ffffff on this fill, and white on #00cc99 is 2.1:1.
+# #007a5c with white is 5.3:1. The big PASS number stays #00cc99 via theme.TEAL on the near-black ground.
+STATUS = {"good": "#007a5c", "warning": "#b8860b", "serious": "#b86a2a", "critical": "#b42318"}
+FONT = 'Manrope, system-ui, -apple-system, "Segoe UI", sans-serif'
 # Inline HTML styles cannot contain a double quote: Streamlit's sanitizer ends the attribute there.
-FONT_INLINE = "system-ui, -apple-system, Segoe UI, sans-serif"
+FONT_INLINE = "Manrope, system-ui, -apple-system, Segoe UI, sans-serif"
 
 
 def mode() -> str:
+    """R9: dark (ALTYCA) unless the presenter switches on light mode for a washed-out projector."""
     try:
-        return "dark" if st.context.theme.type == "dark" else "light"
-    except Exception:  # older Streamlit or no theme info
-        return "light"
+        return "light" if st.session_state.get("light_mode", False) else "dark"
+    except Exception:  # no session (plain import in a test)
+        return "dark"
 
 
 def pal() -> dict:
@@ -147,7 +153,7 @@ def _ring(pct_fill: float, status: str, center: str, sub: str, size: int, captio
         f'<div style="font-size:{max(16, int(size * 0.075))}px;color:{p["ink2"]};margin-top:6px">{sub}</div></div></div>'
         f'<div style="font-size:24px;font-weight:700;margin-top:12px">{caption}</div>'
         f'<div style="display:inline-block;margin-top:8px;padding:6px 18px;border-radius:999px;background:{state};'
-        f'color:{"#1a1a1a" if status == "warning" else "#ffffff"};font-size:24px;font-weight:800;letter-spacing:.08em">'
+        f'color:{"#0d0f12" if status in ("warning", "good") else "#ffffff"};font-size:24px;font-weight:800;letter-spacing:.08em">'
         f'{icon} {label.upper()}</div></div>'
     )
 
@@ -160,7 +166,7 @@ def verdict_html(passed: int, total: int, level: str) -> str:
     text = (f"✓ All {total} targets met" if ok else f"✕ {total - passed} of {total} targets missed")
     return (
         f'<div style="font-family:{FONT_INLINE};display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;margin:4px 0 10px">'
-        f'<span style="background:{bg};color:#ffffff;border-radius:10px;padding:8px 20px;font-size:30px;font-weight:800">{text}</span>'
+        f'<span style="background:{bg};color:{"#0d0f12" if ok else "#ffffff"};border-radius:10px;padding:8px 20px;font-size:30px;font-weight:800">{text}</span>'
         f'<span style="color:{p["ink2"]};font-size:20px">{level} factors</span></div>'
     )
 
@@ -200,7 +206,7 @@ def meter_list_html(rows: list[dict]) -> str:
             f'<div style="flex:0 0 150px;color:{p["ink"]};font-size:15px;font-variant-numeric:tabular-nums">{r["value_txt"]}'
             f'<span style="color:{p["muted"]};font-size:12px"> / {r["target_txt"]}</span></div>'
             f'<div style="flex:0 0 120px;color:{p["ink2"]};font-size:13px"><span style="display:inline-block;width:18px;height:18px;border-radius:9px;'
-            f'background:{fill_of[r["status"]]};color:{"#0b0b0b" if r["status"] == "warning" else "#ffffff"};text-align:center;line-height:18px;'
+            f'background:{fill_of[r["status"]]};color:{"#0b0b0b" if r["status"] in ("warning", "good") else "#ffffff"};text-align:center;line-height:18px;'
             f'font-size:11px;margin-right:6px">{icon}</span>{label}</div></div>'
         )
     out.append("</div>")

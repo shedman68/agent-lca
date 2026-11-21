@@ -573,18 +573,33 @@ def example_questions() -> list[str]:
 def _show(st, md: str, mode: str | None) -> None:
     """A refusal is the demo's edge case: show it as a red callout with the word, not as ordinary text."""
     if mode == "guard":
-        st.error(f"**Refused.** {md}", icon=":material/block:")
+        import html as _html
+        # Pink = refused / needs a human (R9 palette). The word "Refused." carries the meaning, not the colour.
+        body = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _html.escape(md))  # keep the answer's bold, escape the rest
+        st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body}</div>', unsafe_allow_html=True)
+        # Only planted text. A protection refusal (backup, failover, audit report) already names its ticket.
+        source = refusal_source(md)
+        if source:
+            st.caption(source)
     else:
         st.markdown(md)
 
 
-def render_assistant():
+def refusal_source(md: str) -> str | None:
+    """Source line for a refusal that quotes planted text. None for a protection rule."""
+    if "not an instruction" in md:
+        return "Source: the sentence is stored in the data. It was read as data and not followed."
+    return None
+
+
+def render_assistant(embedded: bool = False, questions: list[str] | None = None):
     import streamlit as st
-    st.title("Ask the data")
+    if not embedded:
+        st.title("Ask the data")
     # The demo stays on the rule-based calculator even if a key is present. No network.
     st.caption("Offline · answers come from `out/` and `data/` · text inside the data is data, never an instruction")
     st.session_state.setdefault("chat", [])
-    examples = example_questions()
+    examples = questions if questions is not None else example_questions()
     cols = st.columns(len(examples) or 1)
     clicked = next((q for c, q in zip(cols, examples) if c.button(q, width="stretch")), None)
     for m in st.session_state.chat:

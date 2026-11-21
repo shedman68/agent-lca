@@ -46,6 +46,12 @@ DE: dict[str, str] = {
     "is the largest resource at": "ist die grösste Ressource mit",
     "The chart shows": "Die Grafik zeigt",
     "By department": "Nach Abteilung",
+    "Know the limits": "Grenzen kennen",
+    "Protection windows kept": "Schutzfenster eingehalten",
+    "Contradictions flagged": "Widersprüche markiert",
+    "One contradiction flagged": "Ein Widerspruch markiert",
+    "Needs your OK": "Braucht Ihr OK",
+    "Data": "Daten",
     "How departments are split": "So werden Abteilungen aufgeteilt",
     "By tool": "Nach Tool",
     "By country": "Nach Land",
@@ -150,6 +156,52 @@ DE: dict[str, str] = {
     "Production platform, baseline months": "Produktionsplattform, Basismonate",
     "Carbon-aware job shift": "Klimabewusste Job-Verschiebung",
     "Source:": "Quelle:",
+    # R9 story pages
+    "About AgentLCA": "Über AgentLCA",
+    "0 · About": "0 · Über",
+    "1 · Connect": "1 · Verbinden",
+    "2 · Where you stand": "2 · Wo Sie stehen",
+    "3 · Your plan": "3 · Ihr Plan",
+    "4 · Stay on track": "4 · Auf Kurs bleiben",
+    "5 · Behind the numbers": "5 · Hinter den Zahlen",
+    "1 · Where you stand": "1 · Wo Sie stehen",
+    "2 · Your plan": "2 · Ihr Plan",
+    "3 · Stay on track": "3 · Auf Kurs bleiben",
+    "4 · Behind the numbers": "4 · Hinter den Zahlen",
+    "Connect": "Verbinden",
+    "Bonus sources used:": "Bonusquellen genutzt:",
+    "Training days restart paused machines. Night jobs and month-end keep production at full size. "
+    "March keeps the test environment unchanged. Backups stay.":
+        "Trainingstage starten pausierte Maschinen neu. Nachtjobs und Monatsende halten die Produktion auf voller Grösse. "
+        "Im März bleibt die Testumgebung unverändert. Sicherungen bleiben.",
+    "Flagged, not hidden. The plan keeps the detailed sources. A person decides.":
+        "Markiert, nicht versteckt. Der Plan behält die detaillierten Quellen. Ein Mensch entscheidet.",
+    "How next year was calculated": "So wurde das nächste Jahr berechnet",
+    "Source: the sentence is stored in the data. It was read as data and not followed.":
+        "Quelle: der Satz steht in den Daten. Er wurde als Daten gelesen und nicht befolgt.",
+    "Where you stand": "Wo Sie stehen",
+    "Your plan": "Ihr Plan",
+    "Stay on track": "Auf Kurs bleiben",
+    "Behind the numbers": "Hinter den Zahlen",
+    "Story mode": "Story-Modus",
+    "Light mode (projector)": "Heller Modus (Beamer)",
+    "The plan meets all three targets.": "Der Plan erreicht alle drei Ziele.",
+    "Three places hold most of what you can save.": "Drei Stellen bringen den Grossteil der Einsparung.",
+    "What we did not touch, and why": "Was wir nicht anfassen, und warum",
+    "Next: GreenOps agents": "Als Nächstes: GreenOps-Agenten",
+    "Roadmap · not built yet": "Roadmap · noch nicht gebaut",
+    "Next year, with and without the plan": "Nächstes Jahr, mit und ohne Plan",
+    "Without the plan": "Ohne Plan",
+    "With the plan": "Mit Plan",
+    "Who it is for": "Für wen",
+    "The story in four steps": "Die Geschichte in vier Schritten",
+    "What the plan does": "Was der Plan tut",
+    "Owner": "Verantwortlich",
+    "By department and tool, CO2 first": "Nach Abteilung und Tool, CO2 zuerst",
+    "By department": "Nach Abteilung",
+    "Everything has a <em>lifecycle.</em>": "Alles hat einen <em>Lebenszyklus.</em>",
+    "Our story": "Unsere Geschichte",
+    "Why the name": "Warum der Name",
     "· cost −": "· Kosten −",
     "` from `pipeline": "` aus `pipeline",
 }
@@ -157,7 +209,12 @@ DE: dict[str, str] = {
 # HTML we generate, never in markdown or captions, which can carry evidence or descriptions from the files.
 LABEL_ONLY = {" of ", "All ", "Cost", "From ", "Range ", "target ", "Resource ", "The other ", " findings", "Source:",
               "Budget", "Candidate", "Package", "Findings", "Next year", "Energy (", " factors</div>", "PASS", "MISS",
-              "CLOSE", "Table view", "Baseline year"}
+              "CLOSE", "Table view", "Baseline year",
+              # #65/#68 review: KPI labels that also occur in assistant answers stay out of markdown
+              "Effort", "CO2 per year", "CO2 saved", "Cost saved", "Energy saved, mid",
+              # R9: short page names, translated only where they are our labels
+              "Where you stand", "Your plan", "Stay on track", "Behind the numbers", "Without the plan",
+              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name", "Data", "Know the limits"}
 _ORDER = sorted(DE, key=len, reverse=True)
 _ORDER_SAFE = [p_ for p_ in _ORDER if p_ not in LABEL_ONLY]
 
@@ -190,6 +247,7 @@ def install(module=st) -> None:
     """Wrap the text functions once per process. In English mode the wrappers change nothing."""
     if getattr(module, "_i18n_installed", False):
         return
+    module._raw_html = module.html  # R9: ui.py renders cards that carry data text through this, untranslated
 
     def make(fn, label: bool):
         @functools.wraps(fn)
