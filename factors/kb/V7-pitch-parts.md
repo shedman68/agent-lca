@@ -22,12 +22,14 @@
 
 *Fallback if the tabs are slow:* skip the clicks and say the same sentences. The numbers are all on the page.
 
-## 2. Close, Vinzenz's part (4:30–4:50, ~20 s, ~55 words) → Rashed
+## 2. Close, Vinzenz's part (4:30–4:52, ~22 s) → Rashed
 *[closing slide, or the "Next year" page with the own-AI card]*
-> **Basel-Stadt wants net zero by 2037, and that includes the indirect emissions of its economy. Cloud and AI are exactly those. Our package would cut them by 43 percent at mid factors, 42 to 50 percent across our range.**
-> **We counted our own too: building this with our four agent setups used about 9 kilowatt-hours and 2.5 kilograms of CO2 so far. The package saves that in eight hours.** **Rashed?**
+> **Basel-Stadt wants net zero by 2037, including the indirect emissions of its companies. Cloud and AI are exactly those, and our package would cut them by 43 percent at mid factors.**
+> **And we counted our own AI use this weekend: about two and a half kilograms of CO2 so far. The package saves that in eight hours.** **Rashed?**
 
-- 9 kWh / 2.5 kg: `V6-result.csv` TOTAL, mid, **after PR #64 is merged** (9.0 kWh, 2.45 kg). If #64 is not merged, the app shows 7.7 kWh / 2.1 kg, so say "about 8 kilowatt-hours and 2 kilograms … in seven hours".
+~55 words, about 22 s. Longer version for Q&A: "42 to 50 percent across our range" and "about 9 kilowatt-hours".
+
+- 9 kWh / 2.5 kg: `V6-result.csv` TOTAL, mid, **after PR #64 is merged** (9.0 kWh, 2.45 kg). If #64 is not merged, the app shows 2.1 kg, so say "about two kilograms … in seven hours".
 - Eight hours: 2.45 kg ÷ 2,664 kg saved per year × 8,760 h = 8.1 h.
 - "So far": Rashed's Friday VS Code session is not counted yet (Rashed's request). Do not drop "so far".
 
