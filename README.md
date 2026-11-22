@@ -7,7 +7,7 @@ Where does an SME's digital work create cost, energy and CO₂, and what can be 
 > ## ▶ Live app: **https://agent-lca-greenops.streamlit.app/**
 >
 > **Try the prototype here: no install needed.** It opens in any browser, on a laptop or a phone.
-> Use the sidebar to switch on **Story mode** (guided tour, 18 steps with ← / → or Back / Next).
+> Use the sidebar to switch on **Story mode** (guided tour, 17 steps with ← / → or Back / Next).
 > The live app always runs the latest version of `main`. To run it on your own machine instead, see [Run it](#run-it-offline-about-2-minutes) below.
 
 ## The result in one minute

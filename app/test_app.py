@@ -933,7 +933,7 @@ class ReviewFixesGermanTests(unittest.TestCase):
 
 
 class PresenterModeTests(unittest.TestCase):
-    """Story mode = presenter mode: 18 beats, forward and back, never an exception."""
+    """Story mode = presenter mode: 17 beats, forward and back, never an exception."""
 
     def _app(self):
         from streamlit.testing.v1 import AppTest
@@ -970,25 +970,25 @@ class PresenterModeTests(unittest.TestCase):
                              "Factors", "Analysis", "Wo/Man make the decisions",
                              "Man-made agents do the leg work with real verified data", "Agents analyse", "Humans review",
                              "Example: IT manager", "Data ingestion", "Insights in minutes", "Jira", "funnel",
-                             "We know it from pharma.", "Everything"):
+                             "Everything"):
                     self.assertIn(part, html, f"beat 1: {part}")
-            if n == 4:
+            if n == 3:
                 self.assertTrue(at.session_state["connected"])
             self.assertIn(f".st-key-beat_{b.anchor}", html, f"beat {n} spotlights its block")
-            if n == 8:  # merged: gauges on mid + low / mid / high strip, one key press
+            if n == 7:  # merged: gauges on mid + low / mid / high strip, one key press
                 self.assertEqual(at.session_state["factor_level_label"], "Mid factors")
                 for part in ("Low −49.6 %", "Mid −43.0 %", "High −42.2 %", "target −40 %", "gxLitMid"):
-                    self.assertIn(part, html, f"beat 8: {part}")
-            if n == 9:  # «Hard case»: idle power + budget only
+                    self.assertIn(part, html, f"beat 7: {part}")
+            if n == 8:  # «Hard case»: idle power + budget only
                 self.assertEqual(b.title, "Hard case")
                 self.assertIn("if paused servers count at idle power: −39.2 %", html)
                 self.assertNotIn("CO₂ Low factors", html)
-            if n == 11:
+            if n == 10:
                 self.assertEqual(at.session_state["plan_sort"], "cost")
-            if n == 12:
+            if n == 11:
                 self.assertEqual(at.session_state["plan_sort"], "both")
-                self.assertTrue(at.get("vega_lite_chart"), "beat 12 shows the CO₂ & Cost map")
-            if n == 14:  # merged: monthly file check + T-1251 refusal, one key press
+                self.assertTrue(at.get("vega_lite_chart"), "beat 11 shows the CO₂ & Cost map")
+            if n == 13:  # merged: monthly file check + T-1251 refusal, one key press
                 shown = " ".join(m.value for m in at.markdown)
                 self.assertIn("Refused.", shown)
                 self.assertIn("Human in the loop", shown)
@@ -1007,10 +1007,10 @@ class PresenterModeTests(unittest.TestCase):
         import sys
         sys.path.insert(0, str(ROOT / "app"))
         import story
-        self.assertEqual(story.TOTAL, 18)
-        self.assertEqual(story.HIGHLIGHT, {10: "first", 11: "licences"})
-        self.assertEqual([b.n for b in story.BEATS], list(range(1, 19)))
-        self.assertEqual([b.n for b in story.BEATS if story.ASK_KEY in b.state], [14])
+        self.assertEqual(story.TOTAL, 17)
+        self.assertEqual(story.HIGHLIGHT, {9: "first", 10: "licences"})
+        self.assertEqual([b.n for b in story.BEATS], list(range(1, 18)))
+        self.assertEqual([b.n for b in story.BEATS if story.ASK_KEY in b.state], [13])
         # Story mode off: Your plan keeps the full robustness line and shows no strip.
         from streamlit.testing.v1 import AppTest
         at = _open(AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run(), "your-plan")
@@ -1222,7 +1222,7 @@ class SourcesFooterTests(unittest.TestCase):
         from streamlit.testing.v1 import AppTest
         fac = data.factors_table().set_index("key")
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
-        for url in ("", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
+        for url in ("where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
             page = _open(at, url)
             html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
             self.assertIn('class="gx-sources"', html, url)
@@ -1230,8 +1230,8 @@ class SourcesFooterTests(unittest.TestCase):
         # Sources only where figures are calculated: not on the closing page, no grid factors on About
         page = _open(at, "contact")
         self.assertNotIn('class="gx-sources"', " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
-        page = _open(at, "")
-        self.assertNotIn("grid_CH", " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
+        page = _open(at, "")  # About shows no calculated figure any more: no footer (Rashed, 22.11.)
+        self.assertNotIn('class="gx-sources"', " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
         page = _open(at, "where-you-stand")
         html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
         self.assertIn("(factors/factors.csv, grid_CH)", html)
@@ -1290,7 +1290,6 @@ class SourceRefTests(unittest.TestCase):
         want = {"where-you-stand": {"Cost, energy and CO₂ per line", "Findings and hotspots",
                                     "Grid CO₂ per kWh, Switzerland", "Grid CO₂ per kWh, Germany"},
                 "your-plan": {"Optimisations and package", "Contradictions"},
-                "": {"Package figures"},
                 "stay-on-track": {"Next year", "Our own AI use"}}
         for url, titles in want.items():
             page = _open(at, url)
