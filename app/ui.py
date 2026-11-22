@@ -427,70 +427,85 @@ def team(members: list[tuple], links: bool = False) -> None:
 
 
 _ORG_CSS = """<style>
-.gx-org{margin:-6px 0 0;}
-.gx-org .lv{display:flex;flex-wrap:wrap;gap:4px 22px;margin:0 0 10px;font-size:16px;color:var(--muted,#9aa3ad);}
-.gx-org .lv b{color:var(--ink,#f2f4f5);} .gx-org .lv i{font-style:normal;}
-.gx-org .lv .h::before,.gx-org .lv .a::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;}
-.gx-org .lv .h::before{background:#f6c445;} .gx-org .lv .a::before{background:#00cc99;}
-.gx-org .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));column-gap:10px;row-gap:18px;}
-.gx-org .hum{display:flex;align-items:center;gap:10px;background:var(--card,#16191e);border:1px solid #f6c44588;border-radius:14px;padding:7px 9px;grid-row:1;}
-.gx-org .hum b{display:block;font-size:15px;line-height:1.2;color:var(--ink,#f2f4f5);white-space:nowrap;} .gx-org .hum span{display:block;font-size:12px;line-height:1.25;color:#f6c445;}
-.gx-org .hum em{display:block;font-style:normal;font-size:11.5px;line-height:1.25;color:var(--muted,#9aa3ad);}
-.gx-org .p0{grid-column:1/4;} .gx-org .p1{grid-column:4/5;} .gx-org .p2{grid-column:5/6;}
-.gx-org .ag{position:relative;grid-row:2;background:var(--card,#16191e);border:1px solid #00cc9966;border-radius:12px;padding:8px 9px;}
-.gx-org .ag::before{content:"";position:absolute;left:50%;top:-18px;width:3px;height:18px;margin-left:-1px;
-  background:repeating-linear-gradient(to bottom,#00cc99 0 6px,transparent 6px 12px);}
-.gx-org .c1{grid-column:1;} .gx-org .c2{grid-column:2;} .gx-org .c3{grid-column:3;} .gx-org .c4{grid-column:4;} .gx-org .c5{grid-column:5;}
-.gx-org .ag .t{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
-.gx-org .ag b{font-size:14px;line-height:1.2;color:var(--ink,#f2f4f5);} .gx-org .ag span{display:block;font-size:12.5px;color:var(--muted,#9aa3ad);line-height:1.3;}
-.gx-org .ag small{display:block;font-size:11.5px;color:#00cc99;margin-top:3px;line-height:1.3;}
-.gx-org .gx-avatar{width:32px;height:32px;min-width:32px;margin:0;border-width:2px;}
-.gx-org .ag .gx-avatar{width:26px;height:26px;min-width:26px;border-width:1px;}
-.gx-org .gx-avatar.gx-logo{padding:3px;}
-.gx-org .gate{margin:12px 0 8px;padding:7px 12px;border-radius:12px;border:1px dashed #00cc99;font-size:14.5px;color:var(--ink,#f2f4f5);text-align:center;}
-.gx-org .tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:0 0 10px;}
-.gx-org .tools span{font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line,#262b33);color:var(--muted,#9aa3ad);}
-.gx-org .tools span b{color:var(--ink,#f2f4f5);} .gx-org .tools span.next{border-style:dashed;}
-.gx-org .flow .k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#9aa3ad);margin:0 0 5px;}
-.gx-org .flow ol{list-style:none;display:flex;flex-wrap:wrap;gap:5px;padding:0;margin:0;counter-reset:f;}
-.gx-org .flow li{counter-increment:f;font-size:13px;padding:5px 9px;border-radius:10px;border:1px solid var(--line,#262b33);color:var(--ink,#f2f4f5);}
-.gx-org .flow li::before{content:counter(f) " ";color:#00cc99;font-weight:700;}
-.gx-org .flow li:not(:last-child)::after{content:" →";color:var(--muted,#9aa3ad);}
-img[alt^="Life cycle"]{max-height:250px;width:auto !important;}
-@keyframes gxWire{to{background-position:0 12px;}}
-@keyframes gxStep{0%,14%{border-color:#00cc99;box-shadow:0 0 0 2px #00cc9955,0 0 16px #00cc9944;}18%,100%{border-color:var(--line,#262b33);box-shadow:none;}}
+.gx-org{margin:4px 0 0;--o-line:rgba(255,255,255,.14);--o-glass:rgba(255,255,255,.045);--o-edge:rgba(255,255,255,.09);}
+.gx-org.lt{--o-line:rgba(13,15,18,.18);--o-glass:rgba(13,15,18,.04);--o-edge:rgba(13,15,18,.12);}
+.gx-org .lb{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#9aa3ad);text-align:center;margin:0 0 12px;}
+.gx-org .row{display:flex;gap:18px;}
+.gx-org .grp{display:flex;flex-direction:column;align-items:center;min-width:0;}
+.gx-org .hum{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;}
+.gx-org .hum .gx-avatar{width:56px;height:56px;min-width:56px;margin:0;border:1px solid var(--o-edge);box-shadow:0 0 0 4px rgba(255,255,255,.03);}
+.gx-org .hum b{font-size:16px;font-weight:600;color:var(--ink,#f2f4f5);letter-spacing:-.01em;}
+.gx-org .hum span{font-size:13px;color:var(--muted,#9aa3ad);margin-top:-4px;}
+.gx-org img.wire{display:block;width:100%;height:34px;margin:6px 0 0;}
+.gx-org .ags{display:flex;gap:10px;width:100%;margin-top:6px;}
+.gx-org .ag{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 10px;border-radius:999px;
+  background:var(--o-glass);border:1px solid var(--o-edge);backdrop-filter:blur(8px);white-space:nowrap;}
+.gx-org .ag .gx-avatar{width:22px;height:22px;min-width:22px;margin:0;border:0;}
+.gx-org .ag .gx-avatar.gx-logo{padding:2px;}
+.gx-org .ag b{font-size:13.5px;font-weight:500;color:var(--ink,#f2f4f5);}
+.gx-org .lb.ag-lb{margin:14px 0 10px;}
+.gx-org .track{position:relative;margin:26px 28px 6px;}
+.gx-org .track .ln{position:absolute;left:0;right:0;top:6px;height:1px;background:var(--o-line);}
+.gx-org .track .dot{position:absolute;top:1px;left:0;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:#00cc99;
+  box-shadow:0 0 0 4px rgba(0,204,153,.18),0 0 18px 4px rgba(0,204,153,.45);opacity:0;}
+.gx-org .track ol{position:relative;display:flex;justify-content:space-between;list-style:none;margin:0;padding:0;}
+.gx-org .track li{display:flex;flex-direction:column;align-items:center;gap:9px;width:0;white-space:nowrap;font-size:13px;color:var(--muted,#9aa3ad);}
+.gx-org .track li i{display:block;width:7px;height:7px;margin-top:3px;border-radius:50%;background:var(--muted,#9aa3ad);opacity:.6;}
+.gx-org .via{margin:22px 0 0;text-align:center;font-size:12.5px;color:var(--muted,#9aa3ad);}
+.gx-org .via b{font-weight:500;color:var(--ink,#f2f4f5);} .gx-org .via em{font-style:normal;opacity:.6;}
+@keyframes gxRide{0%{left:0;opacity:0;}4%{opacity:1;}92%{opacity:1;}100%{left:100%;opacity:0;}}
+@keyframes gxNode{0%,6%{color:var(--ink,#f2f4f5);}14%,100%{color:var(--muted,#9aa3ad);}}
+@keyframes gxNodeDot{0%,6%{background:#00cc99;opacity:1;box-shadow:0 0 10px #00cc99;}14%,100%{background:var(--muted,#9aa3ad);opacity:.6;box-shadow:none;}}
 @media (prefers-reduced-motion:no-preference){
-  .gx-org .ag::before{animation:gxWire .7s linear infinite;}
-  .gx-org .flow li{animation:gxStep 7s linear infinite;}
+  .gx-org .track .dot{animation:gxRide 8s linear infinite;}
+  .gx-org .track li{animation:gxNode 8s linear infinite;} .gx-org .track li i{animation:gxNodeDot 8s linear infinite;}
 }
-@media (max-width:720px){.gx-org .grid{grid-template-columns:1fr;row-gap:20px;}
-  .gx-org .hum,.gx-org .ag{grid-column:auto !important;grid-row:auto !important;}}
+@media (max-width:720px){.gx-org .row{flex-direction:column;gap:22px;} .gx-org img.wire{height:22px;}
+  .gx-org .ags{gap:6px;} .gx-org .ag{padding:7px 6px;gap:5px;} .gx-org .ag b{font-size:11.5px;}
+  .gx-org .ag .gx-avatar{width:18px;height:18px;min-width:18px;}
+  .gx-org .ags{justify-content:center;} .gx-org .ag:only-child{flex:0 1 auto;padding:7px 18px;}
+  .gx-org .track li{font-size:10.5px;} .gx-org .track{margin:22px 14px 6px;}}
 </style>"""
 
 
-def org_chart(people: list[tuple], gate: str, tools: list[tuple[str, str, bool]], flow: list[str]) -> str:
-    """Team and agents as one org chart: humans on top (yellow), their agents underneath (green, a dashed line flows down
-    from the person), the checks every change passes, the tools they talk through, and a numbered flow for the ALTYCA case
-    that lights up step by step (CSS only). On a phone it stacks: person, then their agents.
-    people: (name, role, does, [(agent, logo key, does, talks via)]); at most 5 agents in all. Our own text is translated."""
-    cells, col = [], 1
-    for i, (name, role, does, agents) in enumerate(people):
-        cells.append(f'<div class="hum p{i}" style="grid-column:{col}/{col + len(agents)}">{_avatar(name.split()[0])}<div>'
-                     f'<b>{esc(name)}</b><span>{esc(i18n.tr(role))}</span><em>{esc(i18n.tr(does))}</em></div></div>')
-        for a, logo, d, v in agents:
-            cells.append(f'<div class="ag c{col}" style="grid-column:{col}"><div class="t">{_avatar(logo)}<b>{esc(i18n.tr(a))}</b></div>'
-                         f'<span>{esc(i18n.tr(d))}</span><small>{esc(i18n.tr(v))}</small></div>')
-            col += 1
-    chips = "".join(f'<span class="{"next" if nxt else ""}"><b>{esc(t)}</b> · {esc(i18n.tr(d))}</span>' for t, d, nxt in tools)
-    steps = "".join(f'<li style="animation-delay:{i}s">{esc(i18n.tr(x))}</li>' for i, x in enumerate(flow))
-    return (_ORG_CSS + '<div class="gx-org">'
-            f'<p class="lv"><span class="h"><b>{esc(i18n.tr("Humans decide"))}</b> · '
-            f'<i>{esc(i18n.tr("Wo/Man make the decisions."))}</i></span>'
-            f'<span class="a"><b>{esc(i18n.tr("Agents do the leg work"))}</b> · '
-            f'<i>{esc(i18n.tr("Man-made agents do the leg work with real verified data."))}</i></span></p>'
-            f'<div class="grid">{"".join(cells)}</div>'
-            f'<div class="gate">{esc(i18n.tr(gate))}</div><div class="tools">{chips}</div>'
-            f'<div class="flow"><p class="k">{esc(i18n.tr("How the ALTYCA case flowed"))}</p><ol>{steps}</ol></div></div>')
+def _wire(k: int, light: bool = False) -> str:
+    """Thin lines from one person down to k agents (a bracket for k > 1), with a light pulse travelling down each line.
+    An SVG image: st.html drops inline <svg>, an <img> keeps it (and its own animation)."""
+    xs = [100 * (i + .5) / k for i in range(k)]
+    d = [f"M50 0 V14 H{x:.2f} V34" if k > 1 else "M50 0 V34" for x in xs]
+    css = ("<style>path{fill:none;vector-effect:non-scaling-stroke}.b{stroke:" + ("#0d0f12;stroke-opacity:.25" if light else
+                                                                               "#ffffff;stroke-opacity:.18") + ";stroke-width:1}"
+           ".p{stroke:#00cc99;stroke-width:2;stroke-linecap:round;stroke-dasharray:8 120;opacity:0}"
+           "@keyframes m{0%{stroke-dashoffset:8;opacity:0}10%,70%{opacity:1}100%{stroke-dashoffset:-120;opacity:0}}"
+           "@media (prefers-reduced-motion:no-preference){.p{animation:m 2.4s cubic-bezier(.4,0,.2,1) infinite}}</style>")
+    paths = "".join(f'<path class="b" d="{x}"/>' for x in d) + "".join(
+        f'<path class="p" d="{x}" style="animation-delay:{.35 * i:.2f}s"/>' for i, x in enumerate(d))
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 34" preserveAspectRatio="none">{css}{paths}</svg>')
+    return f'<img class="wire" alt="" aria-hidden="true" src="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}">'
+
+
+def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next: str = "", light: bool = False) -> str:
+    """Team and agents as one quiet org chart: people on top (photo, name, role), their agents underneath as small pills
+    (logo + one or two words), thin lines with a light pulse between them, and one track for the ALTYCA case: a dot
+    travels along it and lights each step as it passes (CSS only; still under reduced motion).
+    people: (name, role, [(agent, logo key)]). Our own text is translated here."""
+    total = sum(len(a) for _, _, a in people) or 1
+    grps = []
+    for name, role, agents in people:
+        pills = "".join(f'<div class="ag">{_avatar(logo)}<b>{esc(i18n.tr(a))}</b></div>' for a, logo in agents)
+        grps.append(f'<div class="grp" style="flex:{len(agents)} 1 0">'
+                    f'<div class="hum">{_avatar(name.split()[0])}<b>{esc(name)}</b><span>{esc(i18n.tr(role))}</span></div>'
+                    f'{_wire(len(agents), light)}<div class="ags">{pills}</div></div>')
+    n = len(flow)
+    steps = "".join(f'<li style="animation-delay:{8 * i / max(n - 1, 1) * .92:.2f}s"><i style="animation-delay:'
+                    f'{8 * i / max(n - 1, 1) * .92:.2f}s"></i>{esc(i18n.tr(x))}</li>' for i, x in enumerate(flow))
+    via = " · ".join(f"<b>{esc(t)}</b>" for t in tools) + (f" · <em>{esc(tool_next)}</em>" if tool_next else "")
+    return (_ORG_CSS + f'<div class="gx-org{" lt" if light else ""}">'
+            f'<p class="lb">{esc(i18n.tr("Wo/Man make the decisions"))}</p>'
+            f'<div class="row">{"".join(grps)}</div>'
+            f'<p class="lb ag-lb">{esc(i18n.tr("Man-made agents do the leg work with real verified data"))}</p>'
+            f'<div class="track"><div class="ln"></div><div class="dot"></div><ol>{steps}</ol></div>'
+            f'<p class="via">{esc(i18n.tr("Talking via"))} {via}</p></div>')
 
 
 def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True, classes: list[str] | None = None) -> str:

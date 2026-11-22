@@ -966,9 +966,10 @@ class PresenterModeTests(unittest.TestCase):
             else:
                 self.assertIn(page_title[b.page], titles, f"beat {n} should be on page {b.page!r}")
             if n == 1:  # merged opening: headline + org chart (humans, agents, tools, flow) + LCA, one block
-                for part in ("gx-org", "Rashed Kabir", "Vinzenz Müller", "Hakim Kadriju", "Grok · QA &amp; Deploy",
-                             "Wo/Man make the decisions.", "Man-made agents do the leg work with real verified data.",
-                             "Linear", "How the ALTYCA case flowed", "ALTYCA data · 28 files", "We know it from pharma."):
+                for part in ("gx-org", "Rashed Kabir", "Vinzenz Müller", "Hakim Kadriju", "Chief of staff", "QA &amp; Deploy",
+                             "Factors", "Analysis", "Wo/Man make the decisions",
+                             "Man-made agents do the leg work with real verified data", "Human OK", "Linear next",
+                             "We know it from pharma.", "Everything"):
                     self.assertIn(part, html, f"beat 1: {part}")
             if n == 4:
                 self.assertTrue(at.session_state["connected"])
