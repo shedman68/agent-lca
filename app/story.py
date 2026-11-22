@@ -114,6 +114,7 @@ def spotlight_css(anchor: str) -> str:
     a = f".st-key-beat_{anchor}"
     return f"""<style>
 [data-testid="stMain"] [data-testid="stVerticalBlock"]:has({a}) > div:not(:has({a})):not({a}):not(.st-key-story_nav):not(:has(.st-key-story_nav)):not(.st-key-story_js):not(:has(.st-key-story_js)){{opacity:.35;transition:opacity .4s ease;}}
+{a} .gx-pop{{display:block;}}
 {a}{{border-radius:20px;box-shadow:0 0 0 2px var(--teal,#00cc99),0 0 34px 6px rgba(0,204,153,.28);padding:10px 12px;transition:box-shadow .4s ease;}}
 @media (prefers-reduced-motion: no-preference){{
   {a}{{animation:gxBeatIn .5s ease-out both;}}
@@ -130,6 +131,7 @@ def spotlight_css(anchor: str) -> str:
   {a} [data-testid="stChatMessage"]:last-of-type{{animation-delay:.55s;}}
   {a} .st-key-connect_load button{{animation:gxPress .6s ease-out both;}}
   {a} .gx-callout{{animation:gxPop .5s .45s cubic-bezier(.2,.9,.3,1.2) both;}}
+  {a} .gx-pop{{animation:gxPop .5s .4s cubic-bezier(.2,.9,.3,1.2) both;}}
 }}
 </style>"""
 
