@@ -1,7 +1,7 @@
 # Pitch changes – source of truth for the script and cue cards
 
 - **For:** Rashed's other Claude session (pitch script + cue cards) · **Written by:** Rashed's Claude (build session)
-- **App state:** `main` with #80 to #85 merged (app commit `9a4bed7`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
+- **App state:** `main` with #80 to #86 merged (app commit `554444a`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
 - **Rule:** every number below is what the app shows, read from `out/`, `measures/` and `factors/` by the app itself. Nothing here is typed by hand. If the script needs a number that is not on this page, it is not on screen: leave it out or ask.
 
 ## How to present
@@ -10,6 +10,7 @@
 - On-screen **Back / Next** buttons and the counter («7 / 23 · …») sit bottom right. Pages change by themselves.
 - Each beat **spotlights** one block (the rest dims), scrolls it into view and does the action itself. Nobody clicks inside the app.
 - A refresh keeps the beat (it is in the URL, e.g. `?story=1&beat=7`). Click once into the page before the first key.
+- With Story mode **off**, each page has its own Back / Next buttons at the bottom; on Connect the Next button reads «.json file analysis →» (it opens Where you stand).
 - **Behind the numbers** (sidebar step 5) is not a beat: for Q&A only. **Let's talk · Contact** is in the sidebar footer.
 
 ## The 23 beats
@@ -49,6 +50,12 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 
 **Team (exact):** Rashed Kabir · Product · Vinzenz Müller · Energy and Environment · Hakim Kadriju · Data · Claude · Singularity · Grok · Singularity. LinkedIn: https://www.linkedin.com/in/rkab/ · https://www.linkedin.com/in/vinzenzmueller/ · https://www.linkedin.com/in/hakimkadriju/
 
+## What the prototype does with other data (for Q&A)
+- **Upload box:** files are listed, not processed («Preview only: … not processed in this prototype. The numbers below come from the sample company.»). Do not claim live upload analysis.
+- **Generic part:** `pipeline/pipeline.py --data <folder>` builds the baseline (CHF, kWh, CO₂ low/mid/high per line, by department, tool and country) for any company whose exports follow the 13 case formats in `data/data_dictionary.md`.
+- **Case-specific part:** the findings and the optimisation package name ALTYCA's resources; another company needs them adapted.
+- **Say:** «v1 runs on the ALTYCA export format; a new company maps its exports to these formats; direct API / MCP connection is the next step.»
+
 ## FAQ on the «Let's talk?» page (exact text, all collapsed)
 1. **Why location-based CO₂, and not green certificates?** – We count the CO₂ of the electricity that is really used where the server runs. A certificate does not change the power that flows. Switzerland: 90 g CO₂ per kWh, Germany: 330 g, so Frankfurt is 3.7× Zurich.
 2. **Providers publish no energy per server or per token. Why trust the numbers?** – Every factor has a low, mid and high value with sources. The plan passes on all three: CO₂ −49.6 % (low), −43.0 % (mid), −42.2 % (high).
@@ -63,4 +70,4 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 66 app tests OK (incl. a walk through all 23 beats forward and back, each on its page) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 23 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
-STATUS: FINAL 2026-11-22 02:16 UTC main @ 9a4bed7
+STATUS: FINAL 2026-11-22 02:18 UTC main @ 554444a
