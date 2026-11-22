@@ -1025,7 +1025,7 @@ def page_about() -> None:
         left, right = st.columns([1.05, 1], vertical_alignment="center")
         with left:
             ui.grid([
-                ui.card("Agent", "Bots do the counting. People make the decisions.", kicker="Why the name"),
+                ui.card("Agent", "Man-made agents do the leg work with real verified data. Wo/Man make the decisions.", kicker="Why the name"),
                 ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"),
             ])
         with right:
