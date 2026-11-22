@@ -1105,9 +1105,12 @@ def page_connect() -> None:
         more = int(c.get("extra_more") or 0)
         steps.append(("extra", ", ".join(c["extra_kinds"]) + (f" +{more}" if more else "")))
     # A terminal look; the lines appear one after another by CSS (story.py), so the step stays instant.
-    st.html(ui.terminal("ALTYCA-case.json", steps, "done · overall picture ready"))
-    ui.hero("", f"Overall picture ready in minutes, not weeks:<br><em>CHF&nbsp;{e['cost_chf']:,.0f} · "
-                f"{_tonnes(e['co2_mid'])}&nbsp;t&nbsp;CO₂</em>")
+    result = (f'{i18n.tr("Calculation of")} <span class="lbl">{i18n.tr("SPEND")}:</span> '
+              f'<span class="gx-num">CHF&nbsp;{e["cost_chf"]:,.0f}</span> = '
+              f'<span class="lbl">{i18n.tr("CARBON COST")}:</span> '
+              f'<span class="gx-num">{_tonnes(e["co2_mid"])}&nbsp;t&nbsp;CO₂</span>')
+    st.html(ui.terminal("ALTYCA-case.json", steps, "", done_html=result))
+    ui.hero("", "Overall picture ready in minutes, not weeks.")
     run.__exit__(None, None, None)
     with st.popover("How this was calculated"):
         st.markdown("Files counted in `data/` and `data/extra/`; rows, currencies and sources from `out/fact_costs.csv`; "

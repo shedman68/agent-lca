@@ -621,6 +621,9 @@ class StoryTests(unittest.TestCase):
         self.assertIn("Power BI", blob)
         self.assertIn(f"{c['files']} files · {c['core']} core, {c['extra']} extra", blob)
         self.assertIn(f"{c['planted']} prompt injections → human in the loop", blob)
+        e = appdata.energy_totals()
+        flat = re.sub(r"<[^>]+>", "", blob).replace("&nbsp;", " ").replace("\xa0", " ")
+        self.assertIn(f"Calculation of SPEND: CHF {e['cost_chf']:,.0f} = CARBON COST: {e['co2_mid'] / 1000:.1f} t CO₂", flat)
 
     def test_story_buttons(self):
         page = _open(self._app(), "your-plan")

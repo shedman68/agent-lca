@@ -47,6 +47,10 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-term p.ok.result{font-size:22px;color:#f2f4f5;margin-top:16px;padding-top:14px;border-top:1px solid var(--line,#262b33);}
+.gx-term p.ok.result .gx-num{font-size:1.15em;}
+.gx-term p.ok.result .lbl{color:#00cc99;letter-spacing:.04em;}
+@media (max-width:720px){.gx-term p.ok.result{font-size:16px;}}
 .gx-rot .gx-rot-static{display:none;}
 @media (prefers-reduced-motion:reduce){.gx-rot{height:auto !important;overflow:visible !important;}.gx-rot .w{display:none !important;}.gx-rot .gx-rot-static{display:inline !important;}}
 .gx-does{font-size:.8em;display:inline-block;line-height:1.15;}
@@ -78,7 +82,7 @@ CSS = """<style>
 .gx-callout{box-shadow:0 12px 40px rgba(0,0,0,.45);border-color:var(--teal,#00cc99) !important;padding:16px 18px !important;}
 .gx-callout p{font-size:15px !important;}
 @media (max-width:720px){.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:static;width:auto;}}
-.gx-num{color:var(--gx-stat,#ffd166);font-weight:800;font-size:1.12em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.gx-num{color:var(--gx-stat,#ffd166) !important;font-weight:800;font-size:1.12em;font-variant-numeric:tabular-nums;white-space:nowrap;}
 [data-testid="stPopoverBody"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33) !important;}
 [data-testid="stPopoverBody"] p,[data-testid="stPopoverBody"] li,[data-testid="stPopoverBody"] span{color:var(--ink2,#c4cad1) !important;}
 [data-testid="stPopoverBody"] strong,[data-testid="stPopoverBody"] b{color:var(--ink,#f2f4f5) !important;}
@@ -340,11 +344,12 @@ def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True) -
             f"animation:gxRoll{key} {total:.1f}s cubic-bezier(.6,0,.2,1) .3s {it} both}}}}</style>")
 
 
-def terminal(title: str, lines: list[tuple[str, str]], done: str) -> str:
+def terminal(title: str, lines: list[tuple[str, str]], done: str, done_html: str = "") -> str:
     """A small terminal block: one «> step  detail» line each, a done line at the end. Big mono type, few words."""
     rows = "".join(f'<p><span class="pr">&gt;</span> <b>{esc(i18n.tr(k))}</b> {esc(v)}</p>' for k, v in lines)
     return (f'<div class="gx-term gx-check"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
-            f'<div class="body">{rows}<p class="ok"><span class="pr">✓</span> {esc(i18n.tr(done))}</p></div></div>')
+            f'<div class="body">{rows}<p class="ok{" result" if done_html else ""}"><span class="pr">✓</span> '
+            f'{done_html or esc(i18n.tr(done))}</p></div></div>')
 
 
 def activity_log(title: str, rows: list[tuple[str, str, str]], summary: str) -> str:
