@@ -1151,3 +1151,13 @@ class OwnAiBreakdownTests(unittest.TestCase):
             if p_ != "Grok":
                 self.assertIn(f"Claude Code · {p_}", html)
         self.assertIn("no split by activity", html)
+
+
+class ConnectNextLabelTests(unittest.TestCase):
+    def test_connect_next_button_says_json_file_analysis(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "connect")
+        labels = [b.label for b in page.button]
+        self.assertIn(".json file analysis →", labels)
+        self.assertNotIn("Where you stand →", labels)
