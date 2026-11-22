@@ -68,18 +68,20 @@ Window: Fri 20.11. 18:00 until the time stamp of each row in [`factors/kb/V6-tok
 - The high case is about 15× the mid because published energy-per-token figures differ that much.
 - Not counted: Rashed's Friday VS Code session on his Mac, and Rashed's chief-of-staff session after 21.11. 12:07Z. Rashed's and Hakim's rows are counts made by their own agents; Grok's split is an assumption (Cursor shows one total, about 29 M).
 
-### Hours spent working with AI agents (estimate)
+### Time: humans and agents (estimate)
 
-No one logged time, so these hours are **estimated from activity traces**: every 30-minute slot with at least one commit by that person's agent (git history, all branches) or, for Rashed, one message in his chief-of-staff Claude chat. Window Fri 20.11. 21:30 to Sun 22.11. 11:00 (local time).
+No one logged time, so these are **estimates from activity traces**, not timesheets.
+- **Agent time** = model responses × about 26 s per response. The 26 s average was measured in Rashed's chief-of-staff chat (the time from each human message to the agent's last step). Response counts come from `V6-tokens.csv`.
+- **Human time** = 30-minute slots in which the person sent at least one prompt (chat log) or their agent committed (git, all branches). Commits made by agents overnight are excluded for Rashed.
 
-| Who | Active hours (estimate) | Based on |
-|---|---:|---|
-| Rashed (product lead; Claude Code cloud + chief-of-staff chat) | **about 26 h** | 155 commits + 1,457 chat entries |
-| Grok (AI agent in Cursor, working for Rashed) | about 6.5 h | 35 commits |
-| Vinzenz (energy & environment) | at least 6 h | 25 commits |
-| Hakim (data analysis) | at least 3 h | 18 commits |
+| Who | Agent responses | Agent working time (estimate) | Human time (estimate) |
+|---|---:|---:|---:|
+| Rashed + his Claude agents (chief of staff, build) | about 1,800 | **about 13 h** | **at least 10–14 h** (9.5 h of prompting in the chief-of-staff chat since Sat 02:00, plus Claude Code and Grok prompting) |
+| Grok (Cursor, for Rashed) | not shown by Cursor | about 6.5 h with commits (35 commits) | included in Rashed's row |
+| Hakim + his Claude agent | 493 (to Sat 14:08) | **about 3.5 h** | at least 3 h (commit slots only) |
+| Vinzenz + his Claude agent | 348 (to Sat 13:16) | **about 2.5 h** | at least 6 h (commit slots only) |
 
-Commits undercount people who worked in long agent sessions with few commits: Hakim's agent made 493 responses and Vinzenz's 348 (`V6-tokens.csv`), so their real hours are higher. Hakim and Vinzenz can replace their row with the span of their own session logs (first and last `timestamp` in `~/.claude/projects/**/*.jsonl`).
+The agent time is small compared to the human time: the agents answer in seconds, and most of the weekend was people reading, deciding and prompting. Hakim and Vinzenz can replace their row with their own figures: the first and last `timestamp` of their sessions in `~/.claude/projects/**/*.jsonl`.
 
 ## Repository map
 
