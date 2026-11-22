@@ -14,3 +14,5 @@ The photographer name and the word Free are copied from that photo's Pexels page
 | `img/track.jpg` | Mian Rizwan | https://www.pexels.com/photo/long-exposure-photography-of-road-at-night-1699588/ | Free |
 
 `about.jpg` is a misted conifer slope (the page also gives the longer name Juan Alfonso Solis). `stand.jpg` is a city at night across water; the Basel river views that were available showed flags, a crane brand and people, so they were not used.
+
+- `basel.jpg`, `altyca.png`, `basel2037.png` (in `app/static/`): provided by Rashed for the pitch (Basel photo for the «Let's talk?» page; ALTYCA and Basel 2037 logos as partner marks). Team photos and the Claude / Grok marks in `team/`: provided by Rashed.

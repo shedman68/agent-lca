@@ -597,7 +597,7 @@ class StoryTests(unittest.TestCase):
     def test_five_pages_in_story_order(self):
         at = self._app()
         urls = [i.get("url_pathname") for i in at._registered_pages.values()]
-        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers", "about"])
+        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers", "about", "contact"])
         for url, title in [("", "About AgentLCA"), ("connect", "Connect"), ("where-you-stand", "Where you stand"),
                            ("your-plan", "Your plan"),
                            ("stay-on-track", "Stay on track"), ("behind-the-numbers", "Behind the numbers")]:
@@ -949,8 +949,8 @@ class PresenterModeTests(unittest.TestCase):
         import story
         at = self._app()
         self.assertFalse(at.exception, at.exception)
-        expected_url = {"about": "", "connect": "connect", "where-you-stand": "where-you-stand", "your-plan": "your-plan",
-                        "stay-on-track": "stay-on-track"}
+        page_title = {"about": "About AgentLCA", "connect": "Connect", "where-you-stand": "Where you stand",
+                      "your-plan": "Your plan", "stay-on-track": "Stay on track"}
         seen = []
         for n in range(1, story.TOTAL + 1):
             self.assertEqual(at.session_state["story_beat"], n)
@@ -959,6 +959,11 @@ class PresenterModeTests(unittest.TestCase):
             self.assertIn(f"{n} / {story.TOTAL}", html)
             seen.append(n)
             b = story.beat(n)
+            titles = [t.value for t in at.title]
+            if b.page == "contact":
+                self.assertIn("gx-talk", html, f"beat {n} should show the Let's talk page")
+            else:
+                self.assertIn(page_title[b.page], titles, f"beat {n} should be on page {b.page!r}")
             if n == 6:
                 self.assertTrue(at.session_state["connected"])
             if n in (11, 12):
@@ -1020,6 +1025,9 @@ class TeamPhotoTests(unittest.TestCase):
                 Image.new("RGB", (3000, 2000), (40, 120, 90)).save(Path(d) / "rashed.jpg", quality=95)
                 html = ui._avatar("Rashed")
                 self.assertLess(len(html), 140_000)  # shrunk to 400 px, page stays light
+                Image.new("RGBA", (900, 300), (200, 120, 60, 255)).save(Path(d) / "claude.png")
+                logo = ui._avatar("Claude")
+                self.assertIn('class="gx-avatar gx-logo" src="data:image/png;base64,', logo)  # logos are not cropped
                 self.assertIn('<img class="gx-avatar" src="data:image/jpeg;base64,', html)
                 self.assertNotIn("gx-initials", html)
 
@@ -1084,3 +1092,41 @@ class ActivityLogTests(unittest.TestCase):
         self.assertIn("no human validation yet", blob)
         self.assertIn("more files</b>", blob)
         self.assertIn("exchange_rates", blob)
+
+
+class ContactPageTests(unittest.TestCase):
+    def test_lets_talk_page_has_team_links_faq_and_confetti(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "contact")
+        self.assertFalse(page.exception, page.exception)
+        html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        self.assertIn("Let’s talk?", html)
+        self.assertIn('class="gx-confetti"', html)
+        for url in ("https://www.linkedin.com/in/rkab/", "https://www.linkedin.com/in/vinzenzmueller/",
+                    "https://www.linkedin.com/in/hakimkadriju/"):
+            self.assertIn(url, html)
+        for name in ("Rashed Kabir", "Vinzenz Müller", "Hakim Kadriju", "Claude", "Grok"):
+            self.assertIn(name, html)
+        self.assertGreaterEqual(len(page.expander), 8)
+        self.assertTrue(all(not e.proto.expanded for e in page.expander))  # FAQ starts collapsed
+        md = " ".join(m.value for m in page.markdown)
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        s = data.package_summary()
+        self.assertIn(f"{float(s['effort_pd']):.1f} of 15 person-days", md)
+
+    def test_next_year_chart_ends_at_the_card_values(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        e, s = data.energy_totals(), data.package_summary()
+        m = data.monthly_co2("mid")
+        self.assertAlmostEqual(float(m["co2_kg"].sum()), e["co2_mid"], places=3)
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "stay-on-track")
+        html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        self.assertIn('class="gx-nextyear"', html)
+        self.assertIn("Roadmap items: GreenOps agents", " ".join(x.value for x in page.subheader))
