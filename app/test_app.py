@@ -6,6 +6,7 @@ the same files the app reads.
 """
 from __future__ import annotations
 
+import re
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
@@ -435,7 +436,7 @@ class RobustnessTests(unittest.TestCase):
             package = _open(low, "package")
             self.assertFalse(package.exception, package.exception)
 
-        # Every grid row missing: mid CO2 is empty. Findings must not divide by that total.
+        # Every grid row missing: mid CO₂ is empty. Findings must not divide by that total.
         blank_all = frame.copy()
         for col in energy:
             blank_all[col] = pd.NA
@@ -606,7 +607,7 @@ class StoryTests(unittest.TestCase):
 
     def test_connect_loads_the_sample_company(self):
         page = _open(self._app(), "connect")
-        btn = next(b for b in page.button if b.label.startswith("Load the sample company"))
+        btn = next(b for b in page.button if "ALTYCA-case.json" in b.label)
         page = btn.click().run()
         self.assertFalse(page.exception, page.exception)
         import sys
@@ -616,8 +617,10 @@ class StoryTests(unittest.TestCase):
         self.assertEqual(c["files"], 28)  # 13 core + 15 extra, as the case page says
         self.assertEqual(c["currencies"], ["CHF", "EUR", "USD"])
         blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(getattr(page, "html", [])))
-        self.assertIn("Extra sources used:", blob)
+        self.assertIn("<b>extra</b>", blob)  # terminal line
         self.assertIn("Power BI", blob)
+        self.assertIn(f"{c['files']} files · {c['core']} core, {c['extra']} extra", blob)
+        self.assertIn(f"{c['planted']} prompt injections → human in the loop", blob)
 
     def test_story_buttons(self):
         page = _open(self._app(), "your-plan")
@@ -662,7 +665,7 @@ class StoryTests(unittest.TestCase):
         chf_share = chf[res.isin(["dp-dev", "dp-prod"]) | seats].sum() / chf.sum()
         page = _open(self._app(), "where-you-stand")
         shown = " ".join(c.value for c in page.caption)
-        self.assertIn(f"{co2_share:.0%} of the plan's CO2 savings", shown)
+        self.assertIn(f"{co2_share:.0%} of the plan's CO₂ savings", shown)
         self.assertIn(f"{chf_share:.0%} of its cost savings", shown)
 
     def test_ui_css_stays_inside_the_theme_contract(self):
@@ -676,7 +679,11 @@ class StoryTests(unittest.TestCase):
         contract = {"bg", "card", "card2", "line", "ink", "ink2", "muted", "teal", "teal-ink",
                     "pink", "pink-bg", "teal-bg", "on-teal"}
         used = set(re.findall(r"var\(--([a-z0-9-]+)", ui.CSS))
-        self.assertTrue(used <= contract, sorted(used - contract))
+        own = {v for v in used if v.startswith("gx-")}  # ui.py's own variables, set by ui.inject()
+        self.assertTrue(used - own <= contract, sorted(used - own - contract))
+        import inspect
+        for v in own:
+            self.assertIn(f"--{v}:", inspect.getsource(ui.inject))
 
     def test_photo_heroes_name_files_and_keep_the_glow(self):
         """Hero photos are referenced by the agreed file names. A missing file still paints the teal glow."""
@@ -733,7 +740,7 @@ class UiDataTextTests(unittest.TestCase):
         import ui
 
         with mock.patch.object(i18n, "is_de", return_value=True):
-            html = ui.card("Run the GPU server on demand instead of 24/7", "", "325", "kg CO2 a year",
+            html = ui.card("Run the GPU server on demand instead of 24/7", "", "325", "kg CO₂ a year",
                            f"1.0 person-days · {i18n.tr('Owner')}: {ui.esc('Head of IT')}", kicker="M2", data_title=True)
         self.assertIn("Run the GPU server on demand instead of 24/7", html)
         self.assertIn("Head of IT", html)
@@ -750,7 +757,7 @@ class R10FormatTests(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "app"))
         import ui
 
-        html = ui.card("t", "", "1,221", "kg CO2 a year")
+        html = ui.card("t", "", "1,221", "kg CO₂ a year")
         self.assertIsNone(re.search(r"\d<span", html), html)
         self.assertIn("1,221 <span>", html)
 
@@ -795,9 +802,11 @@ class CopyConnectRoadmapTests(unittest.TestCase):
         at.run()
         page = _open(at, "connect")
         blob = " ".join(h.proto.body for h in page.get("html"))
-        self.assertIn("An IT manager uploads her company", blob)
-        self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", blob)
-        self.assertIn("Roadmap · not built yet", blob)
+        self.assertIn("connects</i><i>integrates</i><i>uploads</i>", blob)
+        self.assertIn("<br>her company data.<br><em>The tool does the rest.</em>", blob)
+        md = " ".join(m.value for m in page.markdown)
+        self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", md)
+        self.assertIn("Roadmap · not built yet", md)
         self.assertFalse(any("connect" in b.label.lower() and "sample" not in b.label.lower() for b in page.button))
 
 
@@ -859,13 +868,13 @@ class PlanSortTests(unittest.TestCase):
 
         g0, c0, _ = snapshot(page)
         self.assertTrue(c0, "no optimisation cards")
-        self.assertIn("Pause the development data platform", c0[0])  # biggest CO2 saving first (default)
+        self.assertIn("Pause the development data platform", c0[0])  # biggest CO₂ saving first (default)
         page.session_state["plan_sort"] = "both"
         page = _open(page, "your-plan")
         g1, c1, html1 = snapshot(page)
         self.assertEqual(g0, g1)
         self.assertEqual(sorted(c0), sorted(c1))
-        self.assertTrue(page.get("vega_lite_chart"), "the CO2 and cost map is missing")
+        self.assertTrue(page.get("vega_lite_chart"), "the CO₂ and cost map is missing")
         page.session_state["plan_sort"] = "cost"
         page = _open(page, "your-plan")
         g2, c2, _ = snapshot(page)
@@ -896,8 +905,8 @@ class ReviewFixesTests(unittest.TestCase):
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
         at.run()
         page = _open(at, "where-you-stand")
-        blob = " ".join(h.proto.body for h in page.get("html"))
-        self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich", blob)
+        blob = re.sub(r'</?span[^>]*>', "", " ".join(h.proto.body for h in page.get("html")))
+        self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO₂ than Zurich", blob)
         kwh = float(data.energy_totals()["kwh_mid"])
         self.assertIn(f"{kwh / 1000:,.0f} MWh of electricity a year", blob)
 
@@ -908,11 +917,11 @@ class ReviewFixesGermanTests(unittest.TestCase):
         from unittest import mock
         sys.path.insert(0, str(ROOT / "app"))
         import i18n
-        cap = ("Sorted by share of the total CO2 saving plus share of the total cost saving. "
-               "Licence optimisations save no CO2, so they sit on the left edge.")
+        cap = ("Sorted by share of the total CO₂ saving plus share of the total cost saving. "
+               "Licence optimisations save no CO₂, so they sit on the left edge.")
         with mock.patch.object(i18n, "is_de", return_value=True):
             self.assertEqual(i18n.tr("Sort"), "Sortieren")
-            self.assertEqual(i18n.tr("Biggest CO2 saving"), "Grösste CO2-Einsparung")
+            self.assertEqual(i18n.tr("Biggest CO₂ saving"), "Grösste CO₂-Einsparung")
             self.assertTrue(i18n.tr(cap, label=False).startswith("Sortiert nach Anteil"))
 
 
@@ -928,7 +937,7 @@ class PresenterModeTests(unittest.TestCase):
     def _url(self, at):
         return at._registered_pages[at._page_hash].get("url_pathname") if getattr(at, "_page_hash", None) else ""
 
-    def test_walk_all_21_beats_forward_and_back(self):
+    def test_walk_all_beats_forward_and_back(self):
         import sys
         sys.path.insert(0, str(ROOT / "app"))
         import story
@@ -950,7 +959,10 @@ class PresenterModeTests(unittest.TestCase):
                 self.assertEqual(at.session_state["factor_level_label"], {11: "Low factors", 12: "High factors"}[n])
             if n == 15:
                 self.assertEqual(at.session_state["plan_sort"], "cost")
-            if n == 17:
+            if n == 16:
+                self.assertEqual(at.session_state["plan_sort"], "both")
+                self.assertTrue(at.get("vega_lite_chart"), "beat 16 shows the CO₂ & Cost map")
+            if n == 19:
                 shown = " ".join(m.value for m in at.markdown)
                 self.assertIn("Refused.", shown)
                 self.assertIn("Human in the loop", shown)
@@ -1018,9 +1030,9 @@ class StoryShareLinesTests(unittest.TestCase):
         rk = data.impact_by("resource", "co2", "mid").set_index("resource_id")["share"]["dp-dev"]
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
         page = _open(at, "where-you-stand")
-        blob = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
-        self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO2.", blob)
-        self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO2", blob)
+        blob = re.sub(r'</?span[^>]*>', "", " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
+        self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO₂.", blob)
+        self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO₂", blob)
 
 
 class StoryKeysScriptTests(unittest.TestCase):
@@ -1037,3 +1049,32 @@ class StoryKeysScriptTests(unittest.TestCase):
         self.assertIn("try {", js)                       # a cross-origin parent must not stop the script
         for key in ("ArrowRight", "ArrowLeft", "PageDown", "PageUp", "' '"):
             self.assertIn(key, js)
+
+
+class StatMarksTests(unittest.TestCase):
+    def test_percentages_and_ratios_marked_ids_and_dates_not(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+        self.assertIn('<span class="gx-num">8.7 %</span>', ui.marks("used 8.7 % of the time"))
+        self.assertIn('<span class="gx-num">3.7×</span>', ui.marks("emits 3.7× more"))
+        for plain in ("T-1251", "2026-03-01", "24/7", "step 2", "CHF 26,316"):
+            self.assertEqual(ui.marks(plain), plain)
+
+
+class ActivityLogTests(unittest.TestCase):
+    def test_log_marks_every_planted_text_red_and_clean_files_green(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "stay-on-track")
+        self.assertFalse(page.exception, page.exception)
+        blob = re.sub(r'</?span[^>]*>', "", " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import register
+        self.assertEqual(blob.count('<p class="bad">'), len(register.MANIPULATIVE_TEXTS))
+        self.assertIn("it_tickets.csv T-1230", blob)
+        self.assertIn("prompt injection · security risk «switch off production»", blob)
+        self.assertIn("no human validation yet", blob)
+        self.assertIn("more files</b>", blob)
+        self.assertIn("exchange_rates", blob)

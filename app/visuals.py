@@ -57,7 +57,7 @@ _LABEL = {"Switzerland": (30, 8, "start"), "Germany": (30, 8, "start"), "Ireland
 
 
 def basel_map(shares: dict[str, float], light: bool = False) -> str:
-    """Decisions in Basel, electricity in Zurich, Frankfurt and Dublin. Line weight = share of CO2 (passed in)."""
+    """Decisions in Basel, electricity in Zurich, Frankfurt and Dublin. Line weight = share of CO₂ (passed in)."""
     ink, muted, line = ("#0d0f12", "#4b5560", "#d4d9df") if light else (INK, MUTED, LINE)
     bx, by = _PLACES["Basel"]
     dots = "".join(f'<circle cx="{x}" cy="{y}" r="1.6" fill="{line}"/>'
@@ -71,6 +71,10 @@ def basel_map(shares: dict[str, float], light: bool = False) -> str:
         mx, my = (bx + x) / 2 - dy * 0.22, (by + y) / 2 + dx * 0.22  # bow sideways, away from the labels
         arcs.append(f'<path d="M {bx} {by} Q {mx:.0f} {my:.0f} {x} {y}" fill="none" stroke="{TEAL}" stroke-opacity=".9" '
                     f'stroke-width="{2 + 16 * sh:.1f}" stroke-linecap="round"/>')
+        # Flow: light dashes run from each data centre to Basel (the footprint lands where decisions are made).
+        arcs.append(f'<path class="flow" d="M {bx} {by} Q {mx:.0f} {my:.0f} {x} {y}" fill="none" stroke="#ffffff" '
+                    f'stroke-opacity=".55" stroke-width="{max(1.5, (2 + 16 * sh) * 0.35):.1f}" stroke-linecap="round" '
+                    f'stroke-dasharray="2 22"/>')
         ox, oy, anc = _LABEL[country]
         labels.append(
             f'<circle cx="{x}" cy="{y}" r="22" fill="{TEAL}" opacity=".15"/><circle cx="{x}" cy="{y}" r="9" fill="{TEAL}"/>'
@@ -82,10 +86,12 @@ def basel_map(shares: dict[str, float], light: bool = False) -> str:
              f'<text x="{bx - 22}" y="{by + 7}" text-anchor="end" font-family="{FONT}" font-size="20" font-weight="800" '
              f'fill="{ink}">Basel</text><text x="{bx - 22}" y="{by + 30}" text-anchor="end" font-family="{FONT}" '
              f'font-size="15" font-weight="600" fill="{muted}">decisions</text>')
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" role="img">{dots}{"".join(arcs)}'
+    flow_css = ("<style>.flow{animation:gxflow 1.4s linear infinite}@keyframes gxflow{to{stroke-dashoffset:24}}"
+                "@media (prefers-reduced-motion:reduce){.flow{animation:none;display:none}}</style>")
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" role="img">{flow_css}{dots}{"".join(arcs)}'
            f'{"".join(labels)}{basel}'
-           f'<text x="30" y="440" font-family="{FONT}" font-size="14" font-weight="600" fill="{muted}">Share of CO2 by '
+           f'<text x="30" y="440" font-family="{FONT}" font-size="14" font-weight="600" fill="{muted}">Share of CO₂ by '
            f'data-centre country · not to scale</text></svg>')
-    alt = "Share of CO2 by data-centre country: " + ", ".join(f"{_CITY[c]} {v * 100:.0f} %" for c, v in shares.items()
+    alt = "Share of CO₂ by data-centre country: " + ", ".join(f"{_CITY[c]} {v * 100:.0f} %" for c, v in shares.items()
                                                                if c in _CITY)
     return _img(svg, alt, "900px")

@@ -1,16 +1,16 @@
 """Sort order for the optimisation cards on "Your plan". Text and order only: no number is changed here.
 
 Three views (the key is stored in st.session_state, the label is shown):
-- co2:  CO2 saved per year (the picked factor set), high to low. Ties: CHF, then ID.
-- cost: CHF saved per year, high to low. Ties: CO2, then ID.
-- both: combined share = CO2 / total CO2 + CHF / total CHF over the shown rows, high to low. Ties: CO2, CHF, ID.
-Licence optimisations have no CO2 (SaaS has no energy factor): they count as 0 kg and stay in the list.
+- co2:  CO₂ saved per year (the picked factor set), high to low. Ties: CHF, then ID.
+- cost: CHF saved per year, high to low. Ties: CO₂, then ID.
+- both: combined share = CO₂ / total CO₂ + CHF / total CHF over the shown rows, high to low. Ties: CO₂, CHF, ID.
+Licence optimisations have no CO₂ (SaaS has no energy factor): they count as 0 kg and stay in the list.
 """
 from __future__ import annotations
 
 import pandas as pd
 
-SORTS = {"co2": "Biggest CO2 saving", "cost": "Biggest cost saving", "both": "CO2 and cost together"}
+SORTS = {"co2": "Biggest CO₂ saving", "cost": "Biggest cost saving", "both": "CO₂ & Cost"}
 DEFAULT = "co2"
 CHF_COL = "savings_cost_chf_per_year"
 

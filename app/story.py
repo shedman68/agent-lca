@@ -1,4 +1,4 @@
-"""Presenter mode: the pitch as 21 beats, moved with one key (→ / PageDown / Space, back with ← / PageUp).
+"""Presenter mode: the pitch as 23 beats, moved with one key (→ / PageDown / Space, back with ← / PageUp).
 
 Each beat names its page, the block to spotlight (a container key «beat_<anchor>») and the app state it sets
 (factor set, sort, sample company loaded, assistant question). State changes happen only when a beat changes,
@@ -34,7 +34,7 @@ BEATS: list[Beat] = [
     Beat(3, "about", "why", "Agent + LCA"),
     Beat(4, "about", "promise", "Promise"),
     Beat(5, "connect", "connect_hero", "Upload"),
-    Beat(6, "connect", "connect_run", "Load the sample company", {"connected": True}),
+    Beat(6, "connect", "connect_run", "Sample company", {"connected": True}),
     Beat(7, "where-you-stand", "stand_numbers", "Where you stand"),
     Beat(8, "where-you-stand", "stand_map", "Location-based"),
     Beat(9, "where-you-stand", "stand_hotspot", "Hotspot 1"),
@@ -42,14 +42,16 @@ BEATS: list[Beat] = [
     Beat(11, "your-plan", "gauges", "Low factors", {"factor_level_label": "Low factors", "plan_sort": "co2"}),
     Beat(12, "your-plan", "gauges", "High factors", {"factor_level_label": "High factors", "plan_sort": "co2"}),
     Beat(13, "your-plan", "gauges", "Back to mid", dict(_PLAN_MID_CO2)),
-    Beat(14, "your-plan", "plan_cards", "Optimisations, CO2 first", dict(_PLAN_MID_CO2)),
+    Beat(14, "your-plan", "plan_cards", "Optimisations, CO₂ first", dict(_PLAN_MID_CO2)),
     Beat(15, "your-plan", "plan_cards", "Biggest cost saving", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
-    Beat(16, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
-    Beat(17, "stay-on-track", "assistant", "Prompt injection refused", {ASK_KEY: T1251_SAY}),
-    Beat(18, "stay-on-track", "next_year", "Next year"),
-    Beat(19, "stay-on-track", "agents", "GreenOps agents"),
-    Beat(20, "stay-on-track", "own_ai", "Our own AI"),
-    Beat(21, "stay-on-track", "close", "Basel 2037"),
+    Beat(16, "your-plan", "plan_map", "CO₂ & Cost map", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
+    Beat(17, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
+    Beat(18, "stay-on-track", "track_top", "Monthly file check"),
+    Beat(19, "stay-on-track", "assistant", "Prompt injection refused", {ASK_KEY: T1251_SAY}),
+    Beat(20, "stay-on-track", "next_year", "Next year"),
+    Beat(21, "stay-on-track", "agents", "GreenOps agents"),
+    Beat(22, "stay-on-track", "own_ai", "Our own AI"),
+    Beat(23, "stay-on-track", "close", "Basel 2037"),
 ]
 TOTAL = len(BEATS)
 
@@ -63,7 +65,7 @@ def beat(n: int | None = None) -> Beat:
 
 
 def current() -> int:
-    """Beat number 1..21. First run in a session reads ?beat= from the URL (survives a refresh)."""
+    """Beat number 1..23. First run in a session reads ?beat= from the URL (survives a refresh)."""
     if BEAT_KEY not in st.session_state:
         try:
             n = int(st.query_params.get("beat", "1"))
@@ -82,7 +84,7 @@ def apply_state(n: int) -> None:
         st.session_state[k] = v
     if "plan_sort" in b.state:  # the sort widget reads its own key on the next run
         st.session_state["plan_sort_w"] = b.state["plan_sort"]
-    if n != 17:
+    if n != 19:
         st.session_state.pop(ASK_KEY, None)
 
 
@@ -119,17 +121,21 @@ def spotlight_css(anchor: str) -> str:
   {a} .gx-check p{{animation:gxTick .35s ease-out both;}}
   {a} .gx-check p:nth-child(1){{animation-delay:.05s}} {a} .gx-check p:nth-child(2){{animation-delay:.25s}}
   {a} .gx-check p:nth-child(3){{animation-delay:.45s}} {a} .gx-check p:nth-child(4){{animation-delay:.65s}}
-  {a} .gx-check p:nth-child(5){{animation-delay:.85s}}
+  {a} .gx-check p:nth-child(5){{animation-delay:.85s}} {a} .gx-check p:nth-child(6){{animation-delay:1.0s}}
+  {a} .gx-check p:nth-child(7){{animation-delay:1.15s}}
+  {a} .gx-log p:nth-child(n+8){{animation-delay:1.2s}}
   {a} div[role="img"]{{animation:gxDraw 1.1s cubic-bezier(.3,.6,.2,1) both;}}
   {a} .gx-card.spot{{animation:gxPulse 1.1s ease-out both;}}
   {a} [data-testid="stChatMessage"]{{animation:gxType .6s steps(28,end) both;}}
   {a} [data-testid="stChatMessage"]:last-of-type{{animation-delay:.55s;}}
   {a} .st-key-connect_load button{{animation:gxPress .6s ease-out both;}}
+  {a} .gx-callout{{animation:gxPop .5s .45s cubic-bezier(.2,.9,.3,1.2) both;}}
 }}
 </style>"""
 
 
 BASE_CSS = """<style>
+@keyframes gxPop{from{opacity:0;transform:translateY(16px) scale(.92);}}
 @keyframes gxBeatIn{from{box-shadow:0 0 0 0 rgba(0,204,153,0);}}
 @keyframes gxRise{from{opacity:0;transform:translateY(14px);filter:blur(5px);}}
 @keyframes gxTick{from{opacity:0;transform:translateX(-10px);}}
@@ -193,10 +199,21 @@ def keys_js(n: int, anchor: str, on_page: bool) -> str:
     let tries = 0;
     const go = function() {{
       const el = doc.querySelector('.st-key-beat_{anchor}');
-      if (el) {{ el.scrollIntoView({{behavior: 'smooth', block: 'center'}}); return; }}
+      if (el) {{ const tall = el.getBoundingClientRect().height > window.innerHeight * 0.8;
+        el.scrollIntoView({{behavior: 'smooth', block: tall ? 'start' : 'center'}}); return; }}
       if (tries++ < 20) setTimeout(go, 100);
     }};
     setTimeout(go, 120);
+    // Charts and photos load after the first scroll and push the block down: check again once things settle.
+    const again = function() {{
+      const el = doc.querySelector('.st-key-beat_{anchor}');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const tall = r.height > window.innerHeight * 0.8;
+      const off = tall ? Math.abs(r.top) > 80 : (r.top < 0 || r.bottom > window.innerHeight);
+      if (off) el.scrollIntoView({{behavior: 'smooth', block: tall ? 'start' : 'center'}});
+    }};
+    setTimeout(again, 900); setTimeout(again, 1800);
   }}
 }})(); /* beat {n} */
 </script>"""

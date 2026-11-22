@@ -10,6 +10,7 @@ Theme contract (grok/R9-theme, app/theme.py): --bg --card --card2 --line --ink -
 from __future__ import annotations
 
 import base64
+import re
 import html as _html
 from pathlib import Path
 
@@ -46,6 +47,49 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-rot{display:inline-block;height:1.12em;overflow:hidden;vertical-align:bottom;color:inherit;}
+.gx-rot .w{display:block;transform:translateY(0);}
+.gx-rot .w i{display:block;height:1.12em;line-height:1.12em;font-style:normal;}
+@media (prefers-reduced-motion:no-preference){.gx-rot .w{animation:gxRoll 2.6s cubic-bezier(.6,0,.2,1) .3s both;}}
+@keyframes gxRoll{0%,22%{transform:translateY(-2.24em);}45%,68%{transform:translateY(-1.12em);}100%{transform:translateY(0);}}
+.st-key-beat_track_top [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stMarkdownContainer"] p::before{content:"› ";color:#00cc99;font-weight:800;}
+.st-key-beat_track_top [data-testid="stChatInput"],.st-key-beat_track_top [data-testid="stChatInput"] > div{background:#0a0c0f !important;border-color:var(--line,#262b33) !important;}
+.st-key-beat_track_top [data-testid="stChatInput"] textarea{color:#f2f4f5 !important;background:transparent !important;}
+.gx-log p{font-size:15px;margin:0 0 5px;line-height:1.4;}
+.gx-log p b{min-width:13.5em;font-weight:600;}
+.gx-log p.cmd{color:#f2f4f5;margin-bottom:12px;}
+.gx-log p.ok .pr,.gx-log p.ok b{color:#00cc99;}
+.gx-log p.warn .pr,.gx-log p.warn b{color:#ffb020;}
+.gx-log p.bad .pr,.gx-log p.bad b{color:#ff5d73;}
+.gx-log p.bad .note{color:#ffc2cb;}
+.gx-log p.sum{margin-top:12px;color:#f2f4f5;}
+.st-key-beat_track_top [data-testid="stChatMessage"]{background:#0a0c0f !important;border:1px solid var(--line,#262b33);border-radius:12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.st-key-beat_track_top [data-testid="stChatMessage"] p{font-family:inherit;}
+.st-key-beat_track_top [data-testid="stChatMessageAvatarUser"],.st-key-beat_track_top [data-testid="stChatMessageAvatarAssistant"]{display:none;}
+.st-key-beat_track_top [data-testid="stChatMessage"]:has(.gx-refuse) .gx-refuse,.st-key-beat_track_top .gx-refuse{font-family:inherit;}
+.st-key-beat_track_top [data-testid="stChatInput"] textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+@media (max-width:720px){.gx-log p{font-size:13.5px;}.gx-log p b{min-width:0;display:block;}}
+.st-key-beat_plan_map{position:relative;}
+.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:absolute;right:8px;top:120px;width:min(340px,36%);z-index:5;}
+.gx-callout{box-shadow:0 12px 40px rgba(0,0,0,.45);border-color:var(--teal,#00cc99) !important;padding:16px 18px !important;}
+.gx-callout p{font-size:15px !important;}
+@media (max-width:720px){.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:static;width:auto;}}
+.gx-num{color:var(--gx-stat,#ffd166);font-weight:800;font-size:1.12em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+[data-testid="stPopoverBody"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33) !important;}
+[data-testid="stPopoverBody"] p,[data-testid="stPopoverBody"] li,[data-testid="stPopoverBody"] span{color:var(--ink2,#c4cad1) !important;}
+[data-testid="stPopoverBody"] strong,[data-testid="stPopoverBody"] b{color:var(--ink,#f2f4f5) !important;}
+.gx-term{background:#0a0c0f;border:1px solid var(--line,#262b33);border-radius:14px;overflow:hidden;margin:14px 0 22px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;}
+.gx-term .bar{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#14171c;border-bottom:1px solid var(--line,#262b33);}
+.gx-term .bar i{width:11px;height:11px;border-radius:50%;background:#3a4047;display:inline-block;}
+.gx-term .bar span{margin-left:10px;font-size:13px;color:#9aa3ad;letter-spacing:.02em;}
+.gx-term .body{padding:16px 20px 18px;}
+.gx-term p{margin:0 0 8px;font-size:19px;line-height:1.45;color:#c4cad1;}
+.gx-term p b{color:#f2f4f5;font-weight:700;display:inline-block;min-width:6.5em;}
+.gx-term .pr{color:#00cc99;font-weight:700;margin-right:6px;}
+.gx-term p.ok{color:#00cc99;font-weight:700;margin:12px 0 0;}
+@media (max-width:720px){.gx-term p{font-size:15px;}.gx-term p b{min-width:0;margin-right:4px;}.gx-term .body{padding:12px 14px;}}
 .gx-team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin:8px 0 4px;}
 .gx-person{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 12px 20px;
   background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:18px;}
@@ -89,15 +133,15 @@ button[data-variant="segmented_control"][aria-checked="true"]{background:var(--t
 .gx-sub{font-size:19px;line-height:1.5;color:var(--ink2,#c4cad1);max-width:60ch;margin:0 0 26px;}
 .gx-kpis{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 26px;}
 .gx-kpi{flex:1 1 220px;min-width:min(200px,100%);}
-.gx-kpi .v{font-size:clamp(34px,4vw,48px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--ink,#f2f4f5);font-variant-numeric:tabular-nums;}
+.gx-kpi .v{font-size:clamp(34px,4vw,48px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--gx-stat,#ffd166);font-variant-numeric:tabular-nums;}
 .gx-kpi .u{font-size:17px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:6px;letter-spacing:0;}
 .gx-kpi .l{font-size:14px;color:var(--muted,#9aa3ad);margin-top:8px;font-weight:600;}
-.gx-kpi.good .v{color:var(--teal-ink,#00cc99);}
+.gx-kpi.good .v{color:var(--gx-stat,#ffd166);}
 .gx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px;margin:6px 0 22px;}
 .gx-card{background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:16px;padding:20px 22px;}
 .gx-card h4{margin:0 0 8px;font-size:18px;font-weight:750;color:var(--ink,#f2f4f5);letter-spacing:-.01em;}
 .gx-card p{margin:0;font-size:15.5px;line-height:1.5;color:var(--ink2,#c4cad1);}
-.gx-card .n{font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--ink,#f2f4f5);font-variant-numeric:tabular-nums;margin-top:14px;}
+.gx-card .n{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--gx-stat,#ffd166);font-variant-numeric:tabular-nums;margin-top:14px;}
 .gx-card .n span{font-size:15px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:4px;letter-spacing:0;}
 .gx-card .meta{font-size:13.5px;color:var(--muted,#9aa3ad);margin-top:10px;font-weight:600;}
 .gx-card .k{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);font-weight:700;margin:0 0 8px;}
@@ -132,8 +176,22 @@ background-color:#0d0f12;background-size:cover;background-position:center;border
 </style>"""
 
 
+STAT_DARK, STAT_LIGHT = "#ffd166", "#8a6400"  # key numbers; the light step keeps ≥ 4.5:1 on white
+
+
 def inject() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
+    stat = STAT_LIGHT if st.session_state.get("light_mode") else STAT_DARK
+    st.markdown(f"<style>:root{{--gx-stat:{stat};}}</style>", unsafe_allow_html=True)
+
+
+_STAT_RE = re.compile(r"(?<![\w\-/.])([−+\-]?\d[\d,]*(?:\.\d+)?\s?(?:%|×))")
+
+
+def marks(html_text: str) -> str:
+    """Key statistics inside a sentence (percentages, «3.7×») in the stat colour, bold and a little bigger.
+    Use on text that is already escaped: it adds spans only around the matched figures."""
+    return _STAT_RE.sub(r'<span class="gx-num">\1</span>', html_text)
 
 
 def photo_band(inner: str, slug: str) -> str:
@@ -173,7 +231,7 @@ def hero(eyebrow: str, line: str, sub: str = "", photo: str = "") -> None:
 
 def explain(term: str, text: str) -> None:
     """First time an idea appears: one plain sentence, so the page makes sense without a voice-over."""
-    _raw(f'<p class="gx-explain"><b>{i18n.tr(term)}</b> {i18n.tr(text, label=False)}</p>')
+    _raw(f'<p class="gx-explain"><b>{i18n.tr(term)}</b> {marks(i18n.tr(text, label=False))}</p>')
 
 
 def roadmap_note(text: str) -> None:
@@ -203,8 +261,8 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
     unit, kicker = i18n.tr(unit), i18n.tr(kicker)
     k = f'<p class="k">{kicker}</p>' if kicker else ""
     n = f'<div class="n">{number} <span>{unit}</span></div>' if number else ""  # a real space: CSS margins can be overridden
-    m = f'<div class="meta">{meta}</div>' if meta else ""
-    b = f"<p>{body}</p>" if body else ""
+    m = f'<div class="meta">{marks(meta)}</div>' if meta else ""
+    b = f"<p>{marks(body)}</p>" if body else ""
     return f'<div class="gx-card {kind}">{k}<h4>{title}</h4>{b}{n}{m}</div>'
 
 
@@ -247,6 +305,23 @@ def team(members: list[tuple[str, str]]) -> None:
     cells = "".join(f'<div class="gx-person">{_avatar(n)}<b>{esc(n)}</b><span>{i18n.tr(r)}</span></div>'
                     for n, r in members)
     _raw(f'<div class="gx-team">{cells}</div>')
+
+
+def terminal(title: str, lines: list[tuple[str, str]], done: str) -> str:
+    """A small terminal block: one «> step  detail» line each, a done line at the end. Big mono type, few words."""
+    rows = "".join(f'<p><span class="pr">&gt;</span> <b>{esc(i18n.tr(k))}</b> {esc(v)}</p>' for k, v in lines)
+    return (f'<div class="gx-term gx-check"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
+            f'<div class="body">{rows}<p class="ok"><span class="pr">✓</span> {esc(i18n.tr(done))}</p></div></div>')
+
+
+def activity_log(title: str, rows: list[tuple[str, str, str]], summary: str) -> str:
+    """Claude-Code-like log: one line per file, ● green = clean, amber = needs a person, red = blocked."""
+    icon = {"ok": "✓", "warn": "!", "bad": "✗"}
+    lines = "".join(f'<p class="{st_}"><span class="pr">{icon.get(st_, "·")}</span> <b>{esc(f)}</b> '
+                    f'<span class="note">{marks(esc(note))}</span></p>' for st_, f, note in rows)
+    return (f'<div class="gx-term gx-log gx-check"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
+            f'<div class="body"><p class="cmd"><span class="pr">&gt;</span> check every file, flag what needs a human</p>'
+            f'{lines}<p class="ok sum"><span class="pr">●</span> {esc(summary)}</p></div></div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:

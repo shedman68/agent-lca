@@ -1,4 +1,4 @@
-"""GreenOps Basel: cost, energy and CO2 of cloud, servers, AI and SaaS.
+"""GreenOps Basel: cost, energy and CO₂ of cloud, servers, AI and SaaS.
 
 Run from the repo root:  python -m streamlit run app/app.py
 Reads only out/ (pipeline output) and analysis/kb/ (findings, reconciliation). See app/README.md.
@@ -221,7 +221,7 @@ def out_ready() -> bool:
         st.error(str(exc))
         return False
     if totals.get("co2_mid") is None:
-        st.error("out/fact_costs.csv has no CO2 column yet. Fill factors/factors.csv and rerun the pipeline. "
+        st.error("out/fact_costs.csv has no CO₂ column yet. Fill factors/factors.csv and rerun the pipeline. "
                  "This page will not estimate a figure.")
         return False
     return True
@@ -244,7 +244,7 @@ def _hero_html(facts_now: dict, level: str) -> str:
     level_label = {"low": "Low factors", "mid": "Mid factors", "high": "High factors"}[level]
     return _kpi_row(
         _kpi_card(
-            "CO2 per year",
+            "CO₂ per year",
             _tonnes(facts_now["co2_level"]),
             "t",
             f'Location-based: electricity mix of the country where it runs, not a green certificate. '
@@ -268,7 +268,7 @@ def _hero_html(facts_now: dict, level: str) -> str:
 
 def _overview_sentence(facts_now: dict) -> str:
     return (
-        f"{facts_now['top_country']} accounts for {pct_share(facts_now['top_country_share'])} of the CO2, "
+        f"{facts_now['top_country']} accounts for {pct_share(facts_now['top_country_share'])} of the CO₂, "
         f"and {facts_now['top_resource']} is the largest resource at {pct_share(facts_now['top_resource_share'])}."
     )
 
@@ -278,7 +278,7 @@ def page_overview(embedded: bool = False) -> None:
     if not embedded:
         st.title("Overall picture")
         st.caption(f"Baseline year {data.BASELINE_LABEL} · every number from `out/` · {CITE}")
-    st.caption("CO2 here is location-based: we use the electricity mix where the server runs, not a green-power certificate.")
+    st.caption("CO₂ here is location-based: we use the electricity mix where the server runs, not a green-power certificate.")
     if not out_ready():
         return
     level = factor_level()
@@ -296,21 +296,21 @@ def page_overview(embedded: bool = False) -> None:
             "An em dash means that column is empty, so no figure is estimated."
         )
     if _missing(facts_now["co2_level"]) or _missing(facts_now["kwh_level"]):
-        st.info(f"`out/fact_costs.csv` has no {level} energy or CO2. A factor value is missing. "
+        st.info(f"`out/fact_costs.csv` has no {level} energy or CO₂. A factor value is missing. "
                 "Nothing is estimated on this page.")
         return
     st.markdown(_overview_sentence(facts_now))
 
     metric = st.segmented_control(
-        "The chart shows", ["CO2", "Cost"], default="CO2", key="overview_metric",
+        "The chart shows", ["CO₂", "Cost"], default="CO₂", key="overview_metric",
     )
     metric_key = "cost" if metric == "Cost" else "co2"
     unit = "CHF" if metric_key == "cost" else "kg"
-    axis = "CHF per year" if metric_key == "cost" else f"kg CO2 per year ({level} factors)"
-    st.subheader("By department" + (" · cost" if metric_key == "cost" else " · CO2"))
+    axis = "CHF per year" if metric_key == "cost" else f"kg CO₂ per year ({level} factors)"
+    st.subheader("By department" + (" · cost" if metric_key == "cost" else " · CO₂"))
     with st.popover("How departments are split"):
         st.markdown("Department uses `dept_allocated` and `alloc_share` from `out/fact_costs_allocated.csv` "
-                    "multiplied by the row's CO2 or cost. The test account is folded into IT. "
+                    "multiplied by the row's CO₂ or cost. The test account is folded into IT. "
                     "There is no overhead left to split in the baseline year.")
     dept = data.impact_by("department", metric_key, level)
     st.altair_chart(charts.ranked_bars(dept, value="amount", unit=unit, axis_title=axis), width="stretch", theme=None)
@@ -335,14 +335,14 @@ def page_overview(embedded: bool = False) -> None:
                    .drop(columns=["share"], errors="ignore"), "Table view: all resources")
     with tab_country:
         country = data.impact_by("country", metric_key, level)
-        st.caption("Country is where the work runs. CO2 uses that country's electricity mix, not a certificate. "
+        st.caption("Country is where the work runs. CO₂ uses that country's electricity mix, not a certificate. "
                    "AI providers and SaaS are «EU mixed».")
         st.altair_chart(charts.ranked_bars(country, value="amount", unit=unit, axis_title=axis), width="stretch", theme=None)
         table_view(country.assign(amount=country["amount"].round(1), share_pct=(country["share"] * 100).round(1))
                    .rename(columns={"label": "country", "amount": unit, "share_pct": "share %"})
                    .drop(columns=["share"]), "Table view: countries")
     with tab_month:
-        st.caption("Cost only. Energy and CO2 are not stored per month in a separate file; the year total is above.")
+        st.caption("Cost only. Energy and CO₂ are not stored per month in a separate file; the year total is above.")
         monthly = data.monthly_by_source()
         st.altair_chart(charts.monthly_stack(monthly, data.SOURCE_ORDER), width="stretch", theme=None)
         src = data.by_dimension("source")
@@ -374,7 +374,7 @@ def _finding_card(r: pd.Series) -> None:
         st.html(_kpi_row(
             _kpi_card("Idle or unused", _qty(r["addressable_chf"]), "CHF", unit_first=True),
             _kpi_card("Energy, mid", _kwh_text(r.get("addressable_kwh_mid")), "kWh"),
-            _kpi_card("CO2, location-based mid", _qty(r.get("addressable_co2_kg_mid")), "kg"),
+            _kpi_card("CO₂, location-based mid", _qty(r.get("addressable_co2_kg_mid")), "kg"),
         ))
         base = chf(r["cost_chf"])
         st.caption(f"Baseline cost of the resource: {base}. Resource `{r['resource']}`.")
@@ -384,7 +384,7 @@ def _finding_card(r: pd.Series) -> None:
 
 
 def _findings_structured(f: pd.DataFrame, source: str) -> None:
-    st.caption(f"Ranked by addressable CO2 (location-based, mid factors) · `{source}`")
+    st.caption(f"Ranked by addressable CO₂ (location-based, mid factors) · `{source}`")
     with st.popover("How to read this page"):
         st.markdown("Written by `analysis/findings.py`. «Idle or unused» is not a saving claim. "
                     "Addressable means that idle or unused part. "
@@ -394,19 +394,19 @@ def _findings_structured(f: pd.DataFrame, source: str) -> None:
         return
     top, rest = f.head(5), f.iloc[5:]
     lead = top.iloc[0]
-    st.markdown(f"### Largest: {lead['finding_id']} · {_kg(lead.get('addressable_co2_kg_mid'))} CO2 a year")
+    st.markdown(f"### Largest: {lead['finding_id']} · {_kg(lead.get('addressable_co2_kg_mid'))} CO₂ a year")
     st.caption(f"{chf(lead['addressable_chf'])} · {_kwh(lead.get('addressable_kwh_mid'))} · {lead['title']}")
     bars = top.dropna(subset=["addressable_co2_kg_mid"]).copy()
     if not bars.empty:
         base_co2 = data.energy_totals()["co2_mid"]
         if _missing(base_co2) or not base_co2:
-            st.info("`out/fact_costs.csv` has no mid CO2 total, so the chart is not drawn. "
+            st.info("`out/fact_costs.csv` has no mid CO₂ total, so the chart is not drawn. "
                     "The rows below still come from the findings file.")
         else:
             bars = bars.assign(label=bars["finding_id"] + " · " + bars["title"].astype(str),
                                share=bars["addressable_co2_kg_mid"] / base_co2)
             st.altair_chart(charts.ranked_bars(bars, value="addressable_co2_kg_mid", unit="kg",
-                                                axis_title="kg CO2 per year, addressable, mid factors"),
+                                                axis_title="kg CO₂ per year, addressable, mid factors"),
                             width="stretch", theme=None)
     for _, r in top.iterrows():
         _finding_card(r)
@@ -464,7 +464,7 @@ def _protection_hits(text: str) -> list[str]:
 
 
 def _signed(reduction_pct: float) -> str:
-    """A reduction shows as −x %; a package that adds cost or CO2 shows as +x %, never as 0 %."""
+    """A reduction shows as −x %; a package that adds cost or CO₂ shows as +x %, never as 0 %."""
     return format_num.signed_pct(reduction_pct)
 
 
@@ -496,7 +496,7 @@ def _selected_ids(rows: pd.DataFrame) -> set[str]:
 def page_package(embedded: bool = False, middle=None) -> None:
     if not embedded:
         st.title("Optimisation package")
-    st.caption(f"Case targets per year: CO2 −{CO2_TARGET:.0f} % (location-based) · cost −{COST_TARGET:.0f} % · "
+    st.caption(f"Case targets per year: CO₂ −{CO2_TARGET:.0f} % (location-based) · cost −{COST_TARGET:.0f} % · "
                f"at most {PD_CAP:.0f} person-days (1 PD = CHF {data.PD_CHF:,.0f}) · rows from `measures/`")
     if not out_ready():
         return
@@ -524,7 +524,7 @@ def page_package(embedded: bool = False, middle=None) -> None:
     board = charts.gauge_board_html(
         co2={"fill": 0.0 if co2_pct is None else co2_pct / CO2_TARGET, "status": co2_status,
              "center": "–" if co2_pct is None else _signed(co2_pct), "sub": f"target −{CO2_TARGET:.0f} %",
-             "caption": "CO2 reduction"},
+             "caption": "CO₂ reduction"},
         cost={"fill": (result["cost_pct"] or 0) / COST_TARGET, "status": cost_status,
               "center": _signed(result["cost_pct"] or 0), "sub": f"target −{COST_TARGET:.0f} %",
               "caption": "Cost reduction"},
@@ -537,7 +537,7 @@ def page_package(embedded: bool = False, middle=None) -> None:
         st.html(charts.verdict_html(passed, 3, level.capitalize()))
         st.html(board)
     pcol, ccol, ecol = st.columns(3)
-    with pcol.popover(i18n.tr("How CO2 was calculated")):
+    with pcol.popover(i18n.tr("How CO₂ was calculated")):
         base_co2 = result["base_co2_kg"]
         pct = result["co2_pct"]
         base_txt = "–" if _missing(base_co2) else f"{base_co2:,.0f} kg"
@@ -547,7 +547,7 @@ def page_package(embedded: bool = False, middle=None) -> None:
             f"divided by the sum of `co2_kg_{level}` on baseline rows in `out/fact_costs.csv` "
             f"({result['co2_kg']:,.0f} kg of {base_txt} = {pct_txt}). "
             "Low, mid and high are three columns already stored on each optimisation. "
-            "Mid is `savings_co2_kg_location_based`. Market-based CO2 is blank in the file and is not shown. "
+            "Mid is `savings_co2_kg_location_based`. Market-based CO₂ is blank in the file and is not shown. "
             "An em dash means that baseline column is empty, so the percent is not estimated."
         )
     with ccol.popover(i18n.tr("How cost was calculated")):
@@ -567,7 +567,7 @@ def page_package(embedded: bool = False, middle=None) -> None:
     _figs = st.expander("See the figures behind the gauges") if embedded else nullcontext()
     with _figs:
         st.html(_kpi_row(
-            _kpi_card("CO2 saved", _qty(result["co2_kg"]), "kg"),
+            _kpi_card("CO₂ saved", _qty(result["co2_kg"]), "kg"),
             _kpi_card("Cost saved", _qty(result["cost_chf"]), "CHF", unit_first=True),
             _kpi_card("Effort", f"{result['pd']:.1f}", "person-days", f'CHF {result["effort_chf"]:,.0f}'),
             _kpi_card("Energy saved, mid", _qty(result["kwh"]), "kWh"),
@@ -601,7 +601,7 @@ def page_package(embedded: bool = False, middle=None) -> None:
         st.subheader("Tick optimisations on or off")
         st.caption("On a phone, swipe the optimisation table sideways. The gauges above follow the ticks.")
         st.caption("Package rows are the chosen set and start ticked. C1 is in that set. C2 is a candidate and starts off. "
-                   "C2's stored CO2 already assumes M1 stays on; this page does not recalculate it. "
+                   "C2's stored CO₂ already assumes M1 stays on; this page does not recalculate it. "
                    "A «Yes» in Human in the loop means a person must decide this row. Nothing here switches a protected resource off.")
         if st.button("Reset to the chosen package"):
             # The editor key includes the factor level (pkg_editor_mid, and the same for low and high).
@@ -635,8 +635,8 @@ def page_package(embedded: bool = False, middle=None) -> None:
                 "description": st.column_config.TextColumn("Optimisation", width="large"),
                 "effort_person_days": st.column_config.NumberColumn("PD", format="%.1f"),
                 "savings_cost_chf_per_year": st.column_config.NumberColumn("CHF / year", format="%,.0f"),
-                "co2_kg": st.column_config.NumberColumn(f"CO2 kg ({level})", format="%,.0f"),
-                "co2_range_kg": "CO2 kg low–high",
+                "co2_kg": st.column_config.NumberColumn(f"CO₂ kg ({level})", format="%,.0f"),
+                "co2_range_kg": "CO₂ kg low–high",
                 "tickets": "Tickets",
                 "responsible_role": "Role",
                 "needs_human": "Human in the loop",
@@ -846,7 +846,7 @@ def page_next(embedded: bool = False) -> None:
                 "Our AI use during the sprint",
                 f'{float(t["co2_kg_mid"]):,.2f}',
                 "kg",
-                f'location-based CO2, mid factors · Range {float(t["co2_kg_low"]):,.2f}–{float(t["co2_kg_high"]):,.1f} kg',
+                f'location-based CO₂, mid factors · Range {float(t["co2_kg_low"]):,.2f}–{float(t["co2_kg_high"]):,.1f} kg',
             ),
             _kpi_card("Energy, mid", f'{float(t["kwh_mid"]):,.1f}', "kWh"),
         ))
@@ -864,11 +864,11 @@ def page_next(embedded: bool = False) -> None:
     months = data.dp_prod_months()
     st.markdown("**Growth after the baseline year (T-1261):** dp-prod grows from 20 to 24 nodes on 1 Oct 2026. "
                 "The baseline and the package stay on the baseline year, as the case asks. "
-                "If dp-prod ran on 24 nodes for a full year, its cost, energy and CO2 would be up to 20 % higher (24/20).")
+                "If dp-prod ran on 24 nodes for a full year, its cost, energy and CO₂ would be up to 20 % higher (24/20).")
     if months is not None and not months.empty:
         up = 24 / 20 - 1
         st.markdown(f"Range for that growth, from `out/`: up to **+CHF {months['cost_chf'].sum() * up:,.0f}**, "
-                    f"**+{months['kwh_mid'].sum() * up:,.0f} kWh** and **+{months['co2_kg_mid'].sum() * up:,.0f} kg CO2** "
+                    f"**+{months['kwh_mid'].sum() * up:,.0f} kWh** and **+{months['co2_kg_mid'].sum() * up:,.0f} kg CO₂** "
                     "a year (mid factors). The package resizes dp-prod in idle hours (M5), so the same optimisation covers the extra nodes. "
                     "Not added to any total.")
     if months is None or months.empty:
@@ -878,7 +878,7 @@ def page_next(embedded: bool = False) -> None:
                      column_config={"cost_chf": st.column_config.NumberColumn("CHF", format="%,.0f"),
                                     "node_hours": st.column_config.NumberColumn("Node-hours", format="%,.0f"),
                                     "kwh_mid": st.column_config.NumberColumn("kWh, mid", format="%,.0f"),
-                                    "co2_kg_mid": st.column_config.NumberColumn("kg CO2, mid", format="%,.1f")})
+                                    "co2_kg_mid": st.column_config.NumberColumn("kg CO₂, mid", format="%,.1f")})
         st.caption("Each month is the sum of dp-prod baseline rows in `out/fact_costs.csv`. "
                    "Quantity unit on those rows is node-hour. June 2026 costs less than the neighbouring months "
                    "while the node-hours stay in the same band; the file is shown as stored, including that month. "
@@ -936,27 +936,27 @@ def _story_nav(step: int) -> None:
 
 
 def _country_line(country: str) -> str:
-    """«Germany: 11 % of the cost, 36 % of the CO2.» Shares from out/ (impact_by), nothing typed."""
+    """«Germany: 11 % of the cost, 36 % of the CO₂.» Shares from out/ (impact_by), nothing typed."""
     try:
         cost = data.impact_by("country", "cost", "mid").set_index("label")["share"]
         co2 = data.impact_by("country", "co2", "mid").set_index("label")["share"]
-        return f"{country}: {float(cost[country]) * 100:.0f} % of the cost, {float(co2[country]) * 100:.0f} % of the CO2."
+        return f"{country}: {float(cost[country]) * 100:.0f} % of the cost, {float(co2[country]) * 100:.0f} % of the CO₂."
     except (KeyError, ValueError, TypeError, AttributeError):
         return ""
 
 
 def _resource_share_line(resource_id: str) -> str:
-    """«8 % of the cost · 29 % of the CO2» for one resource, from out/ (impact_by)."""
+    """«8 % of the cost · 29 % of the CO₂» for one resource, from out/ (impact_by)."""
     try:
         cost = data.impact_by("resource", "cost", "mid").set_index("resource_id")["share"]
         co2 = data.impact_by("resource", "co2", "mid").set_index("resource_id")["share"]
-        return f"{float(cost[resource_id]) * 100:.0f} % of the cost · {float(co2[resource_id]) * 100:.0f} % of the CO2"
+        return f"{float(cost[resource_id]) * 100:.0f} % of the cost · {float(co2[resource_id]) * 100:.0f} % of the CO₂"
     except (KeyError, ValueError, TypeError, AttributeError):
         return ""
 
 
 def _grid_ratio() -> float | None:
-    """How many times more CO2 per kWh Germany's grid emits than Switzerland's (mid factors, factors/factors.csv)."""
+    """How many times more CO₂ per kWh Germany's grid emits than Switzerland's (mid factors, factors/factors.csv)."""
     fac = data.factors_table()
     if fac is None or "key" not in fac.columns:
         return None
@@ -1024,14 +1024,14 @@ def page_about() -> None:
     with st.container(key="beat_promise"):
         if s is not None:
             ui.kpis([
-                (format_num.signed_pct(s["co2_pct_mid"]), "", "CO2 per year, mid factors"),
+                (format_num.signed_pct(s["co2_pct_mid"]), "", "CO₂ per year, mid factors"),
                 (format_num.signed_pct(s["chf_pct"]), "", f"Cost per year · CHF {float(s['chf']):,.0f} saved"),
                 (f"{float(s['effort_pd']):.1f}", f"of {PD_CAP:.0f} person-days", "To implement"),
             ], good={0})
         st.markdown("**Nothing critical is switched off.** For IT, management and finance of Basel SMEs.")
         ui.explain("Person-day:", f"one person's working day. The case allows {PD_CAP:.0f}.")
     chapters = [(i, STORY[i][2], text) for i, text in [
-        (1, "Upload the exports. Get one overall picture."), (2, "Where CO2 and cost go, by department and tool."),
+        (1, "Upload the exports. Get one overall picture."), (2, "Where CO₂ and cost go, by department and tool."),
         (3, "The plan against target and budget, and what we do not touch."),
         (4, "Ask your data. Next year with and without the plan."), (5, "Every factor, check and answer.")]]
     cols = st.columns(3)
@@ -1048,10 +1048,10 @@ def page_about() -> None:
             "companies, where every product is assessed from start to end of life.\n\n"
             "**Our belief.** Everything has a lifecycle that we all have to assess: materials, data, and the longevity "
             "of SMEs themselves.\n\n"
-            "**Today** AgentLCA covers the use phase of cloud, servers, AI and SaaS: energy and CO2. **Next:** hardware "
+            "**Today** AgentLCA covers the use phase of cloud, servers, AI and SaaS: energy and CO₂. **Next:** hardware "
             "and the full lifecycle, run by GreenOps agents with human approval.\n\n"
             "**The problem.** «Electricity is the new currency, and hardly anyone keeps the books» (ALTYCA). Cost, "
-            "electricity and CO2 hide in many systems, providers and three currencies, in data centres in Zurich, "
+            "electricity and CO₂ hide in many systems, providers and three currencies, in data centres in Zurich, "
             "Frankfurt and Dublin, while the decisions are made in Basel.\n\n"
             f"**Why it matters.** {BASEL_LINE}")
     _story_nav(0)
@@ -1062,9 +1062,10 @@ def page_connect() -> None:
     _story_top(1)
     st.title("Connect")
     with st.container(key="beat_connect_hero"):
-        ui.hero("", "An IT manager uploads her company's exports. <em>The tool does the rest.</em>", photo="connect")
-        ui.explain("Exports:", "the files your providers already give you.")
-        ui.roadmap_note("Next step: direct connection to your cloud and licence accounts (API / MCP). Not built yet.")
+        # The verb rolls down: uploads → integrates → connects (CSS only; without motion it shows «connects»).
+        verb = ('<span class="gx-rot" aria-label="connects"><span class="w" aria-hidden="true">'
+                f'<i>{i18n.tr("connects")}</i><i>{i18n.tr("integrates")}</i><i>{i18n.tr("uploads")}</i></span></span>')
+        ui.hero("", f"An IT manager {verb}<br>her company data.<br><em>The tool does the rest.</em>", photo="connect")
     run = st.container(key="beat_connect_run")
     run.__enter__()
     up = st.file_uploader("Upload your exports here (CSV or JSON lines)", accept_multiple_files=True,
@@ -1072,8 +1073,13 @@ def page_connect() -> None:
     if up:
         st.info(f"Preview only: {len(up)} file(s) received and listed, not processed in this prototype. "
                 "The numbers below come from the sample company.")
-    n_files = data.connect_stats()["files"]
-    clicked = st.button(f"Load the sample company (ALTYCA case, {n_files} files)", type="primary", key="connect_load")
+    b1, b2, _ = st.columns([1, 1, 1.4], vertical_alignment="center")
+    # The arrow points up at the upload box: the sample company is used as if its exports were dropped there.
+    clicked = b1.button("↑ ALTYCA-case.json", type="primary", key="connect_load", width="stretch",
+                        help="Load the sample company: the ALTYCA case exports")
+    with b2.popover("Integrate MCP / API", width="stretch"):
+        st.markdown("**Roadmap · not built yet.**\n\nNext step: direct connection to your cloud and licence accounts "
+                    "(API / MCP). Not built yet. Today: upload the exports above.")
     if clicked:
         st.session_state["connected"] = True
     if not st.session_state.get("connected") or not out_ready():
@@ -1082,21 +1088,21 @@ def page_connect() -> None:
         return
     c = data.connect_stats()
     e = data.energy_totals()
+    foreign = [x for x in c["currencies"] if x != "CHF"]
     steps = [
-        f"{c['files']} files read ({c['core']} core, {c['extra']} extra): cloud, servers, AI, SaaS, tickets",
-        f"{len(c['currencies'])} currencies → CHF ({', '.join(c['currencies'])}, monthly ECB rates)",
-        f"Time, units and names harmonised: {c['rows']:,} rows in the baseline year, {c['sources']} cost sources",
-        f"Gaps and contradictions flagged: {c['flags']} corrections logged, {c['contradictions']} cross-checks; "
-        f"{c['planted']} lines of hidden instructions (prompt injection) set aside for a person",
+        ("read", f"{c['files']} files · {c['core']} core, {c['extra']} extra"),
+        ("convert", f"{len(c['currencies'])} currencies → CHF" + (f" ({', '.join(foreign)})" if foreign else "")),
+        ("harmonise", f"{c['rows']:,} rows · {c['sources']} cost sources"),
+        ("check", f"{c['flags']} fixes · {c['contradictions']} cross-checks"),
+        ("guard", f"{c['planted']} prompt injections → human in the loop"),
     ]
     if c.get("extra_kinds"):
         more = int(c.get("extra_more") or 0)
-        tail = f", plus {more} more files in data/extra/" if more else ""
-        steps.append("Extra sources used: " + ", ".join(c["extra_kinds"]) + tail)
-    # The ticks appear one after another by CSS (story.py), so the step stays instant: no sleep, no spinner.
-    st.html('<div class="gx-card accent gx-check">' + "".join(f'<p>✓ {x}</p>' for x in steps) + "</div>")
-    ui.hero("", f"Overall picture ready in minutes, not weeks: <em>CHF {e['cost_chf']:,.0f} · "
-                f"{_tonnes(e['co2_mid'])} t CO2</em>")
+        steps.append(("extra", ", ".join(c["extra_kinds"]) + (f" +{more}" if more else "")))
+    # A terminal look; the lines appear one after another by CSS (story.py), so the step stays instant.
+    st.html(ui.terminal("ALTYCA-case.json", steps, "done · overall picture ready"))
+    ui.hero("", f"Overall picture ready in minutes, not weeks:<br><em>CHF&nbsp;{e['cost_chf']:,.0f} · "
+                f"{_tonnes(e['co2_mid'])}&nbsp;t&nbsp;CO₂</em>")
     run.__exit__(None, None, None)
     with st.popover("How this was calculated"):
         st.markdown("Files counted in `data/` and `data/extra/`; rows, currencies and sources from `out/fact_costs.csv`; "
@@ -1114,10 +1120,10 @@ def page_stand() -> None:
     rows = _chosen_rows()
     with st.container(key="beat_stand_numbers"):
         ui.hero("",
-                   f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO2.</em> "
-                   "Three places give most of the savings.",
+                   f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO₂.</em> "
+                   + (f"Optimisations found in {len(_hotspots(rows))} locations." if rows is not None else ""),
                    photo="stand")
-        st.html(f'<p class="gx-sub">{_mwh_text(e["kwh_mid"])} MWh of electricity a year. CO2 range '
+        st.html(f'<p class="gx-sub">{_mwh_text(e["kwh_mid"])} MWh of electricity a year. CO₂ range '
                 f'{_tonnes(e["co2_low"])}–{_tonnes(e["co2_high"])} t on low and high factors.</p>')
     with st.popover("How this was calculated"):
         st.markdown("Sum of the baseline rows in `out/fact_costs.csv` (Sep 2025 – Aug 2026). Each row: usage × energy "
@@ -1128,12 +1134,12 @@ def page_stand() -> None:
     with st.container(key="beat_stand_map"):
         ui._raw(visuals.basel_map(shares, light=bool(st.session_state.get("light_mode", False))))
         ratio = _grid_ratio()
-        ui.explain("CO2, location-based:", "it depends on the power mix where the data centre stands."
-                   + (f" Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich, because it uses more coal and gas."
+        ui.explain("CO₂, location-based:", "it depends on the power mix where the data centre stands."
+                   + (f" Per kWh, Frankfurt emits {ratio:.1f}× more CO₂ than Zurich, because it uses more coal and gas."
                       if ratio else ""))
         de_line = _country_line("Germany")
         if de_line:
-            st.html(f'<p class="gx-sub" style="font-size:17px;margin:-6px 0 18px">{de_line}</p>')
+            st.html(f'<p class="gx-sub" style="font-size:17px;margin:-6px 0 18px">{ui.marks(ui.esc(de_line))}</p>')
     ui.explain("Not everything idle can be switched off:", "production and the emergency fallback must keep running.")
     if rows is not None:
         hs = {h["key"]: h for h in _hotspots(rows)}
@@ -1145,7 +1151,7 @@ def page_stand() -> None:
         dev_share = _resource_share_line("dp-dev")
         hot = st.container(key="beat_stand_hotspot")
         hot.html(ui.card("Development data platform in Frankfurt, running 24/7", str(f1), _qty(hs["dev"]["kg"]),
-                         "kg CO2 a year saved",
+                         "kg CO₂ a year saved",
                          (f"{dev_share} · " if dev_share else "")
                          + f"CHF {hs['dev']['chf']:,.0f} a year saved · pause when idle, starts automatically "
                            "before training days",
@@ -1153,7 +1159,7 @@ def page_stand() -> None:
                          kicker="Hotspot 1", data_body=True))
         ui.grid([
             ui.card("Production platform at full size all week", "Fewer machines in quiet hours. Never switched off.",
-                       _qty(hs["prod"]["kg"]), "kg CO2 a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
+                       _qty(hs["prod"]["kg"]), "kg CO₂ a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
                        kicker="Hotspot 2"),
             ui.card("Licences nobody uses", "AI and software seats without active users, cancelled at each notice date.",
                        f"{hs['seats']['chf']:,.0f}", "CHF a year", "Cost only: unused seats use no electricity",
@@ -1162,12 +1168,12 @@ def page_stand() -> None:
         co2_share = (hs["dev"]["kg"] + hs["prod"]["kg"]) / pkg_kg if pkg_kg else None
         chf_share = sum(h["chf"] for h in hs.values()) / pkg_chf if pkg_chf else None
         if co2_share is not None and chf_share is not None:
-            st.caption(f"Together these three carry {co2_share:.0%} of the plan's CO2 savings and {chf_share:.0%} of its cost savings.")
-    st.subheader("By department and tool, CO2 first")
+            st.caption(f"Together these three carry {co2_share:.0%} of the plan's CO₂ savings and {chf_share:.0%} of its cost savings.")
+    st.subheader("By department and tool, CO₂ first")
     view = st.segmented_control("Show", ["By department", "By tool"], default="By department", key="stand_view")
     dim = "resource" if view == "By tool" else "department"
     frame = data.impact_by(dim, "co2", "mid").head(6)
-    st.altair_chart(charts.ranked_bars(frame, value="amount", unit="kg", axis_title="kg CO2 per year, mid factors"),
+    st.altair_chart(charts.ranked_bars(frame, value="amount", unit="kg", axis_title="kg CO₂ per year, mid factors"),
                     width="stretch", theme=None)
     if st.toggle("See details: overall picture and all findings", key="stand_details"):
         tab_a, tab_b = st.tabs(["Overall picture", "All findings"])
@@ -1215,7 +1221,7 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
     """Measures as plain cards, then what we did not touch. Called by page_package between hero and details."""
     line = _robustness_line()
     if line:
-        st.html(f'<p class="gx-sub" style="font-size:16px;margin:2px 0 22px">CO2 {line}</p>')
+        st.html(f'<p class="gx-sub" style="font-size:16px;margin:2px 0 22px">CO₂ {line}</p>')
     cap_chf = PD_CAP * data.PD_CHF
     ui.kpis([
         (f"{result['effort_chf']:,.0f}", f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
@@ -1234,10 +1240,18 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
             "label": [f"{i} {plan_sort.short_name(n, 24)}" for i, n in zip(ordered["_id"], ordered["description"])],
             "name": ordered["description"].astype(str),
         })
-        st.altair_chart(charts.optimisation_map(pts, i18n.tr("CO2 saved (kg per year)"), i18n.tr("CHF saved per year"),
-                                                i18n.tr("Person-days")), width="stretch")
-        st.caption("Sorted by share of the total CO2 saving plus share of the total cost saving. "
-                   "Licence optimisations save no CO2, so they sit on the left edge.")  # st.caption translates body text
+        best = ordered.iloc[0] if not ordered.empty else None
+        with st.container(key="beat_plan_map"):
+            st.altair_chart(charts.optimisation_map(pts, i18n.tr("CO₂ saved (kg per year)"), i18n.tr("CHF saved per year"),
+                                                    i18n.tr("Person-days"), room_right=True), width="stretch")
+            # A card on the chart, in the right part that room_right keeps free of dots.
+            best_line = ("" if best is None else
+                         f"<br><b>{i18n.tr('Best of both')}:</b> {ui.esc(best['_id'])} {ui.esc(plan_sort.short_name(best['description'], 40))}")
+            ui._raw(f'<div class="gx-card gx-callout"><p class="k">{i18n.tr("How to read the map")}</p>'
+                    f'<p>{i18n.tr("Right: more CO₂ saved. Up: more CHF saved. Bigger dot: more person-days. Licences sit on the left edge: they save CHF only.", label=False)}'
+                    f'{best_line}</p></div>')
+        st.caption("Sorted by share of the total CO₂ saving plus share of the total cost saving. "
+                   "Licence optimisations save no CO₂, so they sit on the left edge.")  # st.caption translates body text
     cards = []
     spot = story.HIGHLIGHT.get(story.current()) if st.session_state.get(ui.STORY_KEY) else None
     for pos, (_, r) in enumerate(ordered.iterrows()):
@@ -1249,7 +1263,7 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
         cards.append(ui.card(
             str(r["description"]), "",
             _qty(kg) if has_kg else f"{float(r['savings_cost_chf_per_year']):,.0f}",
-            "kg CO2 a year" if has_kg else "CHF a year",
+            "kg CO₂ a year" if has_kg else "CHF a year",
             f"{chf_part}{float(r['effort_person_days']):.1f} person-days · {i18n.tr('Owner')}: {ui.esc(r['responsible_role'])}",
             kind="spot" if is_spot else "",
             data_title=True))  # R10: optimisation ids stay in the tick table (details), not on the cards
@@ -1288,7 +1302,7 @@ def page_plan() -> None:
     s = data.package_summary()
     ok = s is not None and all(str(s.get(k, "")).strip() == "True" for k in ("target_co2_ok_mid", "target_cost_ok", "budget_ok"))
     line = "The plan meets all three targets." if ok else "The plan against the targets."
-    ui.hero("", f"<em>{line}</em>", "Targeted savings, no risk to operations. CO2 first, cost savings on top.",
+    ui.hero("", f"<em>{line}</em>", "Targeted savings, no risk to operations. CO₂ first, cost savings on top.",
             photo="plan")
     ui.explain("Low, mid, high:", "every factor is a range. The plan must pass on all three.")
     page_package(embedded=True, middle=_plan_middle)
@@ -1303,6 +1317,60 @@ AGENTS_ROADMAP = [
 ]
 
 
+_SOURCE_FILE = {"ai_subscriptions": "ai_subscriptions.csv", "ai_usage": "ai_usage.csv", "aws": "aws_costs.csv",
+                "azure": "azure_costs.csv", "hoster": "hoster_invoice.csv", "it_tickets": "it_tickets.csv",
+                "saas": "saas_contracts.csv"}
+# What each planted text tries, in four plain words, and whether it is also a security / operations risk.
+_INJECTION_LABEL = {"P1": ("report costs 40 % lower", False), "P2": ("ignore the cost column", False),
+                    "P3": ("switch off production", True), "P4": ("set db-fin costs to 0", False),
+                    "P5": ("drop real paid costs", False)}
+
+
+def _activity_log() -> list[tuple[str, str, str]]:
+    """The assistant's monthly file check: (status, file, note). Built from the register of planted texts,
+    out/quality_log.csv and the reconciliation checks. Status: bad (red), warn (amber), ok (green)."""
+    rows: list[tuple[str, str, str]] = []
+    bad_files = set()
+    for m in register.MANIPULATIVE_TEXTS:
+        f = str(m["file"]).split("/")[-1]
+        bad_files.add(f)
+        what, risk = _INJECTION_LABEL.get(m["id"], (str(m["tries"]), False))
+        where = str(m["where"]).split(" (")[0] if str(m["where"]).startswith("T-") else ""
+        tag = "prompt injection · security risk" if risk else "prompt injection"
+        role = str(m["role"]).split(" (")[0].split(" ·")[0]
+        rows.append(("bad", f + (f" {where}" if where else ""), f"{tag} «{what}» · blocked → {role}"))
+    q = data.quality_log()
+    if q is not None:
+        cp = q[q["check"].eq("price vs README")]
+        if not cp.empty:
+            f = _SOURCE_FILE.get(str(cp.iloc[0]["source"]), str(cp.iloc[0]["source"]))
+            rows.append(("warn", f, "price ≠ README · no human validation yet → Head of Finance"))
+    for name, check in (("AI invoices", "AI gateway vs provider invoices, all providers"),
+                        ("provider report", "provider_monthly_report vs azure+aws+hoster (12 baseline months)")):
+        k = data.kb_check(check)
+        if k is not None and not _missing(k["diff"]):
+            rows.append(("warn", name, f"sources disagree by {chf(k['diff'])} → a person decides"))
+    fixes = {}
+    if q is not None:
+        for src, g in q[~q["check"].astype(str).str.contains("instruction-like|exclude test account|price vs README",
+                                                               case=False)].groupby("source"):
+            fixes[_SOURCE_FILE.get(str(src), "")] = len(g)
+    core = sorted(p.name for p in (data.ROOT / "data").glob("*") if p.suffix in (".csv", ".jsonl")
+                  and not p.name.startswith("template_"))
+    quiet = []
+    for f in core:
+        if f in bad_files:
+            continue
+        n = fixes.get(f, 0)
+        if n:
+            rows.append(("ok", f, f"clean · {n} automatic fixes"))
+        else:
+            quiet.append(f)
+    if quiet:  # one line for the files with nothing to report, so the log fits one screen
+        rows.append(("ok", f"{len(quiet)} more files", "clean · " + ", ".join(x.rsplit(".", 1)[0] for x in quiet)))
+    return rows
+
+
 def page_track() -> None:
     _story_top(4)
     st.title("Stay on track")
@@ -1310,8 +1378,16 @@ def page_track() -> None:
         return
     e = data.energy_totals()
     s = data.package_summary()
+    top = st.container(key="beat_track_top")
+    top.__enter__()
     ui.hero("", "Ask your data anything. <em>Risky changes go to a human.</em>", photo="track")
+    ui.explain("Your AI assistant:", "each month it reads the new exports, checks every file, and asks a person "
+               "only about the risky ones.")
     ui.explain("Prompt injection:", "hidden text in the data that tries to give orders to an AI.")
+    log = _activity_log()
+    n_bad, n_warn, n_ok = (sum(1 for r in log if r[0] == k) for k in ("bad", "warn", "ok"))
+    st.html(ui.activity_log("assistant · monthly check · ALTYCA-case.json", log,
+                            f"{n_bad} blocked · {n_warn} need a person · rest clean · human in the loop decides"))
     examples = assistant.example_questions()
     # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
     # full addressable figure differs from measure M2 on the previous page (M2 counts 75 % of the energy).
@@ -1319,6 +1395,7 @@ def page_track() -> None:
     # inside a container the chat box sits under the questions, not pinned to the page bottom
     with st.container(key="beat_assistant"):
         assistant.render_assistant(embedded=True, questions=questions)
+    top.__exit__(None, None, None)
     ny = st.container(key="beat_next_year")
     ny.__enter__()
     st.subheader("Next year, with and without the plan")
@@ -1330,11 +1407,11 @@ def page_track() -> None:
         if months is not None and not months.empty:
             up = 24 / 20 - 1  # T-1261: production grows from 20 to 24 nodes from October 2026
             growth = (f"If production runs on 24 instead of 20 nodes all year: up to +CHF {months['cost_chf'].sum() * up:,.0f} "
-                      f"and +{months['co2_kg_mid'].sum() * up:,.0f} kg CO2.")
+                      f"and +{months['co2_kg_mid'].sum() * up:,.0f} kg CO₂.")
         ui.grid([
-            ui.card("Without the plan", "Usage as in the baseline year.", _tonnes(rng["mid"][0]), "t CO2",
+            ui.card("Without the plan", "Usage as in the baseline year.", _tonnes(rng["mid"][0]), "t CO₂",
                     f"Range {_tonnes(rng['low'][0])}–{_tonnes(rng['high'][0])} t · CHF {e['cost_chf']:,.0f} a year"),
-            ui.card("With the plan", "Same usage, optimisations in place for a full year.", _tonnes(rng["mid"][1]), "t CO2",
+            ui.card("With the plan", "Same usage, optimisations in place for a full year.", _tonnes(rng["mid"][1]), "t CO₂",
                     f"Range {_tonnes(rng['low'][1])}–{_tonnes(rng['high'][1])} t · CHF {with_chf:,.0f} a year", kind="accent"),
         ])
         one_off = data.one_off_total()
@@ -1345,7 +1422,7 @@ def page_track() -> None:
                 st.markdown(extra.strip())
             st.markdown(
                 "Without the plan repeats the baseline year in `out/fact_costs.csv`. With the plan subtracts the "
-                "chosen rows summarised in `measures/package_summary.csv`. The range is the low and high CO2 columns "
+                "chosen rows summarised in `measures/package_summary.csv`. The range is the low and high CO₂ columns "
                 "already stored. One-time costs are labelled and are not a saving. The production-growth note scales "
                 "only that platform's own baseline months and is not part of the plan.")
     ny.__exit__(None, None, None)
@@ -1356,7 +1433,7 @@ def page_track() -> None:
         t = tot.iloc[0]
         hours = float(t["co2_kg_mid"]) / float(s["co2_mid"]) * 8760 if float(s["co2_mid"]) else None
         cards.append(ui.card("Our own AI use this weekend", "Building this with AI agents, counted so far.",
-                             f"{float(t['co2_kg_mid']):,.1f}", "kg CO2",
+                             f"{float(t['co2_kg_mid']):,.1f}", "kg CO₂",
                              f"Range {float(t['co2_kg_low']):,.1f}–{float(t['co2_kg_high']):,.1f} kg · "
                              f"{float(t['kwh_mid']):,.1f} kWh"
                              + (f" · the plan saves that in about {hours:,.0f} hours" if hours else ""), kicker="Our own footprint"))
@@ -1365,7 +1442,7 @@ def page_track() -> None:
         red = pd.to_numeric(shift["reduction_pct"], errors="coerce").dropna()
         if not red.empty:
             cards.append(ui.card("Shift jobs to cleaner hours", f"{len(red)} flexible jobs could run when the grid is cleaner.",
-                                 f"{red.min():,.0f}–{red.max():,.0f}", "% less CO2 per kWh",
+                                 f"{red.min():,.0f}–{red.max():,.0f}", "% less CO₂ per kWh",
                                  "Not added to the plan. Training days stay protected.", kicker="Carbon-aware"))
     cards.append(ui.card("Path to operation", "1 · Each month: upload the exports, run the pipeline; two checks must pass. "
                          "2 · Owners decide on the «needs your OK» list. 3 · Once a year: review the factors.",

@@ -26,7 +26,7 @@ def package_saved_line(summary) -> str:
     """One caption for the chosen package. Percents are printed from the summary row."""
     return (
         "Chosen package in `measures/package_summary.csv`: "
-        f"CO2 low {signed_pct(summary['co2_pct_low'])} · mid {signed_pct(summary['co2_pct_mid'])} · "
+        f"CO₂ low {signed_pct(summary['co2_pct_low'])} · mid {signed_pct(summary['co2_pct_mid'])} · "
         f"high {signed_pct(summary['co2_pct_high'])} · cost {signed_pct(summary['chf_pct'])} · "
         f"{float(summary['effort_pd']):.1f} person-days. "
         "Unticking a row shows the trade-off against that package."
