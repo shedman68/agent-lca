@@ -48,10 +48,10 @@ BEATS: list[Beat] = [
     Beat(17, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
     Beat(18, "stay-on-track", "track_top", "Monthly file check"),
     Beat(19, "stay-on-track", "assistant", "Prompt injection refused", {ASK_KEY: T1251_SAY}),
-    Beat(20, "stay-on-track", "next_year", "Next year"),
-    Beat(21, "stay-on-track", "agents", "GreenOps agents"),
-    Beat(22, "stay-on-track", "own_ai", "Our own AI"),
-    Beat(23, "stay-on-track", "close", "Basel 2037"),
+    Beat(20, "stay-on-track", "next_year", "Next year + roadmap"),
+    Beat(21, "stay-on-track", "own_ai", "Our own AI"),
+    Beat(22, "stay-on-track", "close", "Basel 2037"),
+    Beat(23, "contact", "talk", "Let’s talk?"),
 ]
 TOTAL = len(BEATS)
 

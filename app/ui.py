@@ -25,6 +25,7 @@ HERO_FILES = {
     "stand": "stand.jpg",
     "plan": "plan.jpg",
     "track": "track.jpg",
+    "contact": "basel.jpg",
 }
 _IMG_DIR = Path(__file__).resolve().parent / "static" / "img"
 _GLOW = (
@@ -47,6 +48,22 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-partners{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:4px 0 14px;}
+.gx-partner{width:auto;max-width:220px;object-fit:contain;background:#ffffff;border-radius:12px;padding:8px 12px;}
+.gx-partner-txt{font-weight:800;font-size:20px;letter-spacing:.02em;color:var(--ink,#f2f4f5);border:1px solid var(--line,#262b33);border-radius:12px;padding:10px 14px;}
+.gx-partners .x{font-size:26px;font-weight:800;color:var(--muted,#9aa3ad);}
+.gx-close h4{font-size:30px !important;margin:6px 0 10px !important;}
+.gx-close ul{margin:0;padding:0;list-style:none;}
+.gx-close li{font-size:20px;line-height:1.45;color:var(--ink2,#c4cad1);padding:4px 0;}
+.gx-close li b{color:var(--ink,#f2f4f5);}
+.gx-close li::before{content:"→ ";color:var(--teal,#00cc99);font-weight:800;}
+.gx-talk{font-size:clamp(56px,9vw,120px);font-weight:900;letter-spacing:-.04em;line-height:1;color:var(--teal,#00cc99) !important;margin:18px 0 8px;}
+.gx-talk-sub{font-size:20px;color:var(--ink2,#c4cad1);margin:0 0 26px;}
+.gx-confetti{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;}
+.gx-confetti i{position:absolute;top:-24px;display:block;border-radius:2px;opacity:0;}
+@media (prefers-reduced-motion:no-preference){.gx-confetti i{animation-name:gxFall;animation-timing-function:cubic-bezier(.3,.6,.4,1);animation-fill-mode:both;}}
+@keyframes gxFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}85%{opacity:1;}100%{opacity:0;transform:translateY(105vh) rotate(540deg);}}
+.gx-nextyear{margin:6px 0 4px;}
 .gx-term p.ok.result{font-size:22px;color:#f2f4f5;margin-top:16px;padding-top:14px;border-top:1px solid var(--line,#262b33);}
 .gx-term p.ok.result .gx-num{font-size:1.15em;}
 .gx-term p.ok.result .lbl{color:#00cc99;letter-spacing:.04em;}
@@ -213,6 +230,8 @@ def photo_band(inner: str, slug: str) -> str:
     filename = HERO_FILES[slug]
     url = f"/app/static/img/{filename}"
     path = _IMG_DIR / filename
+    if not path.is_file() and (_IMG_DIR.parent / filename).is_file():  # files uploaded straight into app/static/
+        path = _IMG_DIR.parent / filename
     layers = [f"url({url})"]
     if path.is_file():
         b64 = base64.b64encode(path.read_bytes()).decode()
@@ -355,6 +374,61 @@ def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True) -
             f"<style>@keyframes gxRoll{key}{{{''.join(frames)}}}"
             f"@media (prefers-reduced-motion:no-preference){{.gx-rot-{key} .w{{transform:translateY(-{(n - 1) * 1.12:.2f}em);"
             f"animation:gxRoll{key} {total:.1f}s cubic-bezier(.6,0,.2,1) .3s {it} both}}}}</style>")
+
+
+def logo(filename: str, alt: str, height: int = 56) -> str:
+    """A partner logo from app/static/<filename>, inlined (any size, shrunk). Missing or unreadable: the name as text."""
+    path = _IMG_DIR.parent / filename
+    if path.is_file():
+        got = _logo_b64(str(path), path.stat().st_mtime)
+        if got:
+            b64, mime = got
+            return f'<img class="gx-partner" style="height:{height}px" src="data:{mime};base64,{b64}" alt="{esc(alt)}">'
+    return f'<span class="gx-partner-txt">{esc(alt)}</span>'
+
+
+@st.cache_data(show_spinner=False)
+def _logo_b64(path_str: str, mtime: float) -> tuple[str, str] | None:
+    try:
+        import io
+        from PIL import Image, ImageOps
+        from PIL import ImageChops
+        img = ImageOps.exif_transpose(Image.open(path_str))
+        # Trim empty margins (transparent or near-white), so a small mark on a big canvas still reads.
+        rgba = img.convert("RGBA")
+        flat = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+        flat.alpha_composite(rgba)  # transparent parts count as white
+        diff = ImageChops.difference(flat.convert("RGB"), Image.new("RGB", rgba.size, (255, 255, 255))).convert("L")
+        box = diff.point(lambda v: 255 if v > 24 else 0).getbbox()
+        if box:
+            pad = max(6, (box[3] - box[1]) // 6)
+            img = flat.crop((max(0, box[0] - pad), max(0, box[1] - pad), min(rgba.width, box[2] + pad),
+                             min(rgba.height, box[3] + pad))).convert("RGB")
+        img.thumbnail((480, 200))
+        buf = io.BytesIO()
+        if img.mode in ("RGBA", "LA", "P"):
+            img.convert("RGBA").save(buf, "PNG", optimize=True)
+            return base64.b64encode(buf.getvalue()).decode(), "image/png"
+        img.convert("RGB").save(buf, "JPEG", quality=85, optimize=True)
+        return base64.b64encode(buf.getvalue()).decode(), "image/jpeg"
+    except Exception:
+        return None
+
+
+def confetti(n: int = 70) -> str:
+    """CSS-only confetti that falls once over the page (≈3 s). Off under reduced motion. Positions are fixed
+    (no randomness), so every visit looks the same and tests stay stable."""
+    colours = ["#00cc99", "#ffd166", "#f84aa7", "#9ec0dc", "#ffffff"]
+    bits = []
+    for i in range(n):
+        left = (i * 37) % 100
+        delay = (i * 53 % 900) / 1000
+        dur = 2.2 + (i * 29 % 140) / 100
+        rot = (i * 71) % 360
+        w, h = (8, 14) if i % 3 else (10, 10)
+        bits.append(f'<i style="left:{left}%;background:{colours[i % len(colours)]};width:{w}px;height:{h}px;'
+                    f'animation-delay:{delay:.2f}s;animation-duration:{dur:.2f}s;transform:rotate({rot}deg)"></i>')
+    return f'<div class="gx-confetti" aria-hidden="true">{"".join(bits)}</div>'
 
 
 def terminal(title: str, lines: list[tuple[str, str]], done: str, done_html: str = "") -> str:
