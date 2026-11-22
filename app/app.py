@@ -1064,7 +1064,6 @@ def page_connect() -> None:
     with st.container(key="beat_connect_hero"):
         ui.hero("", "An IT manager uploads her company's exports. <em>The tool does the rest.</em>", photo="connect")
         ui.explain("Exports:", "the files your providers already give you.")
-        ui.roadmap_note("Next step: direct connection to your cloud and licence accounts (API / MCP). Not built yet.")
     run = st.container(key="beat_connect_run")
     run.__enter__()
     up = st.file_uploader("Upload your exports here (CSV or JSON lines)", accept_multiple_files=True,
@@ -1072,8 +1071,13 @@ def page_connect() -> None:
     if up:
         st.info(f"Preview only: {len(up)} file(s) received and listed, not processed in this prototype. "
                 "The numbers below come from the sample company.")
-    n_files = data.connect_stats()["files"]
-    clicked = st.button(f"Load the sample company (ALTYCA case, {n_files} files)", type="primary", key="connect_load")
+    b1, b2, _ = st.columns([1, 1, 1.4], vertical_alignment="center")
+    # The arrow points up at the upload box: the sample company is used as if its exports were dropped there.
+    clicked = b1.button("↑ ALTYCA-case.json", type="primary", key="connect_load", width="stretch",
+                        help="Load the sample company: the ALTYCA case exports")
+    with b2.popover("Integrate MCP / API", width="stretch"):
+        st.markdown("**Roadmap · not built yet.**\n\nNext step: direct connection to your cloud and licence accounts "
+                    "(API / MCP). Not built yet. Today: upload the exports above.")
     if clicked:
         st.session_state["connected"] = True
     if not st.session_state.get("connected") or not out_ready():
@@ -1082,21 +1086,21 @@ def page_connect() -> None:
         return
     c = data.connect_stats()
     e = data.energy_totals()
+    foreign = [x for x in c["currencies"] if x != "CHF"]
     steps = [
-        f"{c['files']} files read ({c['core']} core, {c['extra']} extra): cloud, servers, AI, SaaS, tickets",
-        f"{len(c['currencies'])} currencies → CHF ({', '.join(c['currencies'])}, monthly ECB rates)",
-        f"Time, units and names harmonised: {c['rows']:,} rows in the baseline year, {c['sources']} cost sources",
-        f"Gaps and contradictions flagged: {c['flags']} corrections logged, {c['contradictions']} cross-checks; "
-        f"{c['planted']} lines of hidden instructions (prompt injection) set aside for a person",
+        ("read", f"{c['files']} files · {c['core']} core, {c['extra']} extra"),
+        ("convert", f"{len(c['currencies'])} currencies → CHF" + (f" ({', '.join(foreign)})" if foreign else "")),
+        ("harmonise", f"{c['rows']:,} rows · {c['sources']} cost sources"),
+        ("check", f"{c['flags']} fixes · {c['contradictions']} cross-checks"),
+        ("guard", f"{c['planted']} prompt injections → human in the loop"),
     ]
     if c.get("extra_kinds"):
         more = int(c.get("extra_more") or 0)
-        tail = f", plus {more} more files in data/extra/" if more else ""
-        steps.append("Extra sources used: " + ", ".join(c["extra_kinds"]) + tail)
-    # The ticks appear one after another by CSS (story.py), so the step stays instant: no sleep, no spinner.
-    st.html('<div class="gx-card accent gx-check">' + "".join(f'<p>✓ {x}</p>' for x in steps) + "</div>")
-    ui.hero("", f"Overall picture ready in minutes, not weeks: <em>CHF {e['cost_chf']:,.0f} · "
-                f"{_tonnes(e['co2_mid'])} t CO2</em>")
+        steps.append(("extra", ", ".join(c["extra_kinds"]) + (f" +{more}" if more else "")))
+    # A terminal look; the lines appear one after another by CSS (story.py), so the step stays instant.
+    st.html(ui.terminal("ALTYCA-case.json", steps, "done · overall picture ready"))
+    ui.hero("", f"Overall picture ready in minutes, not weeks:<br><em>CHF&nbsp;{e['cost_chf']:,.0f} · "
+                f"{_tonnes(e['co2_mid'])}&nbsp;t&nbsp;CO2</em>")
     run.__exit__(None, None, None)
     with st.popover("How this was calculated"):
         st.markdown("Files counted in `data/` and `data/extra/`; rows, currencies and sources from `out/fact_costs.csv`; "

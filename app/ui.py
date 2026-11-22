@@ -46,6 +46,20 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+[data-testid="stPopoverBody"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33) !important;}
+[data-testid="stPopoverBody"] p,[data-testid="stPopoverBody"] li,[data-testid="stPopoverBody"] span{color:var(--ink2,#c4cad1) !important;}
+[data-testid="stPopoverBody"] strong,[data-testid="stPopoverBody"] b{color:var(--ink,#f2f4f5) !important;}
+.gx-term{background:#0a0c0f;border:1px solid var(--line,#262b33);border-radius:14px;overflow:hidden;margin:14px 0 22px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;}
+.gx-term .bar{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#14171c;border-bottom:1px solid var(--line,#262b33);}
+.gx-term .bar i{width:11px;height:11px;border-radius:50%;background:#3a4047;display:inline-block;}
+.gx-term .bar span{margin-left:10px;font-size:13px;color:#9aa3ad;letter-spacing:.02em;}
+.gx-term .body{padding:16px 20px 18px;}
+.gx-term p{margin:0 0 8px;font-size:19px;line-height:1.45;color:#c4cad1;}
+.gx-term p b{color:#f2f4f5;font-weight:700;display:inline-block;min-width:6.5em;}
+.gx-term .pr{color:#00cc99;font-weight:700;margin-right:6px;}
+.gx-term p.ok{color:#00cc99;font-weight:700;margin:12px 0 0;}
+@media (max-width:720px){.gx-term p{font-size:15px;}.gx-term p b{min-width:0;margin-right:4px;}.gx-term .body{padding:12px 14px;}}
 .gx-team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin:8px 0 4px;}
 .gx-person{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 12px 20px;
   background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:18px;}
@@ -247,6 +261,13 @@ def team(members: list[tuple[str, str]]) -> None:
     cells = "".join(f'<div class="gx-person">{_avatar(n)}<b>{esc(n)}</b><span>{i18n.tr(r)}</span></div>'
                     for n, r in members)
     _raw(f'<div class="gx-team">{cells}</div>')
+
+
+def terminal(title: str, lines: list[tuple[str, str]], done: str) -> str:
+    """A small terminal block: one «> step  detail» line each, a done line at the end. Big mono type, few words."""
+    rows = "".join(f'<p><span class="pr">&gt;</span> <b>{esc(i18n.tr(k))}</b> {esc(v)}</p>' for k, v in lines)
+    return (f'<div class="gx-term gx-check"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
+            f'<div class="body">{rows}<p class="ok"><span class="pr">✓</span> {esc(i18n.tr(done))}</p></div></div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:

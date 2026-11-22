@@ -606,7 +606,7 @@ class StoryTests(unittest.TestCase):
 
     def test_connect_loads_the_sample_company(self):
         page = _open(self._app(), "connect")
-        btn = next(b for b in page.button if b.label.startswith("Load the sample company"))
+        btn = next(b for b in page.button if "ALTYCA-case.json" in b.label)
         page = btn.click().run()
         self.assertFalse(page.exception, page.exception)
         import sys
@@ -616,8 +616,10 @@ class StoryTests(unittest.TestCase):
         self.assertEqual(c["files"], 28)  # 13 core + 15 extra, as the case page says
         self.assertEqual(c["currencies"], ["CHF", "EUR", "USD"])
         blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(getattr(page, "html", [])))
-        self.assertIn("Extra sources used:", blob)
+        self.assertIn("<b>extra</b>", blob)  # terminal line
         self.assertIn("Power BI", blob)
+        self.assertIn(f"{c['files']} files · {c['core']} core, {c['extra']} extra", blob)
+        self.assertIn(f"{c['planted']} prompt injections → human in the loop", blob)
 
     def test_story_buttons(self):
         page = _open(self._app(), "your-plan")
@@ -796,8 +798,9 @@ class CopyConnectRoadmapTests(unittest.TestCase):
         page = _open(at, "connect")
         blob = " ".join(h.proto.body for h in page.get("html"))
         self.assertIn("An IT manager uploads her company", blob)
-        self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", blob)
-        self.assertIn("Roadmap · not built yet", blob)
+        md = " ".join(m.value for m in page.markdown)
+        self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", md)
+        self.assertIn("Roadmap · not built yet", md)
         self.assertFalse(any("connect" in b.label.lower() and "sample" not in b.label.lower() for b in page.button))
 
 

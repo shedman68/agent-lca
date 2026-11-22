@@ -34,7 +34,7 @@ BEATS: list[Beat] = [
     Beat(3, "about", "why", "Agent + LCA"),
     Beat(4, "about", "promise", "Promise"),
     Beat(5, "connect", "connect_hero", "Upload"),
-    Beat(6, "connect", "connect_run", "Load the sample company", {"connected": True}),
+    Beat(6, "connect", "connect_run", "Sample company", {"connected": True}),
     Beat(7, "where-you-stand", "stand_numbers", "Where you stand"),
     Beat(8, "where-you-stand", "stand_map", "Location-based"),
     Beat(9, "where-you-stand", "stand_hotspot", "Hotspot 1"),
@@ -119,7 +119,8 @@ def spotlight_css(anchor: str) -> str:
   {a} .gx-check p{{animation:gxTick .35s ease-out both;}}
   {a} .gx-check p:nth-child(1){{animation-delay:.05s}} {a} .gx-check p:nth-child(2){{animation-delay:.25s}}
   {a} .gx-check p:nth-child(3){{animation-delay:.45s}} {a} .gx-check p:nth-child(4){{animation-delay:.65s}}
-  {a} .gx-check p:nth-child(5){{animation-delay:.85s}}
+  {a} .gx-check p:nth-child(5){{animation-delay:.85s}} {a} .gx-check p:nth-child(6){{animation-delay:1.0s}}
+  {a} .gx-check p:nth-child(7){{animation-delay:1.15s}}
   {a} div[role="img"]{{animation:gxDraw 1.1s cubic-bezier(.3,.6,.2,1) both;}}
   {a} .gx-card.spot{{animation:gxPulse 1.1s ease-out both;}}
   {a} [data-testid="stChatMessage"]{{animation:gxType .6s steps(28,end) both;}}
