@@ -213,8 +213,11 @@ def meter_list_html(rows: list[dict]) -> str:
     return "".join(out)
 
 
+HIGHLIGHT_RED = "#ff5d73"  # one-off highlight colour (the «best of both» box), not a series colour
+
+
 def optimisation_map(df: pd.DataFrame, x_title: str = "CO₂ saved (kg per year)", y_title: str = "CHF saved per year",
-                     size_title: str = "Person-days", room_right: bool = False) -> alt.Chart:
+                     size_title: str = "Person-days", room_right: bool = False, best_label: str = "") -> alt.Chart:
     """CO₂ against CHF per optimisation, one hue. Columns: co2, chf, pd, label, name. Dot size = person-days.
     Licence optimisations sit on the y-axis (0 kg): that is correct, they save francs only."""
     p = pal()
@@ -260,4 +263,10 @@ def optimisation_map(df: pd.DataFrame, x_title: str = "CO₂ saved (kg per year)
     enc = dict(x=alt.X("co2:Q", scale=xs), y=alt.Y("_ly:Q", scale=ys), text="label:N")
     t_l = alt.Chart(d[~right]).mark_text(align="left", dx=11, baseline="middle", color=p["ink2"], fontSize=13).encode(**enc)
     t_r = alt.Chart(d[right]).mark_text(align="right", dx=-11, baseline="middle", color=p["ink2"], fontSize=13).encode(**enc)
-    return _style((dots + t_l + t_r).properties(height=height))
+    layers = dots + t_l + t_r
+    if best_label and (d["label"] == best_label).any():  # a red square around the «best of both» dot
+        box = alt.Chart(d[d["label"] == best_label]).mark_square(
+            size=2600, filled=False, stroke=HIGHLIGHT_RED, strokeWidth=3, opacity=1).encode(
+            x=alt.X("co2:Q", scale=xs), y=alt.Y("chf:Q", scale=ys))
+        layers = layers + box
+    return _style(layers.properties(height=height))
