@@ -389,7 +389,7 @@ def _swap_bytes(path: Path, new: bytes | None, *, hide: bool = False):
 
 
 def _pages(at):
-    for url in ("", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
+    for url in ("", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
         at = _open(at, url)
         if at.exception:
             return at, url
@@ -1203,11 +1203,16 @@ class SourcesFooterTests(unittest.TestCase):
         from streamlit.testing.v1 import AppTest
         fac = data.factors_table().set_index("key")
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
-        for url in ("", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers", "contact"):
+        for url in ("", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"):
             page = _open(at, url)
             html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
             self.assertIn('class="gx-sources"', html, url)
             self.assertIn("ALTYCA sample data", html, url)
+        # Sources only where figures are calculated: not on the closing page, no grid factors on About
+        page = _open(at, "contact")
+        self.assertNotIn('class="gx-sources"', " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
+        page = _open(at, "")
+        self.assertNotIn("grid_CH", " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
         page = _open(at, "where-you-stand")
         html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
         self.assertIn("(factors/factors.csv, grid_CH)", html)

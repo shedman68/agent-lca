@@ -1132,8 +1132,7 @@ def page_about() -> None:
             "electricity and CO₂ hide in many systems, providers and three currencies, in data centres in Zurich, "
             "Frankfurt and Dublin, while the decisions are made in Basel.\n\n"
             f"**Why it matters.** {BASEL_LINE}")
-    _sources(DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py"),
-             *_grid_sources())
+    _sources(DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py"))
     _story_nav(0)
 
 
@@ -1728,8 +1727,6 @@ def page_contact() -> None:
     for q, a in _faq():
         with st.expander(q):
             st.markdown(a)
-    _sources(DATA_SRC, ("FAQ figures", "measures/package_summary.csv, factors/kb/V2-idle-impact.csv, factors/factors.csv"),
-             _factor_src("grid_CH", "Grid CO₂ per kWh, Switzerland"), _factor_src("grid_DE", "Grid CO₂ per kWh, Germany"))
 
 
 _funcs = [page_about, page_connect, page_stand, page_plan, page_track, page_behind]
