@@ -48,6 +48,39 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-upsim{background:#0a0c0f;border:1px dashed var(--teal,#00cc99);border-radius:14px;padding:14px 16px;margin:14px 0 4px;}
+.gx-upsim .hd{display:flex;align-items:center;gap:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:15px;color:#f2f4f5;margin-bottom:10px;}
+.gx-upsim .ic{color:#00cc99;font-weight:800;}
+.gx-upsim .ok{margin-left:auto;color:#00cc99;font-weight:700;}
+.gx-upsim .chips{display:flex;flex-wrap:wrap;gap:6px;}
+.gx-upsim .chip{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;color:#c4cad1;
+  background:#14171c;border:1px solid var(--line,#262b33);border-radius:999px;padding:3px 10px;}
+.gx-upsim .chip.more{color:#00cc99;border-color:#00cc99;}
+.gx-upsim .prog{height:6px;border-radius:3px;background:#1a2e2a;margin-top:12px;overflow:hidden;}
+.gx-upsim .prog i{display:block;height:100%;width:100%;background:#00cc99;}
+.gx-agent .cmd{color:#f2f4f5;margin-bottom:10px;}
+.gx-agent .work{color:#ffd166;font-weight:700;}
+.gx-agent .spin{display:inline-block;color:#ff8a65;}
+.gx-agent .ln .pr{color:#00cc99;}
+@media (prefers-reduced-motion:no-preference){
+  .gx-upsim .chip{animation:gxChip .45s cubic-bezier(.2,.8,.3,1) both;}
+  .gx-upsim .prog i{animation:gxProg 1.3s ease-out .2s both;}
+  .gx-upsim .ok{animation:gxFadeIn .3s ease-out 1.5s both;}
+  .gx-agent .cmd{animation:gxFadeIn .2s ease-out both;}
+  .gx-agent .typed{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;animation:gxTypeW .6s steps(24,end) both;}
+  .gx-agent .work{animation:gxFadeIn .2s ease-out both,gxFadeOut .3s ease-in both;}
+  .gx-agent .spin{animation:gxSpin 1s linear infinite;}
+  .gx-agent .ln{animation:gxLineIn .35s ease-out both;}
+}
+@media (prefers-reduced-motion:reduce){.gx-agent .work{display:none;}}
+@keyframes gxChip{from{opacity:0;transform:translateY(-18px) scale(.9);}}
+@keyframes gxProg{from{width:0;}}
+@keyframes gxFadeIn{from{opacity:0;}}
+@keyframes gxFadeOut{to{opacity:0;height:0;margin:0;padding:0;overflow:hidden;}}
+@keyframes gxTypeW{from{max-width:0;}to{max-width:40ch;}}
+@keyframes gxSpin{to{transform:rotate(360deg);}}
+@keyframes gxLineIn{from{opacity:0;transform:translateX(-10px);}}
 @media (max-width:720px){[data-testid="stHeader"]{background:var(--bg,#0d0f12) !important;box-shadow:0 1px 0 var(--line,#262b33);}}
 [data-testid="stToolbar"]{display:flex !important;visibility:visible !important;}
 [data-testid="stExpandSidebarButton"]{display:flex !important;visibility:visible !important;opacity:1 !important;}
@@ -465,6 +498,38 @@ def breakdown_pop(title: str, parts: list[tuple[str, float]], unit: str, note: s
     nt = f'<p class="nt">{esc(i18n.tr(note, label=False))}</p>' if note else ""
     return (f'<div class="gx-pop" role="tooltip"><p class="tt">{esc(i18n.tr(title))}</p>'
             f'<div class="bar">{seg}</div><ul>{leg}</ul>{nt}</div>')
+
+
+def upload_sim(files: list[str], extra: int, total: int) -> str:
+    """Simulated upload: the real file names drop into a box one by one, a bar fills, then «N files received».
+    CSS only, about 1.8 s; without motion it shows the end state."""
+    chips = "".join(f'<span class="chip" style="animation-delay:{0.06 * i:.2f}s">{esc(f)}</span>'
+                    for i, f in enumerate(files))
+    more = f'<span class="chip more" style="animation-delay:{0.06 * len(files):.2f}s">+{extra} extra</span>' if extra else ""
+    return (f'<div class="gx-upsim"><div class="hd"><span class="ic">↑</span> ALTYCA-case.json '
+            f'<span class="ok">{total} {esc(i18n.tr("files received"))} ✓</span></div>'
+            f'<div class="chips">{chips}{more}</div><div class="prog"><i></i></div></div>')
+
+
+def agent_terminal(title: str, command: str, lines: list[tuple[str, str]], done_html: str, start: float = 1.6) -> str:
+    """Claude-Code-like run: the command types itself, a «✻ Working…» line spins while each step appears with its
+    result, then the result line pops in. CSS only (≈ start + 0.45 s per line); without motion everything shows."""
+    step = 0.35
+    rows = []
+    t = start + 0.6
+    for k, v in lines:
+        rows.append(f'<p class="ln" style="animation-delay:{t:.2f}s"><span class="pr">●</span> <b>{esc(i18n.tr(k))}</b> '
+                    f'{esc(v)}</p>')
+        t += step
+    work_end = t
+    return (f'<div class="gx-term gx-agent"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
+            f'<div class="body"><p class="cmd" style="animation-delay:{start:.2f}s"><span class="pr">&gt;</span> '
+            f'<span class="typed" style="animation-delay:{start:.2f}s">{esc(command)}</span></p>'
+            f'<p class="work" style="animation-delay:{start + 0.5:.2f}s,{work_end:.2f}s"><span class="spin">✻</span> '
+            f'{esc(i18n.tr("Working"))}<span class="dots">…</span></p>'
+            f'{"".join(rows)}'
+            f'<p class="ok result ln" style="animation-delay:{work_end + 0.1:.2f}s"><span class="pr">✓</span> {done_html}</p>'
+            f'</div></div>')
 
 
 def terminal(title: str, lines: list[tuple[str, str]], done: str, done_html: str = "") -> str:

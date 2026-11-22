@@ -1122,7 +1122,11 @@ def page_connect() -> None:
               f'<span class="gx-num">CHF&nbsp;{e["cost_chf"]:,.0f}</span> = '
               f'<span class="lbl">{i18n.tr("CARBON COST")}:</span> '
               f'<span class="gx-num">{_tonnes(e["co2_mid"])}&nbsp;t&nbsp;CO₂</span>')
-    st.html(ui.terminal("ALTYCA-case.json", steps, "", done_html=result))
+    # Demo flow (CSS only, ≈5 s): the files drop into the box, then the agent works through them like a terminal.
+    core = sorted(p_.name for p_ in (data.ROOT / "data").glob("*") if p_.suffix in (".csv", ".jsonl")
+                  and not p_.name.startswith("template_"))
+    st.html(ui.upload_sim(core, int(c["extra"]), int(c["files"])))
+    st.html(ui.agent_terminal("agent · ALTYCA-case.json", "analyse ALTYCA-case.json", steps, result))
     ui.hero("", "Overall picture ready in minutes, not weeks.")
     run.__exit__(None, None, None)
     with st.popover("How this was calculated"):
