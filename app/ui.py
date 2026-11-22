@@ -426,6 +426,88 @@ def team(members: list[tuple], links: bool = False) -> None:
     _raw(f'<div class="gx-team">{"".join(cells)}</div>')
 
 
+_ORG_CSS = """<style>
+.gx-org{margin:4px 0 0;--o-line:rgba(255,255,255,.14);--o-glass:rgba(255,255,255,.045);--o-edge:rgba(255,255,255,.09);}
+.gx-org.lt{--o-line:rgba(13,15,18,.18);--o-glass:rgba(13,15,18,.04);--o-edge:rgba(13,15,18,.12);}
+.gx-org .lb{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#9aa3ad);text-align:center;margin:0 0 12px;}
+.gx-org .row{display:flex;gap:18px;}
+.gx-org .grp{display:flex;flex-direction:column;align-items:center;min-width:0;}
+.gx-org .hum{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;}
+.gx-org .hum .gx-avatar{width:56px;height:56px;min-width:56px;margin:0;border:1px solid var(--o-edge);box-shadow:0 0 0 4px rgba(255,255,255,.03);}
+.gx-org .hum b{font-size:16px;font-weight:600;color:var(--ink,#f2f4f5);letter-spacing:-.01em;}
+.gx-org .hum span{font-size:13px;color:var(--muted,#9aa3ad);margin-top:-4px;}
+.gx-org img.wire{display:block;width:100%;height:34px;margin:6px 0 0;}
+.gx-org .ags{display:flex;gap:10px;width:100%;margin-top:6px;}
+.gx-org .ag{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 10px;border-radius:999px;
+  background:var(--o-glass);border:1px solid var(--o-edge);backdrop-filter:blur(8px);white-space:nowrap;}
+.gx-org .ag .gx-avatar{width:22px;height:22px;min-width:22px;margin:0;border:0;}
+.gx-org .ag .gx-avatar.gx-logo{padding:2px;}
+.gx-org .ag b{font-size:13.5px;font-weight:500;color:var(--ink,#f2f4f5);}
+.gx-org .lb.ag-lb{margin:14px 0 10px;}
+.gx-org .track{position:relative;margin:26px 28px 6px;}
+.gx-org .track .ln{position:absolute;left:0;right:0;top:6px;height:1px;background:var(--o-line);}
+.gx-org .track .dot{position:absolute;top:1px;left:0;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:#00cc99;
+  box-shadow:0 0 0 4px rgba(0,204,153,.18),0 0 18px 4px rgba(0,204,153,.45);opacity:0;}
+.gx-org .track ol{position:relative;display:flex;justify-content:space-between;list-style:none;margin:0;padding:0;}
+.gx-org .track li{display:flex;flex-direction:column;align-items:center;gap:9px;width:0;white-space:nowrap;font-size:13px;color:var(--muted,#9aa3ad);}
+.gx-org .track li i{display:block;width:7px;height:7px;margin-top:3px;border-radius:50%;background:var(--muted,#9aa3ad);opacity:.6;}
+.gx-org .via{margin:22px 0 0;text-align:center;font-size:12.5px;color:var(--muted,#9aa3ad);}
+.gx-org .via b{font-weight:500;color:var(--ink,#f2f4f5);} .gx-org .via em{font-style:normal;opacity:.6;}
+@keyframes gxRide{0%{left:0;opacity:0;}4%{opacity:1;}92%{opacity:1;}100%{left:100%;opacity:0;}}
+@keyframes gxNode{0%,6%{color:var(--ink,#f2f4f5);}14%,100%{color:var(--muted,#9aa3ad);}}
+@keyframes gxNodeDot{0%,6%{background:#00cc99;opacity:1;box-shadow:0 0 10px #00cc99;}14%,100%{background:var(--muted,#9aa3ad);opacity:.6;box-shadow:none;}}
+@media (prefers-reduced-motion:no-preference){
+  .gx-org .track .dot{animation:gxRide 8s linear infinite;}
+  .gx-org .track li{animation:gxNode 8s linear infinite;} .gx-org .track li i{animation:gxNodeDot 8s linear infinite;}
+}
+@media (max-width:720px){.gx-org .row{flex-direction:column;gap:22px;} .gx-org img.wire{height:22px;}
+  .gx-org .ags{gap:6px;} .gx-org .ag{padding:7px 6px;gap:5px;} .gx-org .ag b{font-size:11.5px;}
+  .gx-org .ag .gx-avatar{width:18px;height:18px;min-width:18px;}
+  .gx-org .ags{justify-content:center;} .gx-org .ag:only-child{flex:0 1 auto;padding:7px 18px;}
+  .gx-org .track li{font-size:10.5px;} .gx-org .track{margin:22px 14px 6px;}}
+</style>"""
+
+
+def _wire(k: int, light: bool = False) -> str:
+    """Thin lines from one person down to k agents (a bracket for k > 1), with a light pulse travelling down each line.
+    An SVG image: st.html drops inline <svg>, an <img> keeps it (and its own animation)."""
+    xs = [100 * (i + .5) / k for i in range(k)]
+    d = [f"M50 0 V14 H{x:.2f} V34" if k > 1 else "M50 0 V34" for x in xs]
+    css = ("<style>path{fill:none;vector-effect:non-scaling-stroke}.b{stroke:" + ("#0d0f12;stroke-opacity:.25" if light else
+                                                                               "#ffffff;stroke-opacity:.18") + ";stroke-width:1}"
+           ".p{stroke:#00cc99;stroke-width:2;stroke-linecap:round;stroke-dasharray:8 120;opacity:0}"
+           "@keyframes m{0%{stroke-dashoffset:8;opacity:0}10%,70%{opacity:1}100%{stroke-dashoffset:-120;opacity:0}}"
+           "@media (prefers-reduced-motion:no-preference){.p{animation:m 2.4s cubic-bezier(.4,0,.2,1) infinite}}</style>")
+    paths = "".join(f'<path class="b" d="{x}"/>' for x in d) + "".join(
+        f'<path class="p" d="{x}" style="animation-delay:{.35 * i:.2f}s"/>' for i, x in enumerate(d))
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 34" preserveAspectRatio="none">{css}{paths}</svg>')
+    return f'<img class="wire" alt="" aria-hidden="true" src="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}">'
+
+
+def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next: str = "", light: bool = False) -> str:
+    """Team and agents as one quiet org chart: people on top (photo, name, role), their agents underneath as small pills
+    (logo + one or two words), thin lines with a light pulse between them, and one track for the ALTYCA case: a dot
+    travels along it and lights each step as it passes (CSS only; still under reduced motion).
+    people: (name, role, [(agent, logo key)]). Our own text is translated here."""
+    total = sum(len(a) for _, _, a in people) or 1
+    grps = []
+    for name, role, agents in people:
+        pills = "".join(f'<div class="ag">{_avatar(logo)}<b>{esc(i18n.tr(a))}</b></div>' for a, logo in agents)
+        grps.append(f'<div class="grp" style="flex:{len(agents)} 1 0">'
+                    f'<div class="hum">{_avatar(name.split()[0])}<b>{esc(name)}</b><span>{esc(i18n.tr(role))}</span></div>'
+                    f'{_wire(len(agents), light)}<div class="ags">{pills}</div></div>')
+    n = len(flow)
+    steps = "".join(f'<li style="animation-delay:{8 * i / max(n - 1, 1) * .92:.2f}s"><i style="animation-delay:'
+                    f'{8 * i / max(n - 1, 1) * .92:.2f}s"></i>{esc(i18n.tr(x))}</li>' for i, x in enumerate(flow))
+    via = " · ".join(f"<b>{esc(t)}</b>" for t in tools) + (f" · <em>{esc(tool_next)}</em>" if tool_next else "")
+    return (_ORG_CSS + f'<div class="gx-org{" lt" if light else ""}">'
+            f'<p class="lb">{esc(i18n.tr("Wo/Man make the decisions"))}</p>'
+            f'<div class="row">{"".join(grps)}</div>'
+            f'<p class="lb ag-lb">{esc(i18n.tr("Man-made agents do the leg work with real verified data"))}</p>'
+            f'<div class="track"><div class="ln"></div><div class="dot"></div><ol>{steps}</ol></div>'
+            f'<p class="via">{esc(i18n.tr("Talking via"))} {via}</p></div>')
+
+
 def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True, classes: list[str] | None = None) -> str:
     """Words that roll down one after another (CSS only). loop=False stops on the last word.
     Without motion the words show as one static line, so nothing is hidden."""

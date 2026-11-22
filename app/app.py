@@ -1095,6 +1095,17 @@ BASEL_LINE = ("Built for ALTYCA × Basel 2037: an approach every Basel SME can a
 _ABOUT_SRC = [DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py")]
 
 
+# How we worked (About, beat 1): who decides and which agent does the leg work. Source: AGENTS.md (team, ownership, tools,
+# Slack protocol, Notion board, Stop hook, trap-reviewer) and README «AI tools». Linear was not used: shown as «next».
+ORG = [
+    ("Rashed Kabir", "Product", [("Chief of staff", "claude"), ("Build", "claude"), ("QA & Deploy", "grok")]),
+    ("Vinzenz Müller", "Energy and Environment", [("Factors", "claude")]),
+    ("Hakim Kadriju", "Data", [("Analysis", "claude")]),
+]
+ORG_FLOW = ["Data", "Baseline", "Factors", "Findings", "Plan", "Checks", "Human OK", "Live"]
+ORG_TOOLS = ["GitHub", "Slack", "Notion"]
+
+
 def page_about() -> None:
     """The opening of the pitch (no slides): brand story first, then the promise, then the chapters."""
     _story_top(0)
@@ -1102,25 +1113,22 @@ def page_about() -> None:
     if not out_ready():
         return
     s = data.package_summary()
-    with st.container(key="beat_hook"):
-        # The last word rolls: lifecycle ⇄ cost (CSS only; without motion both words show).
+    # One block for the opening (Rashed, 22.11.): headline, the team as an org chart of humans and agents
+    # («Agent» in the name), and «LCA» with the lifecycle ring. Story mode spotlights it as one beat.
+    with st.container(key="beat_intro"):
         # Both words roll in step: «Everything has a lifecycle.» ⇄ «Electricity has a cost.» (Electricity in yellow).
         first = ui.roller(["Everything", "Electricity"], "about1", step_s=1.8, classes=["", "gx-y"])
         word = ui.roller(["lifecycle.", "cost."], "about", step_s=1.8)
         ui.hero("", f"{first} has a <em>{word}</em>",
                 "We measure the use phase of cloud, servers, AI and SaaS.",
                 photo="about")
-    with st.container(key="beat_team"):
-        ui.team(TEAM)
-    with st.container(key="beat_why"):
-        left, right = st.columns([1.05, 1], vertical_alignment="center")
+        ui._raw(ui.org_chart(ORG, ORG_FLOW, ORG_TOOLS, "Linear next", light=bool(st.session_state.get("light_mode", False))))
+        # Ring left, card right: in story mode the Back / Next bar sits bottom right.
+        left, right = st.columns([1, 1.05], vertical_alignment="top")
         with left:
-            ui.grid([
-                ui.card("Agent", "Man-made agents do the leg work with real verified data. Wo/Man make the decisions.", kicker="Why the name"),
-                ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"),
-            ])
-        with right:
             ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
+        with right:
+            st.html(ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"))
     with st.container(key="beat_promise"):
         if s is not None:
             r_pkg = _ref(_ABOUT_SRC, "Package figures")
