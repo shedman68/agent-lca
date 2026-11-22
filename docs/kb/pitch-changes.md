@@ -30,7 +30,7 @@
 | 22 | Close card with ALTYCA × Basel 2037 logos, three short lines |
 | 23 | New «Let's talk?» contact page (confetti, LinkedIn, FAQ) – the last beat |
 | all | Live app: no reboot needed any more. After an update the app reloads its own code once, so the old «AttributeError … sources» / «roller() … classes» errors and the frozen «Everything» headline go away by themselves (reload the browser page). |
-| all | Raised source numbers: on Where you stand and Your plan the headline figures carry a small grey number (e.g. «6.2 t CO₂.²», «Frankfurt emits 3.7× … ⁴˒⁵», hotspots ³, gauge captions ²) = the item in that page's «Sources» footer. Q&A line: «the small number tells you which source at the bottom of the page». |
+| all | Raised source numbers on every page with figures: About (the three KPIs ²), Connect (result line «6.2 t CO₂³» after loading), Where you stand and Your plan; Stay on track (next-year cards ², own AI 4.1 kg ⁴). Behind the numbers has one source (the factor table), so no numbers there. On Where you stand and Your plan the headline figures carry a small grey number (e.g. «6.2 t CO₂.²», «Frankfurt emits 3.7× … ⁴˒⁵», hotspots ³, gauge captions ²) = the item in that page's «Sources» footer. Q&A line: «the small number tells you which source at the bottom of the page». |
 | all | Pages that show statistics or calculations (About package figures, Connect after loading, Where you stand, Your plan, Stay on track, Behind the numbers) end with a «Sources» footer; «Let’s talk?» has none. It lists the data files behind the numbers and each factor with its published source (e.g. VSE/strom.ch for the Swiss grid, Ember/Our World in Data for Germany and Ireland, Boavizta for server energy). For a source question in Q&A: «every calculated number has its source at the bottom of its page». |
 | 23 | LinkedIn buttons are now small LinkedIn «in» icons; FAQ answer 6 reworded (see FAQ) |
 | – | Not beats: Connect Next button «.json file analysis →» (normal mode only); sidebar » reopens a collapsed sidebar; About step cards in order on phones |
@@ -108,4 +108,4 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 66 app tests OK (incl. a walk through all 23 beats forward and back, each on its page) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 23 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
-STATUS: FINAL 2026-11-22 06:53 UTC main @ f1b028e
+STATUS: FINAL 2026-11-22 06:58 UTC main @ 7cafc28
