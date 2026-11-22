@@ -1261,3 +1261,22 @@ class StaleModuleReloadTests(unittest.TestCase):
             finally:
                 sys.path.remove(d)
                 sys.modules.pop("gx_stale_probe", None)
+
+
+class SourceRefTests(unittest.TestCase):
+    """Raised numbers after headline figures point to existing items in the same page's Sources footer."""
+
+    def test_refs_point_to_footer_items(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        want = {"where-you-stand": {"Cost, energy and CO₂ per line", "Findings and hotspots",
+                                    "Grid CO₂ per kWh, Switzerland", "Grid CO₂ per kWh, Germany"},
+                "your-plan": {"Optimisations and package"}}
+        for url, titles in want.items():
+            page = _open(at, url)
+            html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+            items = re.findall(r"<li><b>(.*?)</b>", re.search(r'class="gx-sources".*?<ol>(.*?)</ol>', html, re.S).group(1))
+            refs = re.findall(r'class="gx-ref"[^>]*>([^<]+)</sup>', html)
+            self.assertGreaterEqual(len(refs), 3, url)
+            used = {items[int(n) - 1] for r in refs for n in r.split(",")}
+            self.assertEqual(used, {i.replace("₂", "₂") for i in titles}, url)

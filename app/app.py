@@ -563,6 +563,10 @@ def page_package(embedded: bool = False, middle=None) -> None:
                 "center": f"{result['pd']:.1f}", "sub": f"{'von' if i18n.is_de() else 'of'} {PD_CAP:.0f} PD",
                 "caption": "Budget"},
     )
+    if embedded:  # on «Your plan»: the gauge captions point to «Optimisations and package» in the footer
+        r_pkg = _ref(_plan_sources(), "Optimisations and package")
+        for cap in ("CO₂ reduction", "Cost reduction", "Budget"):
+            board = board.replace(f">{i18n.tr(cap)}</div>", f">{i18n.tr(cap)}{r_pkg}</div>", 1)
     passed = sum(s_ == "good" for s_ in (co2_status, cost_status, pd_status))
     with gauges:
         st.html(charts.verdict_html(passed, 3, level.capitalize()))
@@ -984,6 +988,16 @@ def _sources(*items) -> None:
     ui.sources([i for i in items if i])
 
 
+def _ref(src, *titles) -> str:
+    """Small raised number(s) after a figure, pointing to the matching item(s) in the page's «Sources» footer."""
+    items = [i for i in src if i]
+    nums = [str(n) for n, (w, _) in enumerate(items, 1) if w in titles]
+    if not nums:
+        return ""
+    return (f'<sup class="gx-ref" title="Source {", ".join(nums)} below" style="font-size:.45em;font-weight:600;'
+            f'opacity:.75;margin-left:.12em;letter-spacing:0;vertical-align:super">{",".join(nums)}</sup>')
+
+
 def _grid_sources():
     return (_factor_src("grid_CH", "Grid CO₂ per kWh, Switzerland"), _factor_src("grid_DE", "Grid CO₂ per kWh, Germany"),
             _factor_src("grid_IE", "Grid CO₂ per kWh, Ireland"), _factor_src("pue_default", "Data-centre overhead (PUE)"))
@@ -1213,9 +1227,13 @@ def page_stand() -> None:
         return
     e = data.energy_totals()
     rows = _chosen_rows()
+    src = [DATA_SRC, ("Cost, energy and CO₂ per line", "out/fact_costs.csv, built by pipeline/pipeline.py"),
+           ("Findings and hotspots", "out/findings.csv, built by analysis/findings.py"), *_grid_sources(),
+           *_energy_sources()]
+    r_line, r_find = _ref(src, "Cost, energy and CO₂ per line"), _ref(src, "Findings and hotspots")
     with st.container(key="beat_stand_numbers"):
         ui.hero("",
-                   f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO₂.</em> "
+                   f"CHF {e['cost_chf']:,.0f} a year → <em>{_tonnes(e['co2_mid'])} t CO₂.</em>{r_line} "
                    + (f"Optimisations found in {len(_hotspots(rows))} locations." if rows is not None else ""),
                    photo="stand")
         st.html(f'<p class="gx-sub">{_mwh_text(e["kwh_mid"])} MWh of electricity a year. CO₂ range '
@@ -1231,10 +1249,10 @@ def page_stand() -> None:
         ratio = _grid_ratio()
         ui.explain("CO₂, location-based:", "it depends on the power mix where the data centre stands."
                    + (f" Per kWh, Frankfurt emits {ratio:.1f}× more CO₂ than Zurich, because it uses more coal and gas."
-                      if ratio else ""))
+                      + _ref(src, "Grid CO₂ per kWh, Switzerland", "Grid CO₂ per kWh, Germany") if ratio else ""))
         de_line = _country_line("Germany")
         if de_line:
-            st.html(f'<p class="gx-sub" style="font-size:17px;margin:-6px 0 18px">{ui.marks(ui.esc(de_line))}</p>')
+            st.html(f'<p class="gx-sub" style="font-size:17px;margin:-6px 0 18px">{ui.marks(ui.esc(de_line))}{r_line}</p>')
     ui.explain("Not everything idle can be switched off:", "production and the emergency fallback must keep running.")
     if rows is not None:
         hs = {h["key"]: h for h in _hotspots(rows)}
@@ -1245,7 +1263,7 @@ def page_stand() -> None:
         f1 = dev.iloc[0]["title"] if dev is not None and not dev.empty else ""
         dev_share = _resource_share_line("dp-dev")
         hot = st.container(key="beat_stand_hotspot")
-        hot.html(ui.card("Development data platform in Frankfurt, running 24/7", str(f1), _qty(hs["dev"]["kg"]),
+        hot.html(ui.card("Development data platform in Frankfurt, running 24/7", str(f1), _qty(hs["dev"]["kg"]) + r_find,
                          "kg CO₂ a year saved",
                          (f"{dev_share} · " if dev_share else "")
                          + f"CHF {hs['dev']['chf']:,.0f} a year saved · pause when idle, starts automatically "
@@ -1254,10 +1272,10 @@ def page_stand() -> None:
                          kicker="Hotspot 1", data_body=True))
         ui.grid([
             ui.card("Production platform at full size all week", "Fewer machines in quiet hours. Never switched off.",
-                       _qty(hs["prod"]["kg"]), "kg CO₂ a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
+                       _qty(hs["prod"]["kg"]) + r_find, "kg CO₂ a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
                        kicker="Hotspot 2"),
             ui.card("Licences nobody uses", "AI and software seats without active users, cancelled at each notice date.",
-                       f"{hs['seats']['chf']:,.0f}", "CHF a year", "Cost only: unused seats use no electricity",
+                       f"{hs['seats']['chf']:,.0f}" + r_find, "CHF a year", "Cost only: unused seats use no electricity",
                        kicker="Hotspot 3"),
         ])
         co2_share = (hs["dev"]["kg"] + hs["prod"]["kg"]) / pkg_kg if pkg_kg else None
@@ -1277,9 +1295,7 @@ def page_stand() -> None:
         with tab_b:
             page_findings(embedded=True)
     ui.bridge("Next: a plan that cuts these, without touching what must keep running.")
-    _sources(DATA_SRC, ("Cost, energy and CO₂ per line", "out/fact_costs.csv, built by pipeline/pipeline.py"),
-             ("Findings and hotspots", "out/findings.csv, built by analysis/findings.py"), *_grid_sources(),
-             *_energy_sources())
+    _sources(*src)
     _story_nav(2)
 
 
@@ -1408,11 +1424,15 @@ def page_plan() -> None:
     ui.explain("Low, mid, high:", "every factor is a range. The plan must pass on all three.")
     page_package(embedded=True, middle=_plan_middle)
     ui.bridge("Next: how the tool keeps helping once the plan runs.")
-    _sources(DATA_SRC, ("Optimisations and package", "measures/measures.csv and measures/package_summary.csv"),
-             ("Idle-power sensitivity", "factors/kb/V2-idle-impact.csv (Vinzenz, V2)"),
-             ("Contradictions", "analysis/kb/reconciliation_checks.csv"), *_grid_sources(), *_energy_sources(),
-             _factor_src("node_hour_idle", "Energy per idle node-hour"))
+    _sources(*_plan_sources())
     _story_nav(3)
+
+
+def _plan_sources():
+    return [DATA_SRC, ("Optimisations and package", "measures/measures.csv and measures/package_summary.csv"),
+            ("Idle-power sensitivity", "factors/kb/V2-idle-impact.csv (Vinzenz, V2)"),
+            ("Contradictions", "analysis/kb/reconciliation_checks.csv"), *_grid_sources(), *_energy_sources(),
+            _factor_src("node_hour_idle", "Energy per idle node-hour")]
 
 
 AGENTS_ROADMAP = [
