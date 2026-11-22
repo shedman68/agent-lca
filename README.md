@@ -2,6 +2,12 @@
 
 Where does an SME's digital work create cost, energy and CO2 – and what can be cut safely?
 
+> ## ▶ Live app: **https://agent-lca-greenops.streamlit.app/**
+>
+> **Try the prototype here: no install needed.** It opens in any browser, on a laptop or a phone.
+> Use the sidebar to switch on **Story mode** (guided tour, 23 steps with ← / → or Back / Next).
+> The live app always runs the latest version of `main`. To run it on your own machine instead, see «Run it» below.
+
 Start with `AGENTS.md` (rules for people and agents), then `docs/plan.md` and `docs/traps.md`.
 
 ## Run it (offline, about 2 minutes)
