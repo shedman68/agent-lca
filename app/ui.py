@@ -47,6 +47,29 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.st-key-beat_track_top [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stMarkdownContainer"] p::before{content:"› ";color:#00cc99;font-weight:800;}
+.st-key-beat_track_top [data-testid="stChatInput"],.st-key-beat_track_top [data-testid="stChatInput"] > div{background:#0a0c0f !important;border-color:var(--line,#262b33) !important;}
+.st-key-beat_track_top [data-testid="stChatInput"] textarea{color:#f2f4f5 !important;background:transparent !important;}
+.gx-log p{font-size:15px;margin:0 0 5px;line-height:1.4;}
+.gx-log p b{min-width:13.5em;font-weight:600;}
+.gx-log p.cmd{color:#f2f4f5;margin-bottom:12px;}
+.gx-log p.ok .pr,.gx-log p.ok b{color:#00cc99;}
+.gx-log p.warn .pr,.gx-log p.warn b{color:#ffb020;}
+.gx-log p.bad .pr,.gx-log p.bad b{color:#ff5d73;}
+.gx-log p.bad .note{color:#ffc2cb;}
+.gx-log p.sum{margin-top:12px;color:#f2f4f5;}
+.st-key-beat_track_top [data-testid="stChatMessage"]{background:#0a0c0f !important;border:1px solid var(--line,#262b33);border-radius:12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.st-key-beat_track_top [data-testid="stChatMessage"] p{font-family:inherit;}
+.st-key-beat_track_top [data-testid="stChatMessageAvatarUser"],.st-key-beat_track_top [data-testid="stChatMessageAvatarAssistant"]{display:none;}
+.st-key-beat_track_top [data-testid="stChatMessage"]:has(.gx-refuse) .gx-refuse,.st-key-beat_track_top .gx-refuse{font-family:inherit;}
+.st-key-beat_track_top [data-testid="stChatInput"] textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+@media (max-width:720px){.gx-log p{font-size:13.5px;}.gx-log p b{min-width:0;display:block;}}
+.st-key-beat_plan_map{position:relative;}
+.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:absolute;right:8px;top:120px;width:min(340px,36%);z-index:5;}
+.gx-callout{box-shadow:0 12px 40px rgba(0,0,0,.45);border-color:var(--teal,#00cc99) !important;padding:16px 18px !important;}
+.gx-callout p{font-size:15px !important;}
+@media (max-width:720px){.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:static;width:auto;}}
 .gx-num{color:var(--gx-stat,#ffd166);font-weight:800;font-size:1.12em;font-variant-numeric:tabular-nums;white-space:nowrap;}
 [data-testid="stPopoverBody"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33) !important;}
 [data-testid="stPopoverBody"] p,[data-testid="stPopoverBody"] li,[data-testid="stPopoverBody"] span{color:var(--ink2,#c4cad1) !important;}
@@ -284,6 +307,16 @@ def terminal(title: str, lines: list[tuple[str, str]], done: str) -> str:
     rows = "".join(f'<p><span class="pr">&gt;</span> <b>{esc(i18n.tr(k))}</b> {esc(v)}</p>' for k, v in lines)
     return (f'<div class="gx-term gx-check"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
             f'<div class="body">{rows}<p class="ok"><span class="pr">✓</span> {esc(i18n.tr(done))}</p></div></div>')
+
+
+def activity_log(title: str, rows: list[tuple[str, str, str]], summary: str) -> str:
+    """Claude-Code-like log: one line per file, ● green = clean, amber = needs a person, red = blocked."""
+    icon = {"ok": "✓", "warn": "!", "bad": "✗"}
+    lines = "".join(f'<p class="{st_}"><span class="pr">{icon.get(st_, "·")}</span> <b>{esc(f)}</b> '
+                    f'<span class="note">{marks(esc(note))}</span></p>' for st_, f, note in rows)
+    return (f'<div class="gx-term gx-log gx-check"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
+            f'<div class="body"><p class="cmd"><span class="pr">&gt;</span> check every file, flag what needs a human</p>'
+            f'{lines}<p class="ok sum"><span class="pr">●</span> {esc(summary)}</p></div></div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:

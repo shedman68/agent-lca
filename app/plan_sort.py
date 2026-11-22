@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-SORTS = {"co2": "Biggest CO₂ saving", "cost": "Biggest cost saving", "both": "CO₂ and cost together"}
+SORTS = {"co2": "Biggest CO₂ saving", "cost": "Biggest cost saving", "both": "CO₂ & Cost"}
 DEFAULT = "co2"
 CHF_COL = "savings_cost_chf_per_year"
 

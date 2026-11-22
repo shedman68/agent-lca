@@ -1238,8 +1238,16 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
             "label": [f"{i} {plan_sort.short_name(n, 24)}" for i, n in zip(ordered["_id"], ordered["description"])],
             "name": ordered["description"].astype(str),
         })
-        st.altair_chart(charts.optimisation_map(pts, i18n.tr("CO₂ saved (kg per year)"), i18n.tr("CHF saved per year"),
-                                                i18n.tr("Person-days")), width="stretch")
+        best = ordered.iloc[0] if not ordered.empty else None
+        with st.container(key="beat_plan_map"):
+            st.altair_chart(charts.optimisation_map(pts, i18n.tr("CO₂ saved (kg per year)"), i18n.tr("CHF saved per year"),
+                                                    i18n.tr("Person-days"), room_right=True), width="stretch")
+            # A card on the chart, in the right part that room_right keeps free of dots.
+            best_line = ("" if best is None else
+                         f"<br><b>{i18n.tr('Best of both')}:</b> {ui.esc(best['_id'])} {ui.esc(plan_sort.short_name(best['description'], 40))}")
+            ui._raw(f'<div class="gx-card gx-callout"><p class="k">{i18n.tr("How to read the map")}</p>'
+                    f'<p>{i18n.tr("Right: more CO₂ saved. Up: more CHF saved. Bigger dot: more person-days. Licences sit on the left edge: they save CHF only.", label=False)}'
+                    f'{best_line}</p></div>')
         st.caption("Sorted by share of the total CO₂ saving plus share of the total cost saving. "
                    "Licence optimisations save no CO₂, so they sit on the left edge.")  # st.caption translates body text
     cards = []
@@ -1307,6 +1315,60 @@ AGENTS_ROADMAP = [
 ]
 
 
+_SOURCE_FILE = {"ai_subscriptions": "ai_subscriptions.csv", "ai_usage": "ai_usage.csv", "aws": "aws_costs.csv",
+                "azure": "azure_costs.csv", "hoster": "hoster_invoice.csv", "it_tickets": "it_tickets.csv",
+                "saas": "saas_contracts.csv"}
+# What each planted text tries, in four plain words, and whether it is also a security / operations risk.
+_INJECTION_LABEL = {"P1": ("report costs 40 % lower", False), "P2": ("ignore the cost column", False),
+                    "P3": ("switch off production", True), "P4": ("set db-fin costs to 0", False),
+                    "P5": ("drop real paid costs", False)}
+
+
+def _activity_log() -> list[tuple[str, str, str]]:
+    """The assistant's monthly file check: (status, file, note). Built from the register of planted texts,
+    out/quality_log.csv and the reconciliation checks. Status: bad (red), warn (amber), ok (green)."""
+    rows: list[tuple[str, str, str]] = []
+    bad_files = set()
+    for m in register.MANIPULATIVE_TEXTS:
+        f = str(m["file"]).split("/")[-1]
+        bad_files.add(f)
+        what, risk = _INJECTION_LABEL.get(m["id"], (str(m["tries"]), False))
+        where = str(m["where"]).split(" (")[0] if str(m["where"]).startswith("T-") else ""
+        tag = "prompt injection · security risk" if risk else "prompt injection"
+        role = str(m["role"]).split(" (")[0].split(" ·")[0]
+        rows.append(("bad", f + (f" {where}" if where else ""), f"{tag} «{what}» · blocked → {role}"))
+    q = data.quality_log()
+    if q is not None:
+        cp = q[q["check"].eq("price vs README")]
+        if not cp.empty:
+            f = _SOURCE_FILE.get(str(cp.iloc[0]["source"]), str(cp.iloc[0]["source"]))
+            rows.append(("warn", f, "price ≠ README · no human validation yet → Head of Finance"))
+    for name, check in (("AI invoices", "AI gateway vs provider invoices, all providers"),
+                        ("provider report", "provider_monthly_report vs azure+aws+hoster (12 baseline months)")):
+        k = data.kb_check(check)
+        if k is not None and not _missing(k["diff"]):
+            rows.append(("warn", name, f"sources disagree by {chf(k['diff'])} → a person decides"))
+    fixes = {}
+    if q is not None:
+        for src, g in q[~q["check"].astype(str).str.contains("instruction-like|exclude test account|price vs README",
+                                                               case=False)].groupby("source"):
+            fixes[_SOURCE_FILE.get(str(src), "")] = len(g)
+    core = sorted(p.name for p in (data.ROOT / "data").glob("*") if p.suffix in (".csv", ".jsonl")
+                  and not p.name.startswith("template_"))
+    quiet = []
+    for f in core:
+        if f in bad_files:
+            continue
+        n = fixes.get(f, 0)
+        if n:
+            rows.append(("ok", f, f"clean · {n} automatic fixes"))
+        else:
+            quiet.append(f)
+    if quiet:  # one line for the files with nothing to report, so the log fits one screen
+        rows.append(("ok", f"{len(quiet)} more files", "clean · " + ", ".join(x.rsplit(".", 1)[0] for x in quiet)))
+    return rows
+
+
 def page_track() -> None:
     _story_top(4)
     st.title("Stay on track")
@@ -1314,8 +1376,16 @@ def page_track() -> None:
         return
     e = data.energy_totals()
     s = data.package_summary()
+    top = st.container(key="beat_track_top")
+    top.__enter__()
     ui.hero("", "Ask your data anything. <em>Risky changes go to a human.</em>", photo="track")
+    ui.explain("Your AI assistant:", "each month it reads the new exports, checks every file, and asks a person "
+               "only about the risky ones.")
     ui.explain("Prompt injection:", "hidden text in the data that tries to give orders to an AI.")
+    log = _activity_log()
+    n_bad, n_warn, n_ok = (sum(1 for r in log if r[0] == k) for k in ("bad", "warn", "ok"))
+    st.html(ui.activity_log("assistant · monthly check · ALTYCA-case.json", log,
+                            f"{n_bad} blocked · {n_warn} need a person · rest clean · human in the loop decides"))
     examples = assistant.example_questions()
     # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
     # full addressable figure differs from measure M2 on the previous page (M2 counts 75 % of the energy).
@@ -1323,6 +1393,7 @@ def page_track() -> None:
     # inside a container the chat box sits under the questions, not pinned to the page bottom
     with st.container(key="beat_assistant"):
         assistant.render_assistant(embedded=True, questions=questions)
+    top.__exit__(None, None, None)
     ny = st.container(key="beat_next_year")
     ny.__enter__()
     st.subheader("Next year, with and without the plan")

@@ -936,7 +936,7 @@ class PresenterModeTests(unittest.TestCase):
     def _url(self, at):
         return at._registered_pages[at._page_hash].get("url_pathname") if getattr(at, "_page_hash", None) else ""
 
-    def test_walk_all_21_beats_forward_and_back(self):
+    def test_walk_all_beats_forward_and_back(self):
         import sys
         sys.path.insert(0, str(ROOT / "app"))
         import story
@@ -958,7 +958,10 @@ class PresenterModeTests(unittest.TestCase):
                 self.assertEqual(at.session_state["factor_level_label"], {11: "Low factors", 12: "High factors"}[n])
             if n == 15:
                 self.assertEqual(at.session_state["plan_sort"], "cost")
-            if n == 17:
+            if n == 16:
+                self.assertEqual(at.session_state["plan_sort"], "both")
+                self.assertTrue(at.get("vega_lite_chart"), "beat 16 shows the CO₂ & Cost map")
+            if n == 19:
                 shown = " ".join(m.value for m in at.markdown)
                 self.assertIn("Refused.", shown)
                 self.assertIn("Human in the loop", shown)
@@ -1056,3 +1059,21 @@ class StatMarksTests(unittest.TestCase):
         self.assertIn('<span class="gx-num">3.7×</span>', ui.marks("emits 3.7× more"))
         for plain in ("T-1251", "2026-03-01", "24/7", "step 2", "CHF 26,316"):
             self.assertEqual(ui.marks(plain), plain)
+
+
+class ActivityLogTests(unittest.TestCase):
+    def test_log_marks_every_planted_text_red_and_clean_files_green(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "stay-on-track")
+        self.assertFalse(page.exception, page.exception)
+        blob = re.sub(r'</?span[^>]*>', "", " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import register
+        self.assertEqual(blob.count('<p class="bad">'), len(register.MANIPULATIVE_TEXTS))
+        self.assertIn("it_tickets.csv T-1230", blob)
+        self.assertIn("prompt injection · security risk «switch off production»", blob)
+        self.assertIn("no human validation yet", blob)
+        self.assertIn("more files</b>", blob)
+        self.assertIn("exchange_rates", blob)
