@@ -463,6 +463,11 @@ _ORG_CSS = """<style>
 .gx-org img.funnel{position:absolute;left:0;top:-46px;width:100%;height:46px;}
 .gx-org .faces{display:flex;margin-top:-2px;} .gx-org .faces .gx-avatar{width:22px;height:22px;min-width:22px;margin:0 -4px;border:2px solid var(--bg,#0d0f12);}
 .gx-org .via .gx-rot{vertical-align:-0.3em;margin-bottom:0;}
+.gx-lca{display:flex;align-items:center;gap:18px;margin:10px 0 0;}
+.gx-lca .ring{flex:0 0 38%;max-width:330px;} .gx-lca .ring img{margin:0 !important;}
+.gx-lca .gx-card{flex:1;margin:0;}
+@media (max-width:720px){.gx-lca{gap:10px;} .gx-lca .ring{flex:0 0 40%;} .gx-lca .gx-card{padding:12px 14px;}
+  .gx-lca .gx-card h4{font-size:16px;} .gx-lca .gx-card p{font-size:14px;}}
 .gx-org .loop{display:block;width:100%;height:26px;margin:2px 0 0;}
 .gx-org .loopk{margin:-14px 0 0;text-align:center;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);}
 .gx-org .via{margin:22px 0 0;text-align:center;font-size:12.5px;color:var(--muted,#9aa3ad);}
