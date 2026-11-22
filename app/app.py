@@ -1257,10 +1257,13 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
         best = ordered.iloc[0] if not ordered.empty else None
         with st.container(key="beat_plan_map"):
             st.altair_chart(charts.optimisation_map(pts, i18n.tr("CO₂ saved (kg per year)"), i18n.tr("CHF saved per year"),
-                                                    i18n.tr("Person-days"), room_right=True), width="stretch")
+                                                    i18n.tr("Person-days"), room_right=True,
+                                                    best_label=pts["label"].iloc[0] if not pts.empty else ""),
+                            width="stretch")
             # A card on the chart, in the right part that room_right keeps free of dots.
             best_line = ("" if best is None else
-                         f"<br><b>{i18n.tr('Best of both')}:</b> {ui.esc(best['_id'])} {ui.esc(plan_sort.short_name(best['description'], 40))}")
+                         f'<span class="gx-best"><b>{i18n.tr("Best of both")}:</b> {ui.esc(best["_id"])} '
+                         f'{ui.esc(best["description"])}</span>')
             ui._raw(f'<div class="gx-card gx-callout"><p class="k">{i18n.tr("How to read the map")}</p>'
                     f'<p>{i18n.tr("Right: more CO₂ saved. Up: more CHF saved. Bigger dot: more person-days. Licences sit on the left edge: they save CHF only.", label=False)}'
                     f'{best_line}</p></div>')

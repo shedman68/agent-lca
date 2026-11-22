@@ -48,6 +48,7 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-best{display:block;margin-top:10px;padding:8px 10px;border:2px solid #ff5d73;border-radius:10px;}
 .gx-partners{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:4px 0 14px;}
 .gx-partner{width:auto;max-width:220px;object-fit:contain;background:#ffffff;border-radius:12px;padding:8px 12px;}
 .gx-partner-txt{font-weight:800;font-size:20px;letter-spacing:.02em;color:var(--ink,#f2f4f5);border:1px solid var(--line,#262b33);border-radius:12px;padding:10px 14px;}
@@ -95,7 +96,7 @@ CSS = """<style>
 .st-key-beat_track_top [data-testid="stChatInput"] textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
 @media (max-width:720px){.gx-log p{font-size:13.5px;}.gx-log p b{min-width:0;display:block;}}
 .st-key-beat_plan_map{position:relative;}
-.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:absolute;right:8px;top:120px;width:min(340px,36%);z-index:5;}
+.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:absolute;right:8px;top:56px;width:min(340px,36%);z-index:5;}
 .gx-callout{box-shadow:0 12px 40px rgba(0,0,0,.45);border-color:var(--teal,#00cc99) !important;padding:16px 18px !important;}
 .gx-callout p{font-size:15px !important;}
 @media (max-width:720px){.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:static;width:auto;}}
