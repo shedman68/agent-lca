@@ -344,7 +344,7 @@ def kpis(items: list[tuple[str, str, str]], good: set[int] | None = None) -> Non
 
 
 def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str = "", kind: str = "",
-         kicker: str = "", data_title: bool = False, data_body: bool = False, pop: str = "") -> str:
+         kicker: str = "", data_title: bool = False, data_body: bool = False, pop: str = "", ref: str = "") -> str:
     """Our own title, body, unit and kicker are translated here. Text from the data files is escaped and kept
     as stored: set data_title / data_body, and pass meta already built (data parts through esc())."""
     title = esc(title) if data_title else i18n.tr(title)
@@ -354,7 +354,7 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
     n = (f'<div class="n{" has-pop" if pop else ""}">{number} <span>{unit}</span>{pop}</div>'
          if number else "")  # a real space: CSS margins can be overridden; pop = optional hover pop-out
     m = f'<div class="meta">{marks(meta)}</div>' if meta else ""
-    b = f"<p>{marks(body)}</p>" if body else ""
+    b = f"<p>{marks(body)}{ref}</p>" if body else ""  # ref: our own raised source number (HTML), after data text
     return f'<div class="gx-card {kind}">{k}<h4>{title}</h4>{b}{n}{m}</div>'
 
 

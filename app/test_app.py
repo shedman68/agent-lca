@@ -1271,7 +1271,7 @@ class SourceRefTests(unittest.TestCase):
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
         want = {"where-you-stand": {"Cost, energy and CO₂ per line", "Findings and hotspots",
                                     "Grid CO₂ per kWh, Switzerland", "Grid CO₂ per kWh, Germany"},
-                "your-plan": {"Optimisations and package"},
+                "your-plan": {"Optimisations and package", "Contradictions"},
                 "": {"Package figures"},
                 "stay-on-track": {"Next year", "Our own AI use"}}
         for url, titles in want.items():
