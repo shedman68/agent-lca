@@ -48,6 +48,7 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+@media (max-width:720px){[data-testid="stHeader"]{background:var(--bg,#0d0f12) !important;box-shadow:0 1px 0 var(--line,#262b33);}}
 [data-testid="stToolbar"]{display:flex !important;visibility:visible !important;}
 [data-testid="stExpandSidebarButton"]{display:flex !important;visibility:visible !important;opacity:1 !important;}
 [data-testid="stExpandSidebarButton"] button,[data-testid="stExpandSidebarButton"]{color:var(--teal,#00cc99) !important;}
