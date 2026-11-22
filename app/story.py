@@ -1,4 +1,4 @@
-"""Presenter mode: the pitch as 23 beats, moved with one key (→ / PageDown / Space, back with ← / PageUp).
+"""Presenter mode: the pitch as 20 beats, moved with one key (→ / PageDown / Space, back with ← / PageUp).
 
 Each beat names its page, the block to spotlight (a container key «beat_<anchor>») and the app state it sets
 (factor set, sort, sample company loaded, assistant question). State changes happen only when a beat changes,
@@ -38,25 +38,23 @@ BEATS: list[Beat] = [
     Beat(7, "where-you-stand", "stand_numbers", "Where you stand"),
     Beat(8, "where-you-stand", "stand_map", "Location-based"),
     Beat(9, "where-you-stand", "stand_hotspot", "Hotspot 1"),
-    Beat(10, "your-plan", "gauges", "Three targets, mid", dict(_PLAN_MID_CO2)),
-    Beat(11, "your-plan", "gauges", "Low factors", {"factor_level_label": "Low factors", "plan_sort": "co2"}),
-    Beat(12, "your-plan", "gauges", "High factors", {"factor_level_label": "High factors", "plan_sort": "co2"}),
-    Beat(13, "your-plan", "gauges", "Back to mid", dict(_PLAN_MID_CO2)),
-    Beat(14, "your-plan", "plan_cards", "Optimisations, CO₂ first", dict(_PLAN_MID_CO2)),
-    Beat(15, "your-plan", "plan_cards", "Biggest cost saving", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
-    Beat(16, "your-plan", "plan_map", "CO₂ & Cost map", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
-    Beat(17, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
-    Beat(18, "stay-on-track", "track_top", "Monthly file check"),
-    Beat(19, "stay-on-track", "assistant", "Prompt injection refused", {ASK_KEY: T1251_SAY}),
-    Beat(20, "stay-on-track", "next_year", "Next year + roadmap"),
-    Beat(21, "stay-on-track", "own_ai", "Our own AI"),
-    Beat(22, "stay-on-track", "close", "Basel 2037"),
-    Beat(23, "contact", "talk", "Let’s talk?"),
+    # Re-pitch (22.11.): the old beats 10-12 (mid, low, high) are one beat; the old 18-19 (file check, T-1251) too.
+    Beat(10, "your-plan", "gauges", "All targets, all factor sets", dict(_PLAN_MID_CO2)),
+    Beat(11, "your-plan", "hard_case", "Hard case", dict(_PLAN_MID_CO2)),
+    Beat(12, "your-plan", "plan_cards", "Optimisations, CO₂ first", dict(_PLAN_MID_CO2)),
+    Beat(13, "your-plan", "plan_cards", "Biggest cost saving", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
+    Beat(14, "your-plan", "plan_map", "CO₂ & Cost map", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
+    Beat(15, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
+    Beat(16, "stay-on-track", "injections", "Prompt injections: checked and refused", {ASK_KEY: T1251_SAY}),
+    Beat(17, "stay-on-track", "next_year", "Next year + roadmap"),
+    Beat(18, "stay-on-track", "own_ai", "Our own AI"),
+    Beat(19, "stay-on-track", "close", "Basel 2037"),
+    Beat(20, "contact", "talk", "Let’s talk?"),
 ]
 TOTAL = len(BEATS)
 
 # Highlighted optimisation cards per beat (matched on measure_id / resource in app.py).
-HIGHLIGHT = {14: "first", 15: "licences"}
+HIGHLIGHT = {12: "first", 13: "licences"}
 
 
 def beat(n: int | None = None) -> Beat:
@@ -65,7 +63,7 @@ def beat(n: int | None = None) -> Beat:
 
 
 def current() -> int:
-    """Beat number 1..23. First run in a session reads ?beat= from the URL (survives a refresh)."""
+    """Beat number 1..TOTAL. First run in a session reads ?beat= from the URL (survives a refresh)."""
     if BEAT_KEY not in st.session_state:
         try:
             n = int(st.query_params.get("beat", "1"))
@@ -84,7 +82,7 @@ def apply_state(n: int) -> None:
         st.session_state[k] = v
     if "plan_sort" in b.state:  # the sort widget reads its own key on the next run
         st.session_state["plan_sort_w"] = b.state["plan_sort"]
-    if n != 19:
+    if ASK_KEY not in b.state:  # only the prompt-injection beat types the T-1251 question
         st.session_state.pop(ASK_KEY, None)
 
 
@@ -116,6 +114,7 @@ def spotlight_css(anchor: str) -> str:
 [data-testid="stMain"] [data-testid="stVerticalBlock"]:has({a}) > div:not(:has({a})):not({a}):not(.st-key-story_nav):not(:has(.st-key-story_nav)):not(.st-key-story_js):not(:has(.st-key-story_js)){{opacity:.35;transition:opacity .4s ease;}}
 {a} .gx-pop{{display:block;}}
 {a}{{border-radius:20px;box-shadow:0 0 0 2px var(--teal,#00cc99),0 0 34px 6px rgba(0,204,153,.28);padding:10px 12px;transition:box-shadow .4s ease;}}
+{_EXTRA_STYLE.get(anchor, "").replace("{a}", a)}
 @media (prefers-reduced-motion: no-preference){{
   {a}{{animation:gxBeatIn .5s ease-out both;}}
   {a} .gx-kpi .v,{a} .gx-card .n,{a} .gx-hero h1 em,{a} .gx-sub{{animation:gxRise .9s cubic-bezier(.2,.7,.2,1) both;}}
@@ -132,8 +131,35 @@ def spotlight_css(anchor: str) -> str:
   {a} .st-key-connect_load button{{animation:gxPress .6s ease-out both;}}
   {a} .gx-callout{{animation:gxPop .5s .45s cubic-bezier(.2,.9,.3,1.2) both;}}
   {a} .gx-pop{{animation:gxPop .5s .4s cubic-bezier(.2,.9,.3,1.2) both;}}
+{_EXTRA_MOTION.get(anchor, "").replace("{a}", a)}
 }}
 </style>"""
+
+
+# Merged beats that hold more than one block: compact type so the whole beat fits one 1080 px screen.
+_EXTRA_STYLE = {
+    "injections": """{a} .gx-log .body{padding:10px 16px;}
+{a} .gx-log p{font-size:14px !important;line-height:1.25 !important;margin:0 0 2px !important;}""",
+}
+
+
+# Merged beats: one key press runs the whole sequence (CSS only, nothing waits on the server).
+_EXTRA_MOTION = {
+    # gauges fill on mid (0-0.8 s), then the strip lights low -> mid -> high and ends on mid (1.5 s in all)
+    "gauges": """
+  {a} div[role="img"]{animation-duration:.8s;}
+  {a} .gx-fstrip .lo{animation:gxLitLo 1.5s linear both;}
+  {a} .gx-fstrip .mid{animation:gxLitMid 1.5s linear both;}
+  {a} .gx-fstrip .hi{animation:gxLitHi 1.5s linear both;}""",
+    # the log ticks in (0-1.0 s), then the T-1251 question types in and the refusal appears (2.0 s in all)
+    "injections": """
+  {a} .gx-check p:nth-child(1){animation-delay:0s} {a} .gx-check p:nth-child(2){animation-delay:.1s}
+  {a} .gx-check p:nth-child(3){animation-delay:.2s} {a} .gx-check p:nth-child(4){animation-delay:.3s}
+  {a} .gx-check p:nth-child(5){animation-delay:.4s} {a} .gx-check p:nth-child(6){animation-delay:.5s}
+  {a} .gx-check p:nth-child(7){animation-delay:.6s} {a} .gx-log p:nth-child(n+8){animation-delay:.65s}
+  {a} [data-testid="stChatMessage"]{animation:gxType .45s steps(28,end) 1.05s both;}
+  {a} [data-testid="stChatMessage"]:last-of-type{animation:gxPop .45s 1.55s cubic-bezier(.2,.9,.3,1.2) both;}""",
+}
 
 
 BASE_CSS = """<style>
@@ -144,6 +170,13 @@ BASE_CSS = """<style>
 @keyframes gxDraw{from{opacity:0;transform:rotate(-120deg) scale(.6);}to{opacity:1;transform:none;}}
 @keyframes gxPulse{0%{box-shadow:0 0 0 0 rgba(0,204,153,.7);}100%{box-shadow:0 0 0 14px rgba(0,204,153,0);}}
 @keyframes gxType{from{clip-path:inset(0 100% 0 0);}to{clip-path:inset(0 0 0 0);}}
+@keyframes gxLitLo{0%,52%{background:transparent;color:var(--muted,#9aa3ad);}54%,66%{background:rgba(0,204,153,.22);color:var(--ink,#f2f4f5);}68%,100%{background:transparent;color:var(--muted,#9aa3ad);}}
+@keyframes gxLitMid{0%,66%{background:transparent;color:var(--muted,#9aa3ad);}68%,79%{background:rgba(0,204,153,.22);color:var(--ink,#f2f4f5);}81%,92%{background:transparent;color:var(--muted,#9aa3ad);}94%,100%{background:rgba(0,204,153,.22);color:var(--ink,#f2f4f5);}}
+@keyframes gxLitHi{0%,79%{background:transparent;color:var(--muted,#9aa3ad);}81%,92%{background:rgba(0,204,153,.22);color:var(--ink,#f2f4f5);}94%,100%{background:transparent;color:var(--muted,#9aa3ad);}}
+.gx-fstrip{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 10px;margin:4px 0 8px;font-size:20px;font-weight:700;color:var(--muted,#9aa3ad);}
+.gx-fstrip span{padding:4px 12px;border-radius:999px;}
+.gx-fstrip .mid{background:rgba(0,204,153,.22);color:var(--ink,#f2f4f5);}
+.gx-fstrip .tg{font-weight:600;font-size:17px;}
 @keyframes gxPress{0%{transform:scale(1);}35%{transform:scale(.94);box-shadow:0 0 0 6px rgba(0,204,153,.35);}100%{transform:scale(1);}}
 .gx-card.spot{border-color:var(--teal,#00cc99) !important;box-shadow:0 0 0 2px var(--teal,#00cc99);}
 .st-key-story_nav{position:fixed !important;right:24px !important;bottom:20px !important;top:auto !important;left:auto !important;z-index:1000;display:flex;flex-direction:row;align-items:center;gap:10px;

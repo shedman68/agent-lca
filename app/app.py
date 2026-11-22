@@ -22,7 +22,7 @@ import format_num  # noqa: E402
 import data  # noqa: E402
 import i18n  # noqa: E402
 import plan_sort  # noqa: E402  (order of the optimisation cards)
-import story  # noqa: E402  (presenter mode: 21 beats, one key)
+import story  # noqa: E402  (presenter mode: 20 beats, one key)
 import register  # noqa: E402
 import theme  # noqa: E402  (global look: Grok)
 import ui  # noqa: E402  (page components)
@@ -571,6 +571,10 @@ def page_package(embedded: bool = False, middle=None) -> None:
     with gauges:
         st.html(charts.verdict_html(passed, 3, level.capitalize()))
         st.html(board)
+        if embedded and st.session_state.get(ui.STORY_KEY):
+            strip = _factor_strip()
+            if strip:
+                st.html(strip)
     pcol, ccol, ecol = st.columns(3)
     with pcol.popover(i18n.tr("How CO₂ was calculated")):
         base_co2 = result["base_co2_kg"]
@@ -1308,14 +1312,28 @@ def page_stand() -> None:
     _story_nav(2)
 
 
-def _robustness_line() -> str | None:
+def _factor_strip() -> str | None:
+    """Story mode, beat «All targets, all factor sets»: low / mid / high CO₂ of the package in one strip under the
+    gauges. Values from measures/package_summary.csv (the same file as the robustness line); target from the case."""
+    s = data.package_summary()
+    if s is None:
+        return None
+    lv = [(c, i18n.tr(t), format_num.signed_pct(s[f"co2_pct_{k}"]))
+          for c, t, k in (("lo", "Low", "low"), ("mid", "Mid", "mid"), ("hi", "High", "high"))]
+    cells = "".join(f'<span class="{c}">{t} {v}</span>' for c, t, v in lv)
+    return (f'<div class="gx-fstrip">{cells}<span class="tg">{i18n.tr("target")} −{CO2_TARGET:.0f} %'
+            f'{_ref(_plan_sources(), "Optimisations and package")}</span></div>')
+
+
+def _robustness_line(idle_only: bool = False) -> str | None:
     """R10: one line under the gauges. Low / high from measures/package_summary.csv, idle power (variant B, mid)
-    from factors/kb/V2-idle-impact.csv. Nothing typed."""
+    from factors/kb/V2-idle-impact.csv. Nothing typed. idle_only: story mode, where the strip shows low / high."""
     s = data.package_summary()
     idle = data.idle_impact()
     if s is None:
         return None
-    parts = [f"Low factors {format_num.signed_pct(s['co2_pct_low'])}", f"High {format_num.signed_pct(s['co2_pct_high'])}"]
+    parts = [] if idle_only else [f"Low factors {format_num.signed_pct(s['co2_pct_low'])}",
+                                  f"High {format_num.signed_pct(s['co2_pct_high'])}"]
     if idle is not None and "B_pct" in idle.index and "mid" in idle.columns:
         parts.append(f"if paused servers count at idle power: {format_num.signed_pct(idle.loc['B_pct', 'mid'])}")
     return " · ".join(parts)
@@ -1342,14 +1360,17 @@ def _plan_sort_control() -> str:
 
 def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level: str) -> None:
     """Measures as plain cards, then what we did not touch. Called by page_package between hero and details."""
-    line = _robustness_line()
-    if line:
-        st.html(f'<p class="gx-sub" style="font-size:16px;margin:2px 0 22px">CO₂ {line}</p>')
-    cap_chf = PD_CAP * data.PD_CHF
-    ui.kpis([
-        (f"{result['effort_chf']:,.0f}" + _ref(_plan_sources(), "Optimisations and package"), f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
-                                                                    f"(1 person-day = CHF {data.PD_CHF:,.0f})"),
-    ], good={0} if result["effort_chf"] <= cap_chf else set())
+    story_on = bool(st.session_state.get(ui.STORY_KEY))
+    # Story mode: the hard case (idle power + budget) is its own block, so beat «Hard case» spotlights only that.
+    with (st.container(key="beat_hard_case") if story_on else nullcontext()):
+        line = _robustness_line(idle_only=story_on)
+        if line:
+            st.html(f'<p class="gx-sub" style="font-size:16px;margin:2px 0 22px">CO₂ {line}</p>')
+        cap_chf = PD_CAP * data.PD_CHF
+        ui.kpis([
+            (f"{result['effort_chf']:,.0f}" + _ref(_plan_sources(), "Optimisations and package"), f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
+                                                                        f"(1 person-day = CHF {data.PD_CHF:,.0f})"),
+        ], good={0} if result["effort_chf"] <= cap_chf else set())
     cards_box = st.container(key="beat_plan_cards")
     cards_box.__enter__()
     st.subheader("What the plan does")
@@ -1520,17 +1541,20 @@ def page_track() -> None:
     ui.explain("Your AI assistant:", "each month it reads the new exports, checks every file, and asks a person "
                "only about the risky ones.")
     ui.explain("Prompt injection:", "hidden text in the data that tries to give orders to an AI.")
-    log = _activity_log()
-    n_bad, n_warn, n_ok = (sum(1 for r in log if r[0] == k) for k in ("bad", "warn", "ok"))
-    st.html(ui.activity_log("assistant · monthly check · ALTYCA-case.json", log,
-                            f"{n_bad} blocked · {n_warn} need a person · rest clean · human in the loop decides"))
-    examples = assistant.example_questions()
-    # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
-    # full addressable figure differs from measure M2 on the previous page (M2 counts 75 % of the energy).
-    questions = [q for q in examples if "production platform" in q.lower() or "seats" in q.lower()][:2] + [T1251_PROMPT]
-    # inside a container the chat box sits under the questions, not pinned to the page bottom
-    with st.container(key="beat_assistant"):
-        assistant.render_assistant(embedded=True, questions=questions)
+    # One block for the monthly check and the assistant: beat «Prompt injections: checked and refused».
+    inj = st.container(key="beat_injections")
+    with inj:
+        log = _activity_log()
+        n_bad, n_warn, n_ok = (sum(1 for r in log if r[0] == k) for k in ("bad", "warn", "ok"))
+        st.html(ui.activity_log("assistant · monthly check · ALTYCA-case.json", log,
+                                f"{n_bad} blocked · {n_warn} need a person · rest clean · human in the loop decides"))
+        examples = assistant.example_questions()
+        # Production at night (a protection window) and idle AI seats; the GPU example is left out because its
+        # full addressable figure differs from measure M2 on the previous page (M2 counts 75 % of the energy).
+        questions = [q for q in examples if "production platform" in q.lower() or "seats" in q.lower()][:2] + [T1251_PROMPT]
+        # inside a container the chat box sits under the questions, not pinned to the page bottom
+        with st.container(key="beat_assistant"):
+            assistant.render_assistant(embedded=True, questions=questions)
     top.__exit__(None, None, None)
     ny = st.container(key="beat_next_year")
     ny.__enter__()
