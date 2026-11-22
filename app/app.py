@@ -28,6 +28,32 @@ import theme  # noqa: E402  (global look: Grok)
 import ui  # noqa: E402  (page components)
 import visuals  # noqa: E402  (drawn SVG visuals)
 from contextlib import nullcontext  # noqa: E402
+import importlib  # noqa: E402
+
+
+def _fresh(mod):
+    """Reload a local module when its file changed since it was loaded.
+
+    Streamlit reruns app.py after an update but can keep the old copies of the modules it imports (seen on
+    Streamlit Cloud: new app.py called ui.sources, the old ui had none). reload() re-executes the module in
+    the same module object, so every reference to it stays valid."""
+    try:
+        t = Path(mod.__file__).stat().st_mtime
+    except (OSError, TypeError, AttributeError):
+        return mod
+    seen = getattr(mod, "_gx_mtime", None)
+    if seen is not None and seen != t:
+        try:
+            importlib.reload(mod)
+        except Exception:  # a half-written file during an update: keep the loaded copy, try again next run
+            return mod
+    mod._gx_mtime = t
+    return mod
+
+
+# Dependencies first: i18n and data are used by the others.
+for _m in (i18n, format_num, data, register, plan_sort, story, theme, charts, visuals, ui, assistant):
+    _fresh(_m)
 
 _STATIC = Path(__file__).resolve().parent / "static"
 st.set_page_config(page_title="AgentLCA", page_icon=str(_STATIC / "leaf.png") if (_STATIC / "leaf.png").is_file() else "🍃",
