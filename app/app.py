@@ -1088,6 +1088,9 @@ BASEL_LINE = ("Built for ALTYCA × Basel 2037: an approach every Basel SME can a
               "and lower indirect emissions of the Basel economy; this is a tested method for advising and funding SMEs.")
 
 
+_ABOUT_SRC = [DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py")]
+
+
 def page_about() -> None:
     """The opening of the pitch (no slides): brand story first, then the promise, then the chapters."""
     _story_top(0)
@@ -1116,10 +1119,11 @@ def page_about() -> None:
             ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
     with st.container(key="beat_promise"):
         if s is not None:
+            r_pkg = _ref(_ABOUT_SRC, "Package figures")
             ui.kpis([
-                (format_num.signed_pct(s["co2_pct_mid"]), "", "CO₂ per year, mid factors"),
-                (format_num.signed_pct(s["chf_pct"]), "", f"Cost per year · CHF {float(s['chf']):,.0f} saved"),
-                (f"{float(s['effort_pd']):.1f}", f"of {PD_CAP:.0f} person-days", "To implement"),
+                (format_num.signed_pct(s["co2_pct_mid"]) + r_pkg, "", "CO₂ per year, mid factors"),
+                (format_num.signed_pct(s["chf_pct"]) + r_pkg, "", f"Cost per year · CHF {float(s['chf']):,.0f} saved"),
+                (f"{float(s['effort_pd']):.1f}" + r_pkg, f"of {PD_CAP:.0f} person-days", "To implement"),
             ], good={0})
         st.markdown("**Nothing critical is switched off.** For IT, management and finance of Basel SMEs.")
         ui.explain("Person-day:", f"one person's working day. The case allows {PD_CAP:.0f}.")
@@ -1149,8 +1153,15 @@ def page_about() -> None:
             "electricity and CO₂ hide in many systems, providers and three currencies, in data centres in Zurich, "
             "Frankfurt and Dublin, while the decisions are made in Basel.\n\n"
             f"**Why it matters.** {BASEL_LINE}")
-    _sources(DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py"))
+    _sources(*_ABOUT_SRC)
     _story_nav(0)
+
+
+def _connect_sources():
+    return [DATA_SRC, ("Files, rows and corrections", "data/ and data/extra/ (file list), out/fact_costs.csv, "
+                                                     "out/quality_log.csv, out/contradiction_checks.csv"),
+            ("Spend → carbon cost", "out/fact_costs.csv, built by pipeline/pipeline.py; checked by an independent "
+                                   "recalculation (pipeline/verify_baseline.py: MATCH)"), *_grid_sources()]
 
 
 def page_connect() -> None:
@@ -1201,7 +1212,8 @@ def page_connect() -> None:
     result = (f'{i18n.tr("Calculation of")} <span class="lbl">{i18n.tr("SPEND")}:</span> '
               f'<span class="gx-num">CHF&nbsp;{e["cost_chf"]:,.0f}</span> = '
               f'<span class="lbl">{i18n.tr("CARBON COST")}:</span> '
-              f'<span class="gx-num">{_tonnes(e["co2_mid"])}&nbsp;t&nbsp;CO₂</span>')
+              f'<span class="gx-num">{_tonnes(e["co2_mid"])}&nbsp;t&nbsp;CO₂</span>'
+              + _ref(_connect_sources(), "Spend → carbon cost"))
     # Demo flow (CSS only, ≈5 s): the files drop into the box, then the agent works through them like a terminal.
     core = sorted(p_.name for p_ in (data.ROOT / "data").glob("*") if p_.suffix in (".csv", ".jsonl")
                   and not p_.name.startswith("template_"))
@@ -1213,10 +1225,7 @@ def page_connect() -> None:
         st.markdown("Files counted in `data/` and `data/extra/`; rows, currencies and sources from `out/fact_costs.csv`; "
                     "corrections from `out/quality_log.csv`; cross-checks from `out/contradiction_checks.csv`. "
                     "Built by `pipeline/pipeline.py`; the baseline matches an independent recalculation (MATCH).")
-    _sources(DATA_SRC, ("Files, rows and corrections", "data/ and data/extra/ (file list), out/fact_costs.csv, out/quality_log.csv, "
-                                                  "out/contradiction_checks.csv"),
-             ("Spend → carbon cost", "out/fact_costs.csv, built by pipeline/pipeline.py; checked by an independent "
-                                    "recalculation (pipeline/verify_baseline.py: MATCH)"), *_grid_sources())
+    _sources(*_connect_sources())
     _story_nav(1)
 
 
@@ -1545,9 +1554,9 @@ def page_track() -> None:
                 note=i18n.tr("Cumulative t CO₂ over the next 12 months, mid factors. The saving is spread over the "
                              "months in proportion to their CO₂ (simplified).")) + "</div>")
         ui.grid([
-            ui.card("Without the plan", "Usage as in the baseline year.", _tonnes(rng["mid"][0]), "t CO₂",
+            ui.card("Without the plan", "Usage as in the baseline year.", _tonnes(rng["mid"][0]) + _ref(_track_sources(), "Next year"), "t CO₂",
                     f"Range {_tonnes(rng['low'][0])}–{_tonnes(rng['high'][0])} t · CHF {e['cost_chf']:,.0f} a year"),
-            ui.card("With the plan", "Same usage, optimisations in place for a full year.", _tonnes(rng["mid"][1]), "t CO₂",
+            ui.card("With the plan", "Same usage, optimisations in place for a full year.", _tonnes(rng["mid"][1]) + _ref(_track_sources(), "Next year"), "t CO₂",
                     f"Range {_tonnes(rng['low'][1])}–{_tonnes(rng['high'][1])} t · CHF {with_chf:,.0f} a year", kind="accent"),
         ])
         one_off = data.one_off_total()
@@ -1580,7 +1589,7 @@ def page_track() -> None:
                                "Mid factors, counted so far. The logs show tokens per session, not what they were for, "
                                "so there is no split by activity.")
         cards.append(ui.card("Our own AI use this weekend", "Building this with AI agents, counted so far.",
-                             f"{float(t['co2_kg_mid']):,.1f}", "kg CO₂",
+                             f"{float(t['co2_kg_mid']):,.1f}" + _ref(_track_sources(), "Our own AI use"), "kg CO₂",
                              f"Range {float(t['co2_kg_low']):,.1f}–{float(t['co2_kg_high']):,.1f} kg · "
                              f"{float(t['kwh_mid']):,.1f} kWh"
                              + (f" · the plan saves that in about {hours:,.0f} hours" if hours else ""),
@@ -1610,13 +1619,17 @@ def page_track() -> None:
             "</ul></div>")
     close.__exit__(None, None, None)
     ui.bridge("Next: let's talk.")
-    _sources(DATA_SRC, ("Next year", "out/fact_costs.csv (baseline year repeated) and measures/package_summary.csv"),
-             ("File check and prompt injections", "out/quality_log.csv, docs/protected.csv, analysis/kb/reconciliation_checks.csv"),
-             ("Our own AI use", "factors/kb/V6-tokens.csv → factors/kb/V6-result.csv (Vinzenz, V6; own session logs)"),
-             _factor_src("tokens_in_1000_large", "Energy per 1,000 input tokens, large model"),
-             _factor_src("tokens_out_1000_large", "Energy per 1,000 output tokens, large model"),
-             _factor_src("cache_read_share", "Cache reads vs fresh input"), *_grid_sources())
+    _sources(*_track_sources())
     _story_nav(4)
+
+
+def _track_sources():
+    return [DATA_SRC, ("Next year", "out/fact_costs.csv (baseline year repeated) and measures/package_summary.csv"),
+            ("File check and prompt injections", "out/quality_log.csv, docs/protected.csv, analysis/kb/reconciliation_checks.csv"),
+            ("Our own AI use", "factors/kb/V6-tokens.csv → factors/kb/V6-result.csv (Vinzenz, V6; own session logs)"),
+            _factor_src("tokens_in_1000_large", "Energy per 1,000 input tokens, large model"),
+            _factor_src("tokens_out_1000_large", "Energy per 1,000 output tokens, large model"),
+            _factor_src("cache_read_share", "Cache reads vs fresh input"), *_grid_sources()]
 
 
 def page_behind() -> None:
