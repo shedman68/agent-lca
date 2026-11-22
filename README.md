@@ -52,6 +52,35 @@ Biggest hotspot: a development data platform in Frankfurt runs 24/7 but is used 
 
 We built this with AI agents and counted it: **about 4.1 kg CO₂** (mid; range 0.3–70.1 kg) for the weekend so far, from session logs (`factors/kb/V6-our-ai-footprint.md`). The plan saves that in about 13 hours.
 
+### Tokens, energy and CO₂ per team member
+
+Window: Fri 20.11. 18:00 until the time stamp of each row in [`factors/kb/V6-tokens.csv`](factors/kb/V6-tokens.csv). Results from [`factors/kb/V6-result.csv`](factors/kb/V6-result.csv) (`factors/own_ai.py`), factors from `factors/factors.csv`, grid `grid_EU`.
+
+| Who (tools) | Tokens in (total) | of which cache reads | Tokens out | Energy kWh (low / **mid** / high) | CO₂ kg (low / **mid** / high) |
+|---|---:|---:|---:|---|---|
+| Rashed (Claude Code cloud: chief-of-staff + build sessions) | 672.3 M | 660.1 M | 1.36 M | 0.82 / **10.4** / 164.2 | 0.17 / **2.84** / 52.4 |
+| Hakim (Claude Code) | 141.9 M | 133.8 M | 0.44 M | 0.27 / **2.9** / 35.1 | 0.06 / **0.79** / 11.2 |
+| Vinzenz (Claude Code) | 52.2 M | 49.5 M | 0.30 M | 0.13 / **1.1** / 13.4 | 0.03 / **0.31** / 4.3 |
+| Grok (Cursor, Rashed's account) | 28.9 M | 28.2 M | 0.08 M | 0.04 / **0.5** / 7.1 | 0.01 / **0.13** / 2.3 |
+| **Total** | **895.3 M** | **871.6 M (97 %)** | **2.17 M** | 1.26 / **15.0** / 219.8 | 0.26 / **4.07** / 70.1 |
+
+- 97 % of the input tokens are cache reads, which cost far less energy than fresh tokens. How they are counted (`cache_read_share`) explains most of the gap between low and high.
+- The high case is about 15× the mid because published energy-per-token figures differ that much.
+- Not counted: Rashed's Friday VS Code session on his Mac, and Rashed's chief-of-staff session after 21.11. 12:07Z. Rashed's and Hakim's rows are counts made by their own agents; Grok's split is an assumption (Cursor shows one total, about 29 M).
+
+### Hours spent working with AI agents (estimate)
+
+No one logged time, so these hours are **estimated from activity traces**: every 30-minute slot with at least one commit by that person's agent (git history, all branches) or, for Rashed, one message in his chief-of-staff Claude chat. Window Fri 20.11. 21:30 to Sun 22.11. 11:00 (local time).
+
+| Who | Active hours (estimate) | Based on |
+|---|---:|---|
+| Rashed (product lead; Claude Code cloud + chief-of-staff chat) | **about 26 h** | 155 commits + 1,457 chat entries |
+| Grok (AI agent in Cursor, working for Rashed) | about 6.5 h | 35 commits |
+| Vinzenz (energy & environment) | at least 6 h | 25 commits |
+| Hakim (data analysis) | at least 3 h | 18 commits |
+
+Commits undercount people who worked in long agent sessions with few commits: Hakim's agent made 493 responses and Vinzenz's 348 (`V6-tokens.csv`), so their real hours are higher. Hakim and Vinzenz can replace their row with the span of their own session logs (first and last `timestamp` in `~/.claude/projects/**/*.jsonl`).
+
 ## Repository map
 
 | Folder | What is in it | Owner |
