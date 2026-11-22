@@ -48,6 +48,10 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+[data-testid="stToolbar"]{display:flex !important;visibility:visible !important;}
+[data-testid="stExpandSidebarButton"]{display:flex !important;visibility:visible !important;opacity:1 !important;}
+[data-testid="stExpandSidebarButton"] button,[data-testid="stExpandSidebarButton"]{color:var(--teal,#00cc99) !important;}
+[data-testid="stHeaderLogo"]{display:block !important;visibility:visible !important;}
 .gx-card .n.has-pop{position:relative;cursor:help;display:inline-block;}
 .gx-pop{display:none;position:absolute;z-index:20;right:calc(100% + 34px);top:-40px;width:330px;background:#0a0c0f;
   border:1px solid var(--teal,#00cc99);border-radius:14px;padding:14px 16px;box-shadow:0 16px 40px rgba(0,0,0,.5);
