@@ -1,4 +1,4 @@
-"""Presenter mode: the pitch as 18 beats, moved with one key (→ / PageDown / Space, back with ← / PageUp).
+"""Presenter mode: the pitch as 17 beats, moved with one key (→ / PageDown / Space, back with ← / PageUp).
 
 Each beat names its page, the block to spotlight (a container key «beat_<anchor>») and the app state it sets
 (factor set, sort, sample company loaded, assistant question). State changes happen only when a beat changes,
@@ -31,29 +31,28 @@ _PLAN_MID_CO2 = {"factor_level_label": "Mid factors", "plan_sort": "co2"}
 BEATS: list[Beat] = [
     # Re-pitch (22.11.): old beats 1-3 (headline, team, why the name) are one beat with the org chart.
     Beat(1, "about", "intro", "Who we are: humans and agents"),
-    Beat(2, "about", "promise", "Promise"),
-    Beat(3, "connect", "connect_hero", "Upload"),
-    Beat(4, "connect", "connect_run", "Sample company", {"connected": True}),
-    Beat(5, "where-you-stand", "stand_numbers", "Where you stand"),
-    Beat(6, "where-you-stand", "stand_map", "Location-based"),
-    Beat(7, "where-you-stand", "stand_hotspot", "Hotspot 1"),
+    Beat(2, "connect", "connect_hero", "Upload"),
+    Beat(3, "connect", "connect_run", "Sample company", {"connected": True}),
+    Beat(4, "where-you-stand", "stand_numbers", "Where you stand"),
+    Beat(5, "where-you-stand", "stand_map", "Location-based"),
+    Beat(6, "where-you-stand", "stand_hotspot", "Hotspot 1"),
     # Re-pitch (22.11.): the old beats 10-12 (mid, low, high) are one beat; the old 18-19 (file check, T-1251) too.
-    Beat(8, "your-plan", "gauges", "All targets, all factor sets", dict(_PLAN_MID_CO2)),
-    Beat(9, "your-plan", "hard_case", "Hard case", dict(_PLAN_MID_CO2)),
-    Beat(10, "your-plan", "plan_cards", "Optimisations, CO₂ first", dict(_PLAN_MID_CO2)),
-    Beat(11, "your-plan", "plan_cards", "Biggest cost saving", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
-    Beat(12, "your-plan", "plan_map", "CO₂ & Cost map", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
-    Beat(13, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
-    Beat(14, "stay-on-track", "injections", "Prompt injections: checked and refused", {ASK_KEY: T1251_SAY}),
-    Beat(15, "stay-on-track", "next_year", "Next year + roadmap"),
-    Beat(16, "stay-on-track", "own_ai", "Our own AI"),
-    Beat(17, "stay-on-track", "close", "Basel 2037"),
-    Beat(18, "contact", "talk", "Let’s talk?"),
+    Beat(7, "your-plan", "gauges", "All targets, all factor sets", dict(_PLAN_MID_CO2)),
+    Beat(8, "your-plan", "hard_case", "Hard case", dict(_PLAN_MID_CO2)),
+    Beat(9, "your-plan", "plan_cards", "Optimisations, CO₂ first", dict(_PLAN_MID_CO2)),
+    Beat(10, "your-plan", "plan_cards", "Biggest cost saving", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
+    Beat(11, "your-plan", "plan_map", "CO₂ & Cost map", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
+    Beat(12, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "both"}),
+    Beat(13, "stay-on-track", "injections", "Prompt injections: checked and refused", {ASK_KEY: T1251_SAY}),
+    Beat(14, "stay-on-track", "next_year", "Next year + roadmap"),
+    Beat(15, "stay-on-track", "own_ai", "Our own AI"),
+    Beat(16, "stay-on-track", "close", "Basel 2037"),
+    Beat(17, "contact", "talk", "Let’s talk?"),
 ]
 TOTAL = len(BEATS)
 
 # Highlighted optimisation cards per beat (matched on measure_id / resource in app.py).
-HIGHLIGHT = {10: "first", 11: "licences"}
+HIGHLIGHT = {9: "first", 10: "licences"}
 
 
 def beat(n: int | None = None) -> Beat:

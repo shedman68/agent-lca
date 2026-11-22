@@ -1092,9 +1092,6 @@ BASEL_LINE = ("Built for ALTYCA × Basel 2037: an approach every Basel SME can a
               "and lower indirect emissions of the Basel economy; this is a tested method for advising and funding SMEs.")
 
 
-_ABOUT_SRC = [DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py")]
-
-
 # How we worked (About, beat 1): who decides and which agent does the leg work. Source: AGENTS.md (team, ownership, tools,
 # Slack protocol, Notion board, Stop hook, trap-reviewer) and README «AI tools». Linear was not used: shown as «next».
 ORG = [
@@ -1128,20 +1125,6 @@ def page_about() -> None:
                 photo="about")
         ui._raw(ui.org_chart(ORG, ORG_FLOW, ORG_TOOLS, light=bool(st.session_state.get("light_mode", False)),
                              ends=ORG_ENDS, agents_step="Agents analyse", humans_step="Humans review", roll=ORG_ROLL))
-        # LCA: a small still ring next to the card, side by side also on a phone (the beat already moves enough).
-        ring = visuals.lifecycle(light=bool(st.session_state.get("light_mode", False)), animate=False)
-        ui._raw(f'<div class="gx-lca"><div class="ring">{ring}</div>'
-                + ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name") + "</div>")
-    with st.container(key="beat_promise"):
-        if s is not None:
-            r_pkg = _ref(_ABOUT_SRC, "Package figures")
-            ui.kpis([
-                (format_num.signed_pct(s["co2_pct_mid"]) + r_pkg, "", "CO₂ per year, mid factors"),
-                (format_num.signed_pct(s["chf_pct"]) + r_pkg, "", f"Cost per year · CHF {float(s['chf']):,.0f} saved"),
-                (f"{float(s['effort_pd']):.1f}" + r_pkg, f"of {PD_CAP:.0f} person-days", "To implement"),
-            ], good={0})
-        st.markdown("**Nothing critical is switched off.** For IT, management and finance of Basel SMEs.")
-        ui.explain("Person-day:", f"one person's working day. The case allows {PD_CAP:.0f}.")
     chapters = [(i, STORY[i][2], text) for i, text in [
         (1, "Upload the exports. Get one overall picture."), (2, "Where CO₂ and cost go, by department and tool."),
         (3, "The plan against target and budget, and what we do not touch."),
@@ -1168,7 +1151,7 @@ def page_about() -> None:
             "electricity and CO₂ hide in many systems, providers and three currencies, in data centres in Zurich, "
             "Frankfurt and Dublin, while the decisions are made in Basel.\n\n"
             f"**Why it matters.** {BASEL_LINE}")
-    _sources(*_ABOUT_SRC)
+    # No «Sources» footer on About (Rashed, 22.11.): the page shows no calculated figure any more.
     _story_nav(0)
 
 
