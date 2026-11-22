@@ -172,7 +172,7 @@ def verdict_html(passed: int, total: int, level: str) -> str:
 
 
 def gauge_board_html(co2: dict, cost: dict, effort: dict) -> str:
-    """Three equal rings in one row, CO2 first: each value and PASS/MISS is readable on a projector from 3 m."""
+    """Three equal rings in one row, CO₂ first: each value and PASS/MISS is readable on a projector from 3 m."""
     p = pal()
     rings = [_ring(g["fill"], g["status"], g["center"], g["sub"], 250, g["caption"]) for g in (co2, cost, effort)]
     cells = "".join(f'<div style="flex:1 1 260px;display:flex;justify-content:center">{r}</div>' for r in rings)
@@ -213,9 +213,9 @@ def meter_list_html(rows: list[dict]) -> str:
     return "".join(out)
 
 
-def optimisation_map(df: pd.DataFrame, x_title: str = "CO2 saved (kg per year)", y_title: str = "CHF saved per year",
+def optimisation_map(df: pd.DataFrame, x_title: str = "CO₂ saved (kg per year)", y_title: str = "CHF saved per year",
                      size_title: str = "Person-days") -> alt.Chart:
-    """CO2 against CHF per optimisation, one hue. Columns: co2, chf, pd, label, name. Dot size = person-days.
+    """CO₂ against CHF per optimisation, one hue. Columns: co2, chf, pd, label, name. Dot size = person-days.
     Licence optimisations sit on the y-axis (0 kg): that is correct, they save francs only."""
     p = pal()
     d = df.copy()
@@ -226,7 +226,7 @@ def optimisation_map(df: pd.DataFrame, x_title: str = "CO2 saved (kg per year)",
     ymax = float(d["chf"].max()) if len(d) else 0.0
     xs = alt.Scale(domain=[0, xmax * 1.35 if xmax else 1], nice=False)
     ys = alt.Scale(domain=[0, ymax * 1.15 if ymax else 1], nice=False)
-    tips = [alt.Tooltip("name:N", title="Optimisation"), alt.Tooltip("_co2:N", title="CO2"),
+    tips = [alt.Tooltip("name:N", title="Optimisation"), alt.Tooltip("_co2:N", title="CO₂"),
             alt.Tooltip("_chf:N", title="CHF"), alt.Tooltip("_pd:N", title=size_title)]
     base = alt.Chart(d).encode(
         x=alt.X("co2:Q", scale=xs, axis=alt.Axis(title=x_title, format=",.0f", tickCount=4, labelFontSize=14, titleFontSize=15)),

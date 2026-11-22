@@ -34,7 +34,7 @@ DE: dict[str, str] = {
     # overview
     "Baseline year": "Basisjahr",
     "every number from": "jede Zahl aus",
-    "Location-based CO2 per year": "Standortbasiertes CO2 pro Jahr",
+    "Location-based CO₂ per year": "Standortbasiertes CO₂ pro Jahr",
     " factors</div>": " Faktoren</div>",
     "on low and high factors": "bei tiefen und hohen Faktoren",
     "Energy (": "Energie (",
@@ -42,7 +42,7 @@ DE: dict[str, str] = {
     "Same on every factor set": "Gleich bei jedem Faktorensatz",
     "How this number was calculated": "So wurde diese Zahl berechnet",
     "accounts for": "verursacht",
-    "of the CO2, and": "des CO2, und",
+    "of the CO₂, and": "des CO₂, und",
     "is the largest resource at": "ist die grösste Ressource mit",
     "The chart shows": "Die Grafik zeigt",
     "By department": "Nach Abteilung",
@@ -63,16 +63,16 @@ DE: dict[str, str] = {
     "Table view": "Tabelle",
     "Cost": "Kosten",
     # findings
-    "Ranked by addressable CO2 (location-based, mid factors)": "Sortiert nach adressierbarem CO2 (standortbasiert, mittlere Faktoren)",
+    "Ranked by addressable CO₂ (location-based, mid factors)": "Sortiert nach adressierbarem CO₂ (standortbasiert, mittlere Faktoren)",
     "How to read this page": "So liest man diese Seite",
     "Largest:": "Grösster:",
-    "CO2 a year": "CO2 pro Jahr",
+    "CO₂ a year": "CO₂ pro Jahr",
     "Needs human review": "Braucht menschliche Prüfung",
     "Candidate": "Kandidat",
     "Protected: keep": "Geschützt: behalten",
     "Idle or unused": "Ungenutzt",
     "Energy, mid": "Energie, mittel",
-    "CO2, location-based mid": "CO2, standortbasiert mittel",
+    "CO₂, location-based mid": "CO₂, standortbasiert mittel",
     "Baseline cost of the resource:": "Basiskosten der Ressource:",
     "Resource ": "Ressource ",
     "Evidence:": "Beleg:",
@@ -90,14 +90,14 @@ DE: dict[str, str] = {
     "targets missed": "Ziele verfehlt",
     "All ": "Alle ",
     " of ": " von ",
-    "CO2 reduction": "CO2-Reduktion",
+    "CO₂ reduction": "CO₂-Reduktion",
     "Cost reduction": "Kostenreduktion",
     "Budget": "Budget",
     "target ": "Ziel ",
     "PASS": "ERFÜLLT",
     "MISS": "VERFEHLT",
     "CLOSE": "KNAPP",
-    "How CO2 was calculated": "So wurde CO2 berechnet",
+    "How CO₂ was calculated": "So wurde CO₂ berechnet",
     "How cost was calculated": "So wurden die Kosten berechnet",
     "How the budget was calculated": "So wurde das Budget berechnet",
     "Energy saved, mid factor only:": "Eingesparte Energie, nur mittlerer Faktor:",
@@ -126,30 +126,30 @@ DE: dict[str, str] = {
     "Nothing on this page is added to the package.": "Nichts auf dieser Seite wird zum Paket addiert.",
     "From ": "Aus ",
     "Our own AI use": "Unsere eigene KI-Nutzung",
-    "CO2 saved": "CO2 eingespart",
+    "CO₂ saved": "CO₂ eingespart",
     "Cost saved": "Kosten eingespart",
     "Energy saved, mid": "Energie eingespart, mittel",
     "Effort": "Aufwand",
     "Energy saved uses the mid factor only (the optimisation file stores one energy column).":
         "Energieeinsparung nur mit mittlerem Faktor (die Massnahmendatei speichert eine Energiespalte).",
     # phone polish: short labels and plain words. No digits, so German shows the same figures.
-    "CO2 per year": "CO2 pro Jahr",
+    "CO₂ per year": "CO₂ pro Jahr",
     "Location-based: electricity mix of the country where it runs, not a green certificate.":
         "Standortbasiert: Strommix des Landes, in dem es läuft, kein Grünstromzertifikat.",
-    "CO2 here is location-based: the electricity mix where the server runs, not a green-power certificate.":
-        "CO2 hier ist standortbasiert: der Strommix dort, wo der Server läuft, kein Grünstromzertifikat.",
+    "CO₂ here is location-based: the electricity mix where the server runs, not a green-power certificate.":
+        "CO₂ hier ist standortbasiert: der Strommix dort, wo der Server läuft, kein Grünstromzertifikat.",
     "Low, mid and high are three factor sets. The cards use the one you pick. Cost does not change.":
         "Tief, mittel und hoch sind drei Faktorensätze. Die Karten nutzen den gewählten. Die Kosten ändern sich nicht.",
     "PUE (extra electricity for cooling and the building)":
         "PUE (zusätzlicher Strom für Kühlung und Gebäude)",
     "Addressable means that idle or unused part.":
         "Adressierbar meint diesen ungenutzten Teil.",
-    "Country is where the work runs. CO2 uses that country's electricity mix, not a certificate. AI providers and SaaS are «EU mixed».":
-        "Das Land ist dort, wo die Arbeit läuft. CO2 nutzt den Strommix dieses Landes, kein Zertifikat. KI-Anbieter und SaaS sind «EU mixed».",
+    "Country is where the work runs. CO₂ uses that country's electricity mix, not a certificate. AI providers and SaaS are «EU mixed».":
+        "Das Land ist dort, wo die Arbeit läuft. CO₂ nutzt den Strommix dieses Landes, kein Zertifikat. KI-Anbieter und SaaS sind «EU mixed».",
     "On a phone, swipe the optimisation table sideways. The gauges above follow the ticks.":
         "Auf dem Telefon die Massnahmentabelle seitlich wischen. Die Anzeigen oben folgen den Häkchen.",
     "Our AI use during the sprint": "Unsere KI-Nutzung im Sprint",
-    "location-based CO2, mid factors": "standortbasiertes CO2, mittlere Faktoren",
+    "location-based CO₂, mid factors": "standortbasiertes CO₂, mittlere Faktoren",
     "Counted so far:": "Bisher gezählt:",
     "Not counted yet:": "Noch nicht gezählt:",
     "Method and tokens (V6 note)": "Methode und Tokens (V6-Notiz)",
@@ -171,15 +171,15 @@ DE: dict[str, str] = {
     "Connect": "Verbinden",
     "Extra sources used:": "Weitere Quellen genutzt:",
     "Sort": "Sortieren",
-    "Biggest CO2 saving": "Grösste CO2-Einsparung",
+    "Biggest CO₂ saving": "Grösste CO₂-Einsparung",
     "Biggest cost saving": "Grösste Kosteneinsparung",
-    "CO2 and cost together": "CO2 und Kosten zusammen",
-    "CO2 saved (kg per year)": "CO2 eingespart (kg pro Jahr)",
+    "CO₂ and cost together": "CO₂ und Kosten zusammen",
+    "CO₂ saved (kg per year)": "CO₂ eingespart (kg pro Jahr)",
     "CHF saved per year": "CHF eingespart pro Jahr",
     "Person-days": "Personentage",
-    "Sorted by share of the total CO2 saving plus share of the total cost saving. Licence optimisations save no CO2, so they sit on the left edge.":
-        "Sortiert nach Anteil an der gesamten CO2-Einsparung plus Anteil an der gesamten Kosteneinsparung. "
-        "Lizenz-Massnahmen sparen kein CO2, deshalb stehen sie am linken Rand.",
+    "Sorted by share of the total CO₂ saving plus share of the total cost saving. Licence optimisations save no CO₂, so they sit on the left edge.":
+        "Sortiert nach Anteil an der gesamten CO₂-Einsparung plus Anteil an der gesamten Kosteneinsparung. "
+        "Lizenz-Massnahmen sparen kein CO₂, deshalb stehen sie am linken Rand.",
     "Training days restart paused machines. Night jobs and month-end keep production at full size. "
     "The test environment stays unchanged 1–31 March 2026 (T-1204): release freeze and acceptance test. Backups stay.":
         "Trainingstage starten pausierte Maschinen neu. Nachtjobs und Monatsende halten die Produktion auf voller Grösse. "
@@ -196,7 +196,8 @@ DE: dict[str, str] = {
     "Story mode": "Story-Modus",
     "Light mode (projector)": "Heller Modus (Beamer)",
     "The plan meets all three targets.": "Der Plan erreicht alle drei Ziele.",
-    "Three places give most of the savings.": "Drei Stellen bringen den Grossteil der Einsparung.",
+    "Optimisations found in ": "Optimierungen gefunden an ",
+    " locations.": " Orten.",
     "What we did not touch, and why": "Was wir nicht anfassen, und warum",
     "Next: GreenOps agents": "Als Nächstes: GreenOps-Agenten",
     "Roadmap · not built yet": "Roadmap · noch nicht gebaut",
@@ -207,7 +208,7 @@ DE: dict[str, str] = {
     "The story in four steps": "Die Geschichte in vier Schritten",
     "What the plan does": "Was der Plan tut",
     "Owner": "Verantwortlich",
-    "By department and tool, CO2 first": "Nach Abteilung und Tool, CO2 zuerst",
+    "By department and tool, CO₂ first": "Nach Abteilung und Tool, CO₂ zuerst",
     "By department": "Nach Abteilung",
     "Everything has a <em>lifecycle.</em>": "Alles hat einen <em>Lebenszyklus.</em>",
     "Our story": "Unsere Geschichte",
@@ -225,7 +226,7 @@ LABEL_ONLY = {" of ", "All ", "Cost", "From ", "Range ", "target ", "Resource ",
               "Budget", "Candidate", "Package", "Findings", "Next year", "Energy (", " factors</div>", "PASS", "MISS",
               "CLOSE", "Table view", "Baseline year",
               # #65/#68 review: KPI labels that also occur in assistant answers stay out of markdown
-              "Effort", "CO2 per year", "CO2 saved", "Cost saved", "Energy saved, mid",
+              "Effort", "CO₂ per year", "CO₂ saved", "Cost saved", "Energy saved, mid",
               # R9: short page names, translated only where they are our labels
               "Where you stand", "Your plan", "Stay on track", "Behind the numbers", "Without the plan",
               "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name", "Data", "Know the limits", "Product lead", "Energy and environment expert", "Data expert", "Sort"}

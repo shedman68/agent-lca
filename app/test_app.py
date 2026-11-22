@@ -435,7 +435,7 @@ class RobustnessTests(unittest.TestCase):
             package = _open(low, "package")
             self.assertFalse(package.exception, package.exception)
 
-        # Every grid row missing: mid CO2 is empty. Findings must not divide by that total.
+        # Every grid row missing: mid CO₂ is empty. Findings must not divide by that total.
         blank_all = frame.copy()
         for col in energy:
             blank_all[col] = pd.NA
@@ -664,7 +664,7 @@ class StoryTests(unittest.TestCase):
         chf_share = chf[res.isin(["dp-dev", "dp-prod"]) | seats].sum() / chf.sum()
         page = _open(self._app(), "where-you-stand")
         shown = " ".join(c.value for c in page.caption)
-        self.assertIn(f"{co2_share:.0%} of the plan's CO2 savings", shown)
+        self.assertIn(f"{co2_share:.0%} of the plan's CO₂ savings", shown)
         self.assertIn(f"{chf_share:.0%} of its cost savings", shown)
 
     def test_ui_css_stays_inside_the_theme_contract(self):
@@ -735,7 +735,7 @@ class UiDataTextTests(unittest.TestCase):
         import ui
 
         with mock.patch.object(i18n, "is_de", return_value=True):
-            html = ui.card("Run the GPU server on demand instead of 24/7", "", "325", "kg CO2 a year",
+            html = ui.card("Run the GPU server on demand instead of 24/7", "", "325", "kg CO₂ a year",
                            f"1.0 person-days · {i18n.tr('Owner')}: {ui.esc('Head of IT')}", kicker="M2", data_title=True)
         self.assertIn("Run the GPU server on demand instead of 24/7", html)
         self.assertIn("Head of IT", html)
@@ -752,7 +752,7 @@ class R10FormatTests(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "app"))
         import ui
 
-        html = ui.card("t", "", "1,221", "kg CO2 a year")
+        html = ui.card("t", "", "1,221", "kg CO₂ a year")
         self.assertIsNone(re.search(r"\d<span", html), html)
         self.assertIn("1,221 <span>", html)
 
@@ -862,13 +862,13 @@ class PlanSortTests(unittest.TestCase):
 
         g0, c0, _ = snapshot(page)
         self.assertTrue(c0, "no optimisation cards")
-        self.assertIn("Pause the development data platform", c0[0])  # biggest CO2 saving first (default)
+        self.assertIn("Pause the development data platform", c0[0])  # biggest CO₂ saving first (default)
         page.session_state["plan_sort"] = "both"
         page = _open(page, "your-plan")
         g1, c1, html1 = snapshot(page)
         self.assertEqual(g0, g1)
         self.assertEqual(sorted(c0), sorted(c1))
-        self.assertTrue(page.get("vega_lite_chart"), "the CO2 and cost map is missing")
+        self.assertTrue(page.get("vega_lite_chart"), "the CO₂ and cost map is missing")
         page.session_state["plan_sort"] = "cost"
         page = _open(page, "your-plan")
         g2, c2, _ = snapshot(page)
@@ -900,7 +900,7 @@ class ReviewFixesTests(unittest.TestCase):
         at.run()
         page = _open(at, "where-you-stand")
         blob = " ".join(h.proto.body for h in page.get("html"))
-        self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich", blob)
+        self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO₂ than Zurich", blob)
         kwh = float(data.energy_totals()["kwh_mid"])
         self.assertIn(f"{kwh / 1000:,.0f} MWh of electricity a year", blob)
 
@@ -911,11 +911,11 @@ class ReviewFixesGermanTests(unittest.TestCase):
         from unittest import mock
         sys.path.insert(0, str(ROOT / "app"))
         import i18n
-        cap = ("Sorted by share of the total CO2 saving plus share of the total cost saving. "
-               "Licence optimisations save no CO2, so they sit on the left edge.")
+        cap = ("Sorted by share of the total CO₂ saving plus share of the total cost saving. "
+               "Licence optimisations save no CO₂, so they sit on the left edge.")
         with mock.patch.object(i18n, "is_de", return_value=True):
             self.assertEqual(i18n.tr("Sort"), "Sortieren")
-            self.assertEqual(i18n.tr("Biggest CO2 saving"), "Grösste CO2-Einsparung")
+            self.assertEqual(i18n.tr("Biggest CO₂ saving"), "Grösste CO₂-Einsparung")
             self.assertTrue(i18n.tr(cap, label=False).startswith("Sortiert nach Anteil"))
 
 
@@ -1022,8 +1022,8 @@ class StoryShareLinesTests(unittest.TestCase):
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
         page = _open(at, "where-you-stand")
         blob = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
-        self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO2.", blob)
-        self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO2", blob)
+        self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO₂.", blob)
+        self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO₂", blob)
 
 
 class StoryKeysScriptTests(unittest.TestCase):

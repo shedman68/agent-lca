@@ -42,7 +42,7 @@ BEATS: list[Beat] = [
     Beat(11, "your-plan", "gauges", "Low factors", {"factor_level_label": "Low factors", "plan_sort": "co2"}),
     Beat(12, "your-plan", "gauges", "High factors", {"factor_level_label": "High factors", "plan_sort": "co2"}),
     Beat(13, "your-plan", "gauges", "Back to mid", dict(_PLAN_MID_CO2)),
-    Beat(14, "your-plan", "plan_cards", "Optimisations, CO2 first", dict(_PLAN_MID_CO2)),
+    Beat(14, "your-plan", "plan_cards", "Optimisations, CO₂ first", dict(_PLAN_MID_CO2)),
     Beat(15, "your-plan", "plan_cards", "Biggest cost saving", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
     Beat(16, "your-plan", "limits", "Know the limits", {"factor_level_label": "Mid factors", "plan_sort": "cost"}),
     Beat(17, "stay-on-track", "assistant", "Prompt injection refused", {ASK_KEY: T1251_SAY}),
