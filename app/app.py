@@ -1128,12 +1128,10 @@ def page_about() -> None:
                 photo="about")
         ui._raw(ui.org_chart(ORG, ORG_FLOW, ORG_TOOLS, light=bool(st.session_state.get("light_mode", False)),
                              ends=ORG_ENDS, agents_step="Agents analyse", humans_step="Humans review", roll=ORG_ROLL))
-        # Ring left, card right: in story mode the Back / Next bar sits bottom right.
-        left, right = st.columns([1, 1.05], vertical_alignment="top")
-        with left:
-            ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
-        with right:
-            st.html(ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"))
+        # LCA: a small still ring next to the card, side by side also on a phone (the beat already moves enough).
+        ring = visuals.lifecycle(light=bool(st.session_state.get("light_mode", False)), animate=False)
+        ui._raw(f'<div class="gx-lca"><div class="ring">{ring}</div>'
+                + ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name") + "</div>")
     with st.container(key="beat_promise"):
         if s is not None:
             r_pkg = _ref(_ABOUT_SRC, "Package figures")
