@@ -1048,11 +1048,13 @@ def page_about() -> None:
         (1, "Upload the exports. Get one overall picture."), (2, "Where CO₂ and cost go, by department and tool."),
         (3, "The plan against target and budget, and what we do not touch."),
         (4, "Ask your data. Next year with and without the plan."), (5, "Every factor, check and answer.")]]
-    cols = st.columns(3)
-    for i, (step, name, text) in enumerate(chapters):
-        with cols[i % 3]:
-            st.html(ui.card(name, text, kicker=f"Step {step}"))
-            st.page_link(PAGES[STORY[step][0]], label=f"Open: {name}", icon=":material/arrow_forward:")
+    # Row by row (1 2 3, then 4 5): on a phone the columns stack, so the steps stay in order 1 … 5.
+    for start in range(0, len(chapters), 3):
+        cols = st.columns(3)
+        for col, (step, name, text) in zip(cols, chapters[start:start + 3]):
+            with col:
+                st.html(ui.card(name, text, kicker=f"Step {step}"))
+                st.page_link(PAGES[STORY[step][0]], label=f"Open: {name}", icon=":material/arrow_forward:")
     st.html(f'<div class="gx-foot"><b>{BASEL_LINE.split(":")[0]}.</b> {CITE}.</div>')
     with st.expander("Our story"):
         st.markdown(

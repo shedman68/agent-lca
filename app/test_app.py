@@ -1161,3 +1161,14 @@ class ConnectNextLabelTests(unittest.TestCase):
         labels = [b.label for b in page.button]
         self.assertIn(".json file analysis →", labels)
         self.assertNotIn("Where you stand →", labels)
+
+
+class AboutChapterOrderTests(unittest.TestCase):
+    def test_chapter_cards_are_in_step_order(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "")
+        html = [getattr(h.proto, "body", "") for h in page.get("html")]
+        steps = [int(m) for h in html for m in re.findall(r'<p class="k">Step (\d)</p>', h)]
+        self.assertEqual(steps, sorted(steps))
+        self.assertEqual(steps, [1, 2, 3, 4, 5])
