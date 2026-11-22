@@ -1102,8 +1102,9 @@ ORG = [
     ("Vinzenz Müller", "Energy and Environment", [("Factors", "claude")]),
     ("Hakim Kadriju", "Data", [("Analysis", "claude")]),
 ]
-ORG_FLOW = ["Data", "Baseline", "Factors", "Findings", "Plan", "Checks", "Human OK"]
-# The SME at both ends: its IT manager uploads the exports and gets the optimisations back, every month (Stay on track).
+# Kept simple for the opening (Rashed, 22.11.): the SME's IT manager puts data in (as in the next scene), our agents analyse,
+# a human reviews, the IT manager gets the optimisations. The detailed steps are shown on the pages that follow.
+ORG_FLOW = ["Agents analyse", "Humans review"]
 ORG_ENDS = (("IT manager", "uploads data"), ("IT manager", "gets optimisations"))
 ORG_TOOLS = ["GitHub", "Slack", "Notion"]
 
@@ -1125,7 +1126,7 @@ def page_about() -> None:
                 "We measure the use phase of cloud, servers, AI and SaaS.",
                 photo="about")
         ui._raw(ui.org_chart(ORG, ORG_FLOW, ORG_TOOLS, "Linear next", light=bool(st.session_state.get("light_mode", False)),
-                                ends=ORG_ENDS, loop="every month"))
+                                ends=ORG_ENDS))
         # Ring left, card right: in story mode the Back / Next bar sits bottom right.
         left, right = st.columns([1, 1.05], vertical_alignment="top")
         with left:

@@ -968,7 +968,8 @@ class PresenterModeTests(unittest.TestCase):
             if n == 1:  # merged opening: headline + org chart (humans, agents, tools, flow) + LCA, one block
                 for part in ("gx-org", "Rashed Kabir", "Vinzenz Müller", "Hakim Kadriju", "Chief of staff", "QA &amp; Deploy",
                              "Factors", "Analysis", "Wo/Man make the decisions",
-                             "Man-made agents do the leg work with real verified data", "Human OK", "Linear next",
+                             "Man-made agents do the leg work with real verified data", "Agents analyse", "Humans review",
+                             "IT manager", "gets optimisations", "Linear next",
                              "We know it from pharma.", "Everything"):
                     self.assertIn(part, html, f"beat 1: {part}")
             if n == 4:
