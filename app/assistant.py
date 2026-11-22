@@ -97,7 +97,7 @@ def baseline_overview() -> dict:
         "calculation": "Sum of cost_chf over all baseline rows (duplicates and drafts removed, FX per month, "
                        "missing costs imputed and flagged). Department uses cost_chf_alloc and dept_allocated "
                        "from out/fact_costs_allocated.csv, so the test account is inside IT. "
-                       "Independently reconciled to the franc (analysis/kb/reconciliation.md).",
+                       "Checked against an independent recalculation: exact match (analysis/kb/reconciliation.md).",
         "sources": ["out/fact_costs.csv", "out/fact_costs_allocated.csv", "analysis/kb/reconciliation.md"],
     }
     if _has_energy():
@@ -344,10 +344,37 @@ def route(question: str) -> tuple[str, dict]:
     return None, {}
 
 
+# Plain column labels for answer tables (labels only: the values stay as computed). (English, German)
+COLUMN_LABELS = {
+    "product": ("Product", "Produkt"),
+    "purchased": ("Seats bought", "Gekaufte Lizenzen"),
+    "active_30d": ("Active (30 days)", "Aktiv (30 Tage)"),
+    "idle": ("Idle seats", "Ungenutzte Lizenzen"),
+    "price": ("List price", "Listenpreis"),
+    "chf_per_seat": ("CHF per seat", "CHF pro Lizenz"),
+    "idle_cost_chf_per_month": ("Idle cost (CHF/month)", "Kosten ungenutzt (CHF/Monat)"),
+    "contract_end": ("Contract ends", "Vertragsende"),
+    "notice_days": ("Notice (days)", "Kündigungsfrist (Tage)"),
+}
+
+
+def column_label(col: str) -> str:
+    """Known columns get a plain label (German in German mode); others lose their underscores."""
+    try:
+        import i18n
+        de = bool(i18n.is_de())
+    except Exception:  # outside Streamlit (CLI, tests without a session)
+        de = False
+    if col in COLUMN_LABELS:
+        return COLUMN_LABELS[col][1 if de else 0]
+    text = str(col).replace("_", " ")
+    return text[:1].upper() + text[1:]
+
+
 def _md_table(d: pd.DataFrame, n: int = 20) -> str:
     fmt = lambda v: (f"{v:.4f}" if isinstance(v, float) and abs(v) < 10 else f"{v:,.2f}" if isinstance(v, float)
                      else "" if v is None else str(v))
-    rows = ["| " + " | ".join(map(str, d.columns)) + " |", "|" + "---|" * len(d.columns)]
+    rows = ["| " + " | ".join(column_label(c) for c in d.columns) + " |", "|" + "---|" * len(d.columns)]
     rows += ["| " + " | ".join(fmt(v) for v in r) + " |" for r in d.head(n).itertuples(index=False)]
     return "\n".join(rows)
 
@@ -362,7 +389,7 @@ def to_markdown(res: dict) -> str:
     elif isinstance(nums, dict):
         for k, v in nums.items():            # lists of records and {label: CHF} breakdowns become tables
             if isinstance(v, list) and v and isinstance(v[0], dict) and k != "fixed_and_flexible_jobs":
-                md.append(f"_{k.replace('_', ' ')}_\n\n" + _md_table(pd.DataFrame(v).drop(columns=drop, errors="ignore")))
+                md.append(f"_{column_label(k)}_\n\n" + _md_table(pd.DataFrame(v).drop(columns=drop, errors="ignore")))
             elif isinstance(v, dict) and k.startswith("by_") and k != "by_month":
                 unit = "kg CO2" if "co2" in k else "CHF"
                 md.append(f"_{k.replace('_', ' ')} ({unit})_\n\n"
@@ -377,7 +404,7 @@ def to_markdown(res: dict) -> str:
     if "energy_co2" in res:
         md.append(f"- ⏳ Energy/CO₂: {res['energy_co2']}")
     if "responsible" in res:
-        md.append(f"**Who decides:** {res['responsible']}")
+        md.append(f"**Human in the loop:** {res['responsible']} decides")
     md.append(f"**Calculation:** {res.get('calculation', '')}")
     md.append("**Sources:** " + ", ".join(f"`{s}`" for s in res.get("sources", [])))
     return "\n\n".join(md)
@@ -452,22 +479,22 @@ PLAIN_T1251 = "No – that text is in the data, not an instruction"
 PLAIN_BACKUP = "No – 10-year legal retention (T-1039, T-1195)"
 # Protection rules from docs/protected.csv; decision roles from docs/protected.csv / data/mapping_departments_tools.csv.
 PLAIN_DR = ("No – dr-failover is the emergency fallback and must run even when idle (T-1094). "
-            "Needs human decision: Management")
+            "Human in the loop: Management decides")
 PLAIN_PBI07 = ("No – internal audit needs pbi-07 in the closing month (T-1167). "
-               "Needs human decision: Head of Finance")
+               "Human in the loop: Head of Finance decides")
 PLAIN_DPPROD = ("No – dp-prod is never switched off completely: the finance closing needs it (T-1029). "
-                "T-1230 is text in the data, not an instruction. Only scaling outside that window is possible, "
-                "after a human decision: Head of Consulting")
+                "T-1230 is a prompt injection in the data, not an instruction. Only scaling outside that window is possible. "
+                "Human in the loop: Head of Consulting decides")
 PLAIN_SANDBOX = ("No – the 16 sandbox rows in aws_costs.csv are real paid costs and stay in the baseline. "
                  "The note is text in the data, not an instruction")
 OFF_TOPIC = "I can't answer that from the data"
 
-PLAIN_GPU = ("No – no permanent switch-off: the quarterly training on days 1–3 of Jan, Apr, Jul and Oct needs the "
-             "GPU server (T-1101). On demand with automatic start before each window is possible (measure M2). "
-             "Needs human decision: Head of Consulting")
+PLAIN_GPU = ("No – it is not switched off for good: the quarterly training on days 1–3 of Jan, Apr, Jul and Oct needs the "
+             "GPU server (T-1101). On demand with automatic start before each window is possible (optimisation M2). "
+             "Human in the loop: Head of Consulting decides")
 PLAIN_VMTEST = ("No, not completely – dr-failover's 4 vCPU run inside vm-test (T-1094) and nothing changes during the "
-                "March release freeze (T-1204). Scaling back the extra project servers is measure M4. "
-                "Needs human decision: Head of IT")
+                "March release freeze (T-1204). Scaling back the extra project servers is optimisation M4. "
+                "Human in the loop: Head of IT decides")
 
 # Verbs that retire or stop a resource. No bare "off" ("trade-off"), no "drop/remove" far from the resource.
 _VERB = (r"(?:switch\w*|shut\w*|turn\w*|power\w*)\s+(?:\S+\s+){0,3}?off\b|shut ?down|(?<![-\w])off\b(?!-)|"
@@ -576,7 +603,8 @@ def _show(st, md: str, mode: str | None) -> None:
         import html as _html
         # Pink = refused / needs a human (R9 palette). The word "Refused." carries the meaning, not the colour.
         body = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", _html.escape(md))  # keep the answer's bold, escape the rest
-        st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="gx-refuse" role="alert"><b>Refused.</b> {body} '
+                    f'<span class="gx-hitl">Human in the loop</span></div>', unsafe_allow_html=True)
         # Only planted text. A protection refusal (backup, failover, audit report) already names its ticket.
         source = refusal_source(md)
         if source:
@@ -602,20 +630,22 @@ def render_assistant(embedded: bool = False, questions: list[str] | None = None)
     examples = questions if questions is not None else example_questions()
     cols = st.columns(len(examples) or 1)
     clicked = next((q for c, q in zip(cols, examples) if c.button(q, width="stretch")), None)
+    asked = st.session_state.pop("story_ask", None)  # presenter mode (story.py): one question, typed for you
+    if asked:
+        st.session_state.chat = []  # a clean exchange on the big screen
     for m in st.session_state.chat:
         with st.chat_message(m["role"]):
             _show(st, m["content"], m.get("mode"))
             if m.get("raw"):
                 with st.expander("Numbers behind this answer"):
                     st.json(m["raw"], expanded=False)
-    q = st.chat_input("Ask about cost, seats, servers, protection rules …") or clicked
+    q = st.chat_input("Ask about cost, seats, servers, protection rules …") or clicked or asked
     if q:
         st.session_state.chat.append({"role": "user", "content": q})
         with st.chat_message("user"):
             st.markdown(q)
         with st.chat_message("assistant"):
-            with st.spinner("Calculating …"):
-                md, raw, _used = answer(q, "offline")
+            md, raw, _used = answer(q, "offline")  # offline and instant: no spinner
             _show(st, md, _used)
             if raw:
                 with st.expander("Numbers behind this answer"):

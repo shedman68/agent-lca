@@ -211,3 +211,52 @@ def meter_list_html(rows: list[dict]) -> str:
         )
     out.append("</div>")
     return "".join(out)
+
+
+def optimisation_map(df: pd.DataFrame, x_title: str = "CO2 saved (kg per year)", y_title: str = "CHF saved per year",
+                     size_title: str = "Person-days") -> alt.Chart:
+    """CO2 against CHF per optimisation, one hue. Columns: co2, chf, pd, label, name. Dot size = person-days.
+    Licence optimisations sit on the y-axis (0 kg): that is correct, they save francs only."""
+    p = pal()
+    d = df.copy()
+    d["_co2"] = d["co2"].map(lambda v: f"{v:,.0f} kg")
+    d["_chf"] = d["chf"].map(lambda v: f"CHF {v:,.0f}")
+    d["_pd"] = d["pd"].map(lambda v: f"{v:.1f}")
+    xmax = float(d["co2"].max()) if len(d) else 0.0
+    ymax = float(d["chf"].max()) if len(d) else 0.0
+    xs = alt.Scale(domain=[0, xmax * 1.35 if xmax else 1], nice=False)
+    ys = alt.Scale(domain=[0, ymax * 1.15 if ymax else 1], nice=False)
+    tips = [alt.Tooltip("name:N", title="Optimisation"), alt.Tooltip("_co2:N", title="CO2"),
+            alt.Tooltip("_chf:N", title="CHF"), alt.Tooltip("_pd:N", title=size_title)]
+    base = alt.Chart(d).encode(
+        x=alt.X("co2:Q", scale=xs, axis=alt.Axis(title=x_title, format=",.0f", tickCount=4, labelFontSize=14, titleFontSize=15)),
+        y=alt.Y("chf:Q", scale=ys, axis=chf_axis(y_title)),
+    )
+    dots = base.mark_circle(color=p["accent"], opacity=0.85, stroke=p["surface"], strokeWidth=1).encode(
+        size=alt.Size("pd:Q", scale=alt.Scale(range=[80, 900]), legend=alt.Legend(title=size_title, orient="top", values=[0.5, 1.5, 3.0])),
+        tooltip=tips,
+    )
+    # Greedy label placement: from the top, each label sits just above its dot unless a label close by on the
+    # x-axis is within one line; then it moves one line down. Positions only; the dots stay on their values.
+    height, line = 400, 22.0  # the plot area is shorter than the chart, so one text line is ~22 chart px
+    ydom = ymax * 1.15 if ymax else 1.0
+    xdom = xmax * 1.35 if xmax else 1.0
+    px = height / ydom
+    placed, label_y = [], {}
+    for i, r in d.sort_values("chf", ascending=False).iterrows():
+        ly = (ydom - float(r["chf"])) * px - 9
+        xf = float(r["co2"]) / xdom
+        moved = True
+        while moved:
+            moved = False
+            for qx, qy in placed:
+                if abs(qx - xf) < 0.3 and abs(qy - ly) < line:
+                    ly, moved = qy + line, True
+        placed.append((xf, ly))
+        label_y[i] = ydom - ly / px
+    d["_ly"] = pd.Series(label_y)
+    right = d["co2"] / xdom >= 0.6  # far-right dots get their label on the left, so phones do not clip it
+    enc = dict(x=alt.X("co2:Q", scale=xs), y=alt.Y("_ly:Q", scale=ys), text="label:N")
+    t_l = alt.Chart(d[~right]).mark_text(align="left", dx=11, baseline="middle", color=p["ink2"], fontSize=13).encode(**enc)
+    t_r = alt.Chart(d[right]).mark_text(align="right", dx=-11, baseline="middle", color=p["ink2"], fontSize=13).encode(**enc)
+    return _style((dots + t_l + t_r).properties(height=height))

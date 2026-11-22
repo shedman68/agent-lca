@@ -46,6 +46,35 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin:8px 0 4px;}
+.gx-person{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 12px 20px;
+  background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:18px;}
+.gx-person b{font-size:19px;color:var(--ink,#f2f4f5);margin-top:6px;}
+.gx-person span{font-size:15px;color:var(--muted,#9aa3ad);line-height:1.35;}
+.gx-avatar{width:112px;height:112px;border-radius:50%;object-fit:cover;border:2px solid var(--teal,#00cc99);}
+.gx-initials{display:flex;align-items:center;justify-content:center;background:var(--teal-bg,#0f2a23);color:var(--teal,#00cc99);
+  font-size:38px;font-weight:800;letter-spacing:.02em;}
+.st-key-beat_hook .gx-photo{margin-bottom:0;}
+.st-key-beat_hook,.st-key-beat_team,.st-key-beat_why,.st-key-beat_promise{margin:0 0 12px;}
+.st-key-beat_why .gx-grid{margin:0;}
+@media (max-width:720px){.gx-team{grid-template-columns:1fr;gap:12px;}.gx-person{flex-direction:row;text-align:left;padding:14px 16px;gap:14px;}
+  .gx-person b{margin-top:0;}.gx-avatar{width:64px;height:64px;}.gx-initials{font-size:24px;}
+  .gx-person{display:grid;grid-template-columns:64px 1fr;grid-template-rows:auto auto;column-gap:14px;}
+  .gx-person .gx-avatar{grid-row:1 / span 2;}}
+.gx-hitl{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;border:1px solid var(--pink,#f84aa7);font-size:13px;font-weight:700;letter-spacing:.04em;white-space:nowrap;}
+.gx-team-note{font-size:14px;color:var(--muted,#9aa3ad);margin:10px 0 0;text-align:center;}
+button[data-variant="segmented_control"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border-color:var(--line,#262b33) !important;min-height:44px;}
+button[data-variant="segmented_control"] *{color:inherit !important;}
+button[data-variant="segmented_control"][aria-checked="true"]{background:var(--teal,#00cc99) !important;color:var(--on-teal,#0d0f12) !important;border-color:var(--teal,#00cc99) !important;font-weight:700;}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"]{min-width:0;max-width:100%;}
+[data-testid="stChatMessage"] table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-collapse:collapse;font-size:14px;}
+[data-testid="stChatMessage"] th,[data-testid="stChatMessage"] td{white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:none;padding:6px 10px;vertical-align:top;}
+[data-testid="stChatMessage"] th{min-width:72px;color:var(--ink,#f2f4f5) !important;font-weight:700;border-bottom:1px solid var(--line,#262b33) !important;}
+[data-testid="stChatMessage"] td{color:var(--ink2,#c4cad1) !important;border-bottom:1px solid var(--line,#262b33) !important;}
+[data-testid="stChatMessage"] th,[data-testid="stChatMessage"] td{background:transparent !important;}
+[data-testid="stFileUploaderDropzone"]{background:var(--card2,#1c2026) !important;border:1px dashed var(--line,#262b33) !important;color:var(--ink2,#c4cad1) !important;}
+[data-testid="stFileUploaderDropzone"] span,[data-testid="stFileUploaderDropzone"] small,[data-testid="stFileUploaderDropzoneInstructions"] *{color:var(--ink2,#c4cad1) !important;}
+[data-testid="stFileUploaderDropzone"] button{background:var(--card,#16191e) !important;color:var(--ink,#f2f4f5) !important;border:1px solid var(--line,#262b33) !important;}
 /* R10 item 2: popover buttons ("How … was calculated") and inline code chips readable in dark and light mode */
 [data-testid="stPopover"] button,[data-testid="stPopoverButton"],[data-testid="stPopover"] > div > button{
   background:var(--card,#16191e) !important;color:var(--ink,#f2f4f5) !important;border:1px solid var(--line,#262b33) !important;}
@@ -72,10 +101,6 @@ CSS = """<style>
 .gx-card .n span{font-size:15px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:4px;letter-spacing:0;}
 .gx-card .meta{font-size:13.5px;color:var(--muted,#9aa3ad);margin-top:10px;font-weight:600;}
 .gx-card .k{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);font-weight:700;margin:0 0 8px;}
-.gx-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px;margin:6px 0 6px;}
-.gx-team .gx-card{padding:14px 18px;}
-.gx-team .gx-card h4{font-size:17px;margin:0 0 2px;}
-.gx-team .gx-card p{font-size:14.5px;color:var(--muted,#9aa3ad);}
 .gx-card.accent{border-color:var(--teal,#00cc99);}
 .gx-card.pink{border-color:var(--pink,#f84aa7);background:var(--pink-bg,#2a1421);}
 .gx-card.pink h4{color:var(--pink,#f84aa7);}
@@ -94,6 +119,8 @@ CSS = """<style>
 .gx-refuse b{color:var(--pink,#f84aa7);}
 .gx-explain{font-size:15px;color:var(--muted,#9aa3ad);border-left:3px solid var(--teal,#00cc99);padding:2px 0 2px 12px;margin:0 0 18px;max-width:70ch;}
 .gx-explain b{color:var(--ink2,#c4cad1);}
+.gx-roadmap{font-size:14px;color:var(--muted,#9aa3ad);margin:-8px 0 18px;max-width:70ch;}
+.gx-roadmap .k{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-right:8px;}
 .gx-bridge{font-size:16px;color:var(--ink2,#c4cad1);margin:28px 0 8px;}
 .gx-photo{position:relative;border-radius:20px;padding:32px 28px 12px;margin:0 0 22px;min-height:210px;
 background-color:#0d0f12;background-size:cover;background-position:center;border:1px solid var(--line,#262b33);overflow:hidden;}
@@ -149,6 +176,11 @@ def explain(term: str, text: str) -> None:
     _raw(f'<p class="gx-explain"><b>{i18n.tr(term)}</b> {i18n.tr(text, label=False)}</p>')
 
 
+def roadmap_note(text: str) -> None:
+    """One muted line for a roadmap item: same «Roadmap · not built yet» label as the GreenOps agents cards. No controls."""
+    _raw(f'<p class="gx-roadmap"><span class="k">{i18n.tr("Roadmap · not built yet")}</span>{i18n.tr(text, label=False)}</p>')
+
+
 def bridge(text: str) -> None:
     _raw(f'<p class="gx-bridge">{i18n.tr(text, label=False)}</p>')
 
@@ -180,9 +212,41 @@ def grid(cards: list[str]) -> None:
     _raw(f'<div class="gx-grid">{"".join(cards)}</div>')
 
 
+TEAM_DIR = Path(__file__).resolve().parent / "static" / "team"
+
+
+@st.cache_data(show_spinner=False)
+def _photo_b64(path_str: str, mtime: float) -> str | None:
+    """Any size photo → 400 px square JPEG (centre crop), base64. None when the file cannot be read."""
+    try:
+        import io
+        from PIL import Image, ImageOps
+        img = ImageOps.exif_transpose(Image.open(path_str)).convert("RGB")
+        img = ImageOps.fit(img, (400, 400))
+        buf = io.BytesIO()
+        img.save(buf, "JPEG", quality=82, optimize=True)
+        return base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return None
+
+
+def _avatar(name: str) -> str:
+    """Round photo from app/static/team/<name>.jpg|.jpeg|.png (any size, shrunk here). No usable file: initials."""
+    for ext in ("jpg", "jpeg", "png", "JPG", "JPEG", "PNG"):
+        path = TEAM_DIR / f"{name.lower()}.{ext}"
+        if path.is_file():
+            b64 = _photo_b64(str(path), path.stat().st_mtime)
+            if b64:
+                return f'<img class="gx-avatar" src="data:image/jpeg;base64,{b64}" alt="{esc(name)}">'
+    initials = "".join(w[0] for w in name.split()[:2]).upper()
+    return f'<div class="gx-avatar gx-initials" aria-hidden="true">{esc(initials)}</div>'
+
+
 def team(members: list[tuple[str, str]]) -> None:
-    """Small equal-weight name cards: name in bold, role underneath. No photos."""
-    _raw(f'<div class="gx-team">{"".join(card(n, r) for n, r in members)}</div>')
+    """Three equal team cards: round photo (or initials), name, role underneath."""
+    cells = "".join(f'<div class="gx-person">{_avatar(n)}<b>{esc(n)}</b><span>{i18n.tr(r)}</span></div>'
+                    for n, r in members)
+    _raw(f'<div class="gx-team">{cells}</div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:

@@ -616,7 +616,7 @@ class StoryTests(unittest.TestCase):
         self.assertEqual(c["files"], 28)  # 13 core + 15 extra, as the case page says
         self.assertEqual(c["currencies"], ["CHF", "EUR", "USD"])
         blob = " ".join(getattr(el, "value", "") or "" for el in list(page.markdown) + list(getattr(page, "html", [])))
-        self.assertIn("Bonus sources used:", blob)
+        self.assertIn("Extra sources used:", blob)
         self.assertIn("Power BI", blob)
 
     def test_story_buttons(self):
@@ -662,8 +662,8 @@ class StoryTests(unittest.TestCase):
         chf_share = chf[res.isin(["dp-dev", "dp-prod"]) | seats].sum() / chf.sum()
         page = _open(self._app(), "where-you-stand")
         shown = " ".join(c.value for c in page.caption)
-        self.assertIn(f"{co2_share:.0%} of the plan's CO2 cut", shown)
-        self.assertIn(f"{chf_share:.0%} of its francs", shown)
+        self.assertIn(f"{co2_share:.0%} of the plan's CO2 savings", shown)
+        self.assertIn(f"{chf_share:.0%} of its cost savings", shown)
 
     def test_ui_css_stays_inside_the_theme_contract(self):
         """grok/R9-theme's contract: ui.py may only read these CSS variables."""
@@ -713,7 +713,7 @@ class StoryTests(unittest.TestCase):
             for el in getattr(page, name, []) or []:
                 html_bits.append(getattr(el, "value", "") or getattr(el, "body", "") or "")
         blob = blob + " " + " ".join(html_bits)
-        self.assertIn("March keeps the test environment unchanged", blob)
+        self.assertIn("The test environment stays unchanged 1–31 March 2026 (T-1204)", blob)
         self.assertIn("Contradictions flagged", blob)
         self.assertNotIn("One contradiction flagged", blob)
         self.assertIn("provider monthly report", blob)
@@ -785,3 +785,239 @@ class R10RobustnessLineTests(unittest.TestCase):
         self.assertFalse(page.exception, page.exception)
         bodies = " ".join(getattr(e.proto, "body", "") for e in page.get("html"))
         self.assertIn(expected, bodies)
+
+
+class CopyConnectRoadmapTests(unittest.TestCase):
+    def test_connect_says_upload_and_roadmap_is_not_built(self):
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=60)
+        at.run()
+        page = _open(at, "connect")
+        blob = " ".join(h.proto.body for h in page.get("html"))
+        self.assertIn("An IT manager uploads her company", blob)
+        self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", blob)
+        self.assertIn("Roadmap · not built yet", blob)
+        self.assertFalse(any("connect" in b.label.lower() and "sample" not in b.label.lower() for b in page.button))
+
+
+class PlanSortTests(unittest.TestCase):
+    """Order of the optimisation cards on Your plan: sorting only, totals never change."""
+
+    def _ps(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import plan_sort
+        return plan_sort
+
+    def _rows(self):
+        import pandas as pd
+        return pd.DataFrame({
+            "measure_id": ["M2", "M1", "M3", "M8", "M7"],
+            "description": ["b", "a", "c", "licence x", "licence y"],
+            "savings_co2_kg_location_based": [100.0, 100.0, 50.0, None, 0.0],
+            "savings_cost_chf_per_year": [1000.0, 2000.0, 9000.0, 5000.0, 5000.0],
+        })
+
+    def test_co2_sort_breaks_ties_by_chf_then_id_and_keeps_licences(self):
+        ps = self._ps()
+        out = ps.sort_rows(self._rows(), "savings_co2_kg_location_based", "co2")
+        self.assertEqual(list(out["measure_id"]), ["M1", "M2", "M3", "M7", "M8"])  # licences last, kept
+
+    def test_cost_sort_breaks_ties_by_co2_then_id(self):
+        ps = self._ps()
+        out = ps.sort_rows(self._rows(), "savings_co2_kg_location_based", "cost")
+        self.assertEqual(list(out["measure_id"]), ["M3", "M7", "M8", "M1", "M2"])
+
+    def test_combined_share_is_co2_share_plus_chf_share(self):
+        ps = self._ps()
+        out = ps.sort_rows(self._rows(), "savings_co2_kg_location_based", "both").set_index("measure_id")
+        self.assertAlmostEqual(out.loc["M3", "_share"], 50 / 250 + 9000 / 22000)
+        self.assertAlmostEqual(out.loc["M8", "_share"], 0 + 5000 / 22000)
+        self.assertEqual(list(out.index)[0], "M3")
+
+    def test_input_rows_are_not_changed(self):
+        ps = self._ps()
+        rows = self._rows()
+        before = rows.copy()
+        ps.sort_rows(rows, "savings_co2_kg_location_based", "both")
+        self.assertTrue(rows.equals(before))
+
+    def test_toggle_keeps_gauges_and_budget(self):
+        import re
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
+        at.run()
+        page = _open(at, "your-plan")
+
+        def snapshot(p):
+            html = " ".join(h.proto.body for h in p.get("html"))
+            gauges = re.findall(r"−\d+\.\d %|\d+\.\d of 15|of 16,500 CHF|15,950", html)
+            cards = re.findall(r'<div class="gx-card "><h4>(.*?)</h4>', html)
+            return gauges, cards, html
+
+        g0, c0, _ = snapshot(page)
+        self.assertTrue(c0, "no optimisation cards")
+        self.assertIn("Pause the development data platform", c0[0])  # biggest CO2 saving first (default)
+        page.session_state["plan_sort"] = "both"
+        page = _open(page, "your-plan")
+        g1, c1, html1 = snapshot(page)
+        self.assertEqual(g0, g1)
+        self.assertEqual(sorted(c0), sorted(c1))
+        self.assertTrue(page.get("vega_lite_chart"), "the CO2 and cost map is missing")
+        page.session_state["plan_sort"] = "cost"
+        page = _open(page, "your-plan")
+        g2, c2, _ = snapshot(page)
+        self.assertEqual(g0, g2)
+        self.assertIn("Scale the production data platform down", c2[0])  # biggest CHF saving first
+
+
+class ReviewFixesTests(unittest.TestCase):
+    def test_seats_table_has_plain_labels_and_same_values(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        from assistant import answer, idle_ai_seats
+        md, _res, _mode = answer("How many AI subscription seats were purchased but not active in August 2026, "
+                                 "and what do they cost per month?", mode="offline")
+        header = "| Product | Seats bought | Active (30 days) | Idle seats | List price | CHF per seat | " \
+                 "Idle cost (CHF/month) | Contract ends | Notice (days) |"
+        self.assertIn(header, md)
+        for r in idle_ai_seats()["numbers"]["per_product"]:
+            self.assertIn(f"| {r['product']} | {r['purchased']} | {r['active_30d']} | {r['idle']} |", md)
+
+    def test_frankfurt_ratio_comes_from_factors(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        from streamlit.testing.v1 import AppTest
+        idx = data.factors_table().set_index("key")
+        ratio = float(idx.loc["grid_DE", "value_mid"]) / float(idx.loc["grid_CH", "value_mid"])
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
+        at.run()
+        page = _open(at, "where-you-stand")
+        blob = " ".join(h.proto.body for h in page.get("html"))
+        self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO2 than Zurich", blob)
+        kwh = float(data.energy_totals()["kwh_mid"])
+        self.assertIn(f"{kwh / 1000:,.0f} MWh of electricity a year", blob)
+
+
+class ReviewFixesGermanTests(unittest.TestCase):
+    def test_sort_labels_have_german_and_caption_is_not_mangled(self):
+        import sys
+        from unittest import mock
+        sys.path.insert(0, str(ROOT / "app"))
+        import i18n
+        cap = ("Sorted by share of the total CO2 saving plus share of the total cost saving. "
+               "Licence optimisations save no CO2, so they sit on the left edge.")
+        with mock.patch.object(i18n, "is_de", return_value=True):
+            self.assertEqual(i18n.tr("Sort"), "Sortieren")
+            self.assertEqual(i18n.tr("Biggest CO2 saving"), "Grösste CO2-Einsparung")
+            self.assertTrue(i18n.tr(cap, label=False).startswith("Sortiert nach Anteil"))
+
+
+class PresenterModeTests(unittest.TestCase):
+    """Story mode = presenter mode: 21 beats, forward and back, never an exception."""
+
+    def _app(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
+        at.session_state["story_mode"] = True
+        return at.run()
+
+    def _url(self, at):
+        return at._registered_pages[at._page_hash].get("url_pathname") if getattr(at, "_page_hash", None) else ""
+
+    def test_walk_all_21_beats_forward_and_back(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import story
+        at = self._app()
+        self.assertFalse(at.exception, at.exception)
+        expected_url = {"about": "", "connect": "connect", "where-you-stand": "where-you-stand", "your-plan": "your-plan",
+                        "stay-on-track": "stay-on-track"}
+        seen = []
+        for n in range(1, story.TOTAL + 1):
+            self.assertEqual(at.session_state["story_beat"], n)
+            self.assertFalse(at.exception, f"beat {n}: {at.exception}")
+            html = " ".join(getattr(h.proto, "body", "") for h in at.get("html"))
+            self.assertIn(f"{n} / {story.TOTAL}", html)
+            seen.append(n)
+            b = story.beat(n)
+            if n == 6:
+                self.assertTrue(at.session_state["connected"])
+            if n in (11, 12):
+                self.assertEqual(at.session_state["factor_level_label"], {11: "Low factors", 12: "High factors"}[n])
+            if n == 15:
+                self.assertEqual(at.session_state["plan_sort"], "cost")
+            if n == 17:
+                shown = " ".join(m.value for m in at.markdown)
+                self.assertIn("Refused.", shown)
+                self.assertIn("Human in the loop", shown)
+            if n < story.TOTAL:
+                at = at.button(key="story_next").click().run()
+                at = at.run()  # the page switch lands on the next run
+        self.assertEqual(seen, list(range(1, story.TOTAL + 1)))
+        for n in range(story.TOTAL, 1, -1):
+            at = at.button(key="story_prev").click().run()
+            at = at.run()
+            self.assertFalse(at.exception, f"back to beat {n - 1}: {at.exception}")
+            self.assertEqual(at.session_state["story_beat"], n - 1)
+
+    def test_gauges_same_after_low_high_mid(self):
+        import re
+        at = self._app()
+        for _ in range(9):  # to beat 10
+            at = at.button(key="story_next").click().run().run()
+        snap = lambda a: re.findall(r"−\\d+\\.\\d %|\\d+\\.\\d of 15", " ".join(getattr(h.proto, "body", "") for h in a.get("html")))
+        g10 = snap(at)
+        for _ in range(3):  # 11 low, 12 high, 13 mid
+            at = at.button(key="story_next").click().run().run()
+        self.assertEqual(at.session_state["story_beat"], 13)
+        self.assertEqual(snap(at), g10)
+
+    def test_story_off_has_no_presenter_controls(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        keys = [getattr(b, "key", None) for b in at.button]
+        self.assertNotIn("story_next", keys)
+        html = " ".join(getattr(h.proto, "body", "") for h in at.get("html"))
+        self.assertNotIn("opacity:.35", html)
+
+
+class TeamPhotoTests(unittest.TestCase):
+    def test_initials_without_photo_and_image_with_photo(self):
+        import sys
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+        with tempfile.TemporaryDirectory() as d:
+            with mock.patch.object(ui, "TEAM_DIR", Path(d)):
+                self.assertIn('gx-initials" aria-hidden="true">R<', ui._avatar("Rashed"))
+                (Path(d) / "hakim.png").write_bytes(b"not an image")
+                self.assertIn("gx-initials", ui._avatar("Hakim"))  # broken file: initials, no broken image
+                from PIL import Image
+                Image.new("RGB", (3000, 2000), (40, 120, 90)).save(Path(d) / "rashed.jpg", quality=95)
+                html = ui._avatar("Rashed")
+                self.assertLess(len(html), 140_000)  # shrunk to 400 px, page stays light
+                self.assertIn('<img class="gx-avatar" src="data:image/jpeg;base64,', html)
+                self.assertNotIn("gx-initials", html)
+
+
+class StoryShareLinesTests(unittest.TestCase):
+    def test_germany_and_dev_platform_shares_come_from_out(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        from streamlit.testing.v1 import AppTest
+        cc = data.impact_by("country", "cost", "mid").set_index("label")["share"]["Germany"]
+        ck = data.impact_by("country", "co2", "mid").set_index("label")["share"]["Germany"]
+        rc = data.impact_by("resource", "cost", "mid").set_index("resource_id")["share"]["dp-dev"]
+        rk = data.impact_by("resource", "co2", "mid").set_index("resource_id")["share"]["dp-dev"]
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "where-you-stand")
+        blob = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO2.", blob)
+        self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO2", blob)
