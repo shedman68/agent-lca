@@ -933,7 +933,7 @@ class ReviewFixesGermanTests(unittest.TestCase):
 
 
 class PresenterModeTests(unittest.TestCase):
-    """Story mode = presenter mode: 21 beats, forward and back, never an exception."""
+    """Story mode = presenter mode: 20 beats, forward and back, never an exception."""
 
     def _app(self):
         from streamlit.testing.v1 import AppTest
@@ -967,17 +967,25 @@ class PresenterModeTests(unittest.TestCase):
                 self.assertIn(page_title[b.page], titles, f"beat {n} should be on page {b.page!r}")
             if n == 6:
                 self.assertTrue(at.session_state["connected"])
-            if n in (11, 12):
-                self.assertEqual(at.session_state["factor_level_label"], {11: "Low factors", 12: "High factors"}[n])
-            if n == 15:
+            self.assertIn(f".st-key-beat_{b.anchor}", html, f"beat {n} spotlights its block")
+            if n == 10:  # merged: gauges on mid + low / mid / high strip, one key press
+                self.assertEqual(at.session_state["factor_level_label"], "Mid factors")
+                for part in ("Low −49.6 %", "Mid −43.0 %", "High −42.2 %", "target −40 %", "gxLitMid"):
+                    self.assertIn(part, html, f"beat 10: {part}")
+            if n == 11:  # «Hard case»: idle power + budget only
+                self.assertEqual(b.title, "Hard case")
+                self.assertIn("if paused servers count at idle power: −39.2 %", html)
+                self.assertNotIn("CO₂ Low factors", html)
+            if n == 13:
                 self.assertEqual(at.session_state["plan_sort"], "cost")
-            if n == 16:
+            if n == 14:
                 self.assertEqual(at.session_state["plan_sort"], "both")
-                self.assertTrue(at.get("vega_lite_chart"), "beat 16 shows the CO₂ & Cost map")
-            if n == 19:
+                self.assertTrue(at.get("vega_lite_chart"), "beat 14 shows the CO₂ & Cost map")
+            if n == 16:  # merged: monthly file check + T-1251 refusal, one key press
                 shown = " ".join(m.value for m in at.markdown)
                 self.assertIn("Refused.", shown)
                 self.assertIn("Human in the loop", shown)
+                self.assertIn("5 blocked · 3 need a person", html)
             if n < story.TOTAL:
                 at = at.button(key="story_next").click().run()
                 at = at.run()  # the page switch lands on the next run
@@ -988,17 +996,20 @@ class PresenterModeTests(unittest.TestCase):
             self.assertFalse(at.exception, f"back to beat {n - 1}: {at.exception}")
             self.assertEqual(at.session_state["story_beat"], n - 1)
 
-    def test_gauges_same_after_low_high_mid(self):
-        import re
-        at = self._app()
-        for _ in range(9):  # to beat 10
-            at = at.button(key="story_next").click().run().run()
-        snap = lambda a: re.findall(r"−\\d+\\.\\d %|\\d+\\.\\d of 15", " ".join(getattr(h.proto, "body", "") for h in a.get("html")))
-        g10 = snap(at)
-        for _ in range(3):  # 11 low, 12 high, 13 mid
-            at = at.button(key="story_next").click().run().run()
-        self.assertEqual(at.session_state["story_beat"], 13)
-        self.assertEqual(snap(at), g10)
+    def test_merged_beats_and_story_off_unchanged(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import story
+        self.assertEqual(story.TOTAL, 20)
+        self.assertEqual(story.HIGHLIGHT, {12: "first", 13: "licences"})
+        self.assertEqual([b.n for b in story.BEATS], list(range(1, 21)))
+        self.assertEqual([b.n for b in story.BEATS if story.ASK_KEY in b.state], [16])
+        # Story mode off: Your plan keeps the full robustness line and shows no strip.
+        from streamlit.testing.v1 import AppTest
+        at = _open(AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run(), "your-plan")
+        html = " ".join(getattr(h.proto, "body", "") for h in at.get("html"))
+        self.assertIn("CO₂ Low factors −49.6 % · High −42.2 % · if paused servers count at idle power: −39.2 %", html)
+        self.assertNotIn("gx-fstrip", html)
 
     def test_story_off_has_no_presenter_controls(self):
         from streamlit.testing.v1 import AppTest
