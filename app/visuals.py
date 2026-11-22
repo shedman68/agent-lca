@@ -17,37 +17,53 @@ def _img(svg: str, alt: str, max_w: str = "100%") -> str:
             f'style="width:100%;max-width:{max_w};height:auto;display:block;margin:4px 0 18px">')
 
 
-def lifecycle(today: str = "Use", phases: tuple[str, ...] = ("Materials", "Build", "Use", "End of life"),
+def lifecycle(today: str = "Use", phases: tuple[str, ...] = ("Materials", "Build", "Use", "End of use / life"),
               light: bool = False) -> str:
-    """A thin orbit with four life-cycle phases. The phase we measure today is lit; the rest is 'next'."""
+    """A thin orbit with four life-cycle phases. The phase we measure today is lit. A light travels clockwise
+    Materials → Build → Use → End of use / life and each label brightens as it passes (SMIL inside the SVG;
+    hidden under reduced motion)."""
     ink, muted, line = ("#0d0f12", "#4b5560", "#d4d9df") if light else (INK, MUTED, LINE)
-    cx, cy, r = 260, 200, 150
+    cx, cy, r = 300, 200, 150
     pos = [(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)]
     anchors = ["middle", "start", "middle", "end"]
     offs = [(0, -22), (22, 6), (0, 34), (-22, 6)]
+    period = 8.0  # seconds for one turn; each phase gets a quarter
     nodes = []
-    for (x, y), name, anc, (dx, dy) in zip(pos, phases, anchors, offs):
+    for i, ((x, y), name, anc, (dx, dy)) in enumerate(zip(pos, phases, anchors, offs)):
         lit = name == today
+        base = TEAL if lit else muted
+        # the label brightens while the light is near its phase (a quarter turn around it)
+        t0 = i / 4
+        keys = sorted({0.0, max(0.0, t0 - 0.06), t0, min(1.0, t0 + 0.12), 1.0})
+        vals = [TEAL if abs(k - t0) < 1e-9 else base for k in keys]
+        if t0 == 0:  # Materials sits at the start (and end) of the loop
+            keys, vals = [0.0, 0.12, 0.94, 1.0], [TEAL, base, base, TEAL]
+        anim = (f'<animate class="lt" attributeName="fill" dur="{period}s" repeatCount="indefinite" '
+                f'keyTimes="{";".join(f"{k:.3f}" for k in keys)}" values="{";".join(vals)}"/>')
         nodes.append(
             f'<circle cx="{x}" cy="{y}" r="{11 if lit else 7}" fill="{TEAL if lit else "none"}" '
             f'stroke="{TEAL if lit else muted}" stroke-width="2"/>'
             + (f'<circle cx="{x}" cy="{y}" r="24" fill="{TEAL}" opacity=".18"/>' if lit else "")
             + f'<text x="{x + dx}" y="{y + dy}" text-anchor="{anc}" font-family="{FONT}" font-size="17" '
-              f'font-weight="{800 if lit else 600}" fill="{TEAL if lit else muted}">{name}'
-              f'{" · today" if lit else ""}</text>')
+              f'font-weight="{800 if lit else 600}" fill="{base}">{name}{" · today" if lit else ""}{anim}</text>')
     # lit arc: the quarter around 'Use' (bottom)
     arc = (f'<path d="M {cx + r * 0.707:.1f} {cy + r * 0.707:.1f} A {r} {r} 0 0 1 {cx - r * 0.707:.1f} {cy + r * 0.707:.1f}" '
            f'fill="none" stroke="{TEAL}" stroke-width="4" stroke-linecap="round"/>')
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 420" role="img">'
+    orbit = f"M {cx} {cy - r} A {r} {r} 0 1 1 {cx} {cy + r} A {r} {r} 0 1 1 {cx} {cy - r}"  # clockwise from the top
+    glow = (f'<g class="light"><circle r="22" fill="{TEAL}" opacity=".22"/><circle r="12" fill="{TEAL}" opacity=".45"/>'
+            f'<circle r="6" fill="#ffffff"/>'
+            f'<animateMotion dur="{period}s" repeatCount="indefinite" path="{orbit}"/></g>')
+    css = "<style>@media (prefers-reduced-motion:reduce){.light{display:none}}</style>"
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" role="img">{css}'
            f'<defs><radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="{TEAL}" stop-opacity=".16"/>'
            f'<stop offset="1" stop-color="{TEAL}" stop-opacity="0"/></radialGradient></defs>'
            f'<circle cx="{cx}" cy="{cy}" r="{r + 40}" fill="url(#g)"/>'
            f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{line}" stroke-width="2" stroke-dasharray="2 7"/>'
-           f'{arc}{"".join(nodes)}'
+           f'{arc}{"".join(nodes)}{glow}'
            f'<text x="{cx}" y="{cy - 4}" text-anchor="middle" font-family="{FONT}" font-size="30" font-weight="800" '
            f'fill="{ink}">Digital</text><text x="{cx}" y="{cy + 26}" text-anchor="middle" font-family="{FONT}" '
            f'font-size="15" font-weight="600" fill="{muted}">footprint of an SME</text></svg>')
-    return _img(svg, "Life cycle: materials, build, use (measured today), end of life", "460px")
+    return _img(svg, "Life cycle: materials, build, use (measured today), end of use / life", "500px")
 
 
 # Stylised positions (not to scale) in a 900 x 460 frame: Basel is the decision point.
