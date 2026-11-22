@@ -48,6 +48,11 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-sources{border-top:1px solid var(--line,#262b33);margin:36px 0 8px;padding-top:14px;}
+.gx-sources .tt{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--muted,#9aa3ad);margin:0 0 6px;}
+.gx-sources ol{margin:0;padding-left:20px;}
+.gx-sources li{font-size:13px;line-height:1.5;color:var(--muted,#9aa3ad);margin:0 0 3px;overflow-wrap:anywhere;}
+.gx-sources li b{color:var(--ink2,#c4cad1);font-weight:700;}
 .gx-upsim{background:#0a0c0f;border:1px dashed var(--teal,#00cc99);border-radius:14px;padding:14px 16px;margin:14px 0 4px;}
 .gx-upsim .hd{display:flex;align-items:center;gap:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-size:15px;color:#f2f4f5;margin-bottom:10px;}
@@ -126,8 +131,9 @@ CSS = """<style>
 .gx-rot .gx-rot-static{display:none;}
 @media (prefers-reduced-motion:reduce){.gx-rot{height:auto !important;overflow:visible !important;}.gx-rot .w{display:none !important;}.gx-rot .gx-rot-static{display:inline !important;}}
 .gx-does{font-size:.8em;display:inline-block;line-height:1.15;}
-.gx-in{margin-top:6px;font-size:14px;font-weight:700;color:var(--teal,#00cc99) !important;text-decoration:none;border:1px solid var(--teal,#00cc99);border-radius:999px;padding:4px 12px;}
-.gx-in:hover{background:var(--teal,#00cc99);color:var(--on-teal,#0d0f12) !important;}
+.gx-in{margin-top:8px;display:inline-flex;line-height:0;border-radius:7px;transition:transform .15s ease;}
+.gx-in img{display:block;width:30px;height:30px;}
+.gx-in:hover{transform:scale(1.08);}
 .gx-rot{display:inline-block;height:1.12em;overflow:hidden;vertical-align:bottom;color:inherit;}
 .gx-rot .w{display:block;transform:translateY(0);}
 .gx-rot .w i{display:block;height:1.12em;line-height:1.12em;font-style:normal;}
@@ -185,7 +191,8 @@ CSS = """<style>
 @media (max-width:720px){.gx-team{grid-template-columns:1fr;gap:12px;}.gx-person{flex-direction:row;text-align:left;padding:14px 16px;gap:14px;}
   .gx-person b{margin-top:0;}.gx-avatar{width:64px;height:64px;}.gx-initials{font-size:24px;}
   .gx-person{display:grid;grid-template-columns:64px 1fr;grid-template-rows:auto auto;column-gap:14px;}
-  .gx-person .gx-avatar{grid-row:1 / span 2;}}
+  .gx-person .gx-avatar{grid-row:1 / span 3;}
+  .gx-person .gx-in{grid-column:2;justify-self:start;margin-top:2px;}}
 .gx-hitl{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;border:1px solid var(--pink,#f84aa7);font-size:13px;font-weight:700;letter-spacing:.04em;white-space:nowrap;}
 .gx-team-note{font-size:14px;color:var(--muted,#9aa3ad);margin:10px 0 0;text-align:center;}
 button[data-variant="segmented_control"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border-color:var(--line,#262b33) !important;min-height:44px;}
@@ -395,6 +402,14 @@ def _avatar(name: str) -> str:
     return f'<div class="gx-avatar gx-initials" aria-hidden="true">{esc(initials)}</div>'
 
 
+# A small LinkedIn «in» mark, drawn here (no download): blue rounded square, white «in».
+_LINKEDIN_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34"><rect width="34" height="34" rx="6" fill="#0A66C2"/>'
+                 '<circle cx="9.5" cy="9.5" r="2.6" fill="#fff"/><rect x="7.3" y="13.3" width="4.4" height="13.2" fill="#fff"/>'
+                 '<path d="M15 13.3h4.2v1.9c.6-1.1 2.1-2.2 4.3-2.2 4.4 0 5.2 2.9 5.2 6.6v6.9h-4.4v-6.1c0-1.5 0-3.4-2.1-3.4'
+                 's-2.4 1.6-2.4 3.3v6.2H15z" fill="#fff"/></svg>')
+_LINKEDIN_ICON = "data:image/svg+xml;base64," + base64.b64encode(_LINKEDIN_SVG.encode()).decode()
+
+
 def team(members: list[tuple], links: bool = False) -> None:
     """Three equal team cards: round photo (or initials), full name, role underneath; optional LinkedIn link.
     The photo file is named after the first name (app/static/team/rashed.jpeg …)."""
@@ -402,7 +417,8 @@ def team(members: list[tuple], links: bool = False) -> None:
     for m in members:
         name, role = m[0], m[1]
         url = m[2] if len(m) > 2 else ""
-        link = (f'<a class="gx-in" href="{esc(url)}" target="_blank" rel="noopener">LinkedIn</a>'
+        link = (f'<a class="gx-in" href="{esc(url)}" target="_blank" rel="noopener" aria-label="LinkedIn: {esc(name)}" '
+                f'title="LinkedIn"><img src="{_LINKEDIN_ICON}" alt="LinkedIn" width="30" height="30"></a>'
                 if links and url else "")
         cells.append(f'<div class="gx-person">{_avatar(name.split()[0])}<b>{esc(name)}</b>'
                      f'<span>{i18n.tr(role)}</span>{link}</div>')
@@ -530,6 +546,14 @@ def agent_terminal(title: str, command: str, lines: list[tuple[str, str]], done_
             f'{"".join(rows)}'
             f'<p class="ok result ln" style="animation-delay:{work_end + 0.1:.2f}s"><span class="pr">✓</span> {done_html}</p>'
             f'</div></div>')
+
+
+def sources(items: list[tuple[str, str]]) -> None:
+    """«Sources» footer at the bottom of a page: numbered, what each number rests on and where it comes from."""
+    if not items:
+        return
+    rows = "".join(f'<li><b>{esc(i18n.tr(what))}</b> – {esc(src)}</li>' for what, src in items)
+    _raw(f'<div class="gx-sources"><p class="tt">{esc(i18n.tr("Sources"))}</p><ol>{rows}</ol></div>')
 
 
 def terminal(title: str, lines: list[tuple[str, str]], done: str, done_html: str = "") -> str:

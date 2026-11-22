@@ -1,7 +1,7 @@
 # Pitch changes – source of truth for the script and cue cards
 
 - **For:** Rashed's other Claude session (pitch script + cue cards) · **Written by:** Rashed's Claude (build session)
-- **App state:** `main` with #80 to #90 merged (app commit `3e5ec90`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
+- **App state:** `main` with #80 to #92 merged (app commit `ca434a4`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
 - **Rule:** every number below is what the app shows, read from `out/`, `measures/` and `factors/` by the app itself. Nothing here is typed by hand. If the script needs a number that is not on this page, it is not on screen: leave it out or ask.
 
 ## Read first – for the scheduled run and any agent updating the script or cue cards
@@ -29,6 +29,8 @@
 | 21 | **Own AI is now 3.6 kg CO₂** (was 2.4 kg), «the plan saves that in about 12 hours»; pop-out «Who used it, by tool»: Claude Code · Rashed 2.36 kg (66 %), Hakim 0.79 kg (22 %), Vinzenz 0.31 kg (9 %), Grok (Cursor) 0.13 kg (4 %) |
 | 22 | Close card with ALTYCA × Basel 2037 logos, three short lines |
 | 23 | New «Let's talk?» contact page (confetti, LinkedIn, FAQ) – the last beat |
+| all | Every page now ends with a «Sources» footer: the data files behind its numbers and each factor with its published source (e.g. VSE/strom.ch for the Swiss grid, Ember/Our World in Data for Germany and Ireland, Boavizta for server energy). For a source question in Q&A: «every number has its source at the bottom of the page». |
+| 23 | LinkedIn buttons are now small LinkedIn «in» icons; FAQ answer 6 reworded (see FAQ) |
 | – | Not beats: Connect Next button «.json file analysis →» (normal mode only); sidebar » reopens a collapsed sidebar; About step cards in order on phones |
 
 **Do not say or put on a card**
@@ -96,7 +98,7 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 3. **A paused server still uses some power. Does the saving hold?** – We show that case openly: if paused hours count at idle power, the saving is −39.2 % on mid factors, just under the −40 % target. In the official counting (one factor per hour, in the baseline and in the saving alike) it is −43.0 %.
 4. **How much work is it for an SME?** – The plan needs 14.5 of 15 person-days. After that, once a month: upload the exports, run the tool, two checks must pass, owners decide on the open points.
 5. **Why is SaaS not in the CO₂?** – No SaaS vendor publishes energy per licence. We left it out instead of inventing a number. SaaS still counts fully for cost, so unused licences show up in CHF.
-6. **Does the AI assistant send our data to the cloud?** – No. In this app the assistant answers offline from the exported files. It makes no API calls.
+6. **Does the AI assistant send our data to the cloud?** – No. The assistant works inside this app and only reads your exported files. Your data is not sent to an outside AI service.
 7. **What about hidden instructions in the data (prompt injection)?** – Text in the data is data, never an instruction. 22 lines were set aside for a person. None of them changed a number: the baseline matches an independent recalculation.
 8. **Is anything critical switched off?** – No. Production, backups, the emergency fallback and the audit report stay on. Inside a protection window, paused systems start again automatically, and every change needs a person's OK: human in the loop.
 9. **What comes next?** – A direct connection to cloud and licence accounts (API / MCP), and GreenOps agents that propose changes for a person to approve. Both are on the roadmap, not built yet.
@@ -104,4 +106,4 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 66 app tests OK (incl. a walk through all 23 beats forward and back, each on its page) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 23 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
-STATUS: FINAL 2026-11-22 02:42 UTC main @ 3e5ec90
+STATUS: FINAL 2026-11-22 03:16 UTC main @ ca434a4
