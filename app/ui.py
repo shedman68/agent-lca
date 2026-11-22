@@ -47,6 +47,8 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-in{margin-top:6px;font-size:14px;font-weight:700;color:var(--teal,#00cc99) !important;text-decoration:none;border:1px solid var(--teal,#00cc99);border-radius:999px;padding:4px 12px;}
+.gx-in:hover{background:var(--teal,#00cc99);color:var(--on-teal,#0d0f12) !important;}
 .gx-rot{display:inline-block;height:1.12em;overflow:hidden;vertical-align:bottom;color:inherit;}
 .gx-rot .w{display:block;transform:translateY(0);}
 .gx-rot .w i{display:block;height:1.12em;line-height:1.12em;font-style:normal;}
@@ -300,11 +302,18 @@ def _avatar(name: str) -> str:
     return f'<div class="gx-avatar gx-initials" aria-hidden="true">{esc(initials)}</div>'
 
 
-def team(members: list[tuple[str, str]]) -> None:
-    """Three equal team cards: round photo (or initials), name, role underneath."""
-    cells = "".join(f'<div class="gx-person">{_avatar(n)}<b>{esc(n)}</b><span>{i18n.tr(r)}</span></div>'
-                    for n, r in members)
-    _raw(f'<div class="gx-team">{cells}</div>')
+def team(members: list[tuple], links: bool = False) -> None:
+    """Three equal team cards: round photo (or initials), full name, role underneath; optional LinkedIn link.
+    The photo file is named after the first name (app/static/team/rashed.jpeg …)."""
+    cells = []
+    for m in members:
+        name, role = m[0], m[1]
+        url = m[2] if len(m) > 2 else ""
+        link = (f'<a class="gx-in" href="{esc(url)}" target="_blank" rel="noopener">LinkedIn</a>'
+                if links and url else "")
+        cells.append(f'<div class="gx-person">{_avatar(name.split()[0])}<b>{esc(name)}</b>'
+                     f'<span>{i18n.tr(role)}</span>{link}</div>')
+    _raw(f'<div class="gx-team">{"".join(cells)}</div>')
 
 
 def terminal(title: str, lines: list[tuple[str, str]], done: str) -> str:
