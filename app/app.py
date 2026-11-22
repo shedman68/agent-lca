@@ -1137,7 +1137,7 @@ def page_stand() -> None:
                       if ratio else ""))
         de_line = _country_line("Germany")
         if de_line:
-            st.html(f'<p class="gx-sub" style="font-size:17px;margin:-6px 0 18px">{de_line}</p>')
+            st.html(f'<p class="gx-sub" style="font-size:17px;margin:-6px 0 18px">{ui.marks(ui.esc(de_line))}</p>')
     ui.explain("Not everything idle can be switched off:", "production and the emergency fallback must keep running.")
     if rows is not None:
         hs = {h["key"]: h for h in _hotspots(rows)}

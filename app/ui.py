@@ -10,6 +10,7 @@ Theme contract (grok/R9-theme, app/theme.py): --bg --card --card2 --line --ink -
 from __future__ import annotations
 
 import base64
+import re
 import html as _html
 from pathlib import Path
 
@@ -46,6 +47,7 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-num{color:var(--gx-stat,#ffd166);font-weight:800;font-size:1.12em;font-variant-numeric:tabular-nums;white-space:nowrap;}
 [data-testid="stPopoverBody"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33) !important;}
 [data-testid="stPopoverBody"] p,[data-testid="stPopoverBody"] li,[data-testid="stPopoverBody"] span{color:var(--ink2,#c4cad1) !important;}
 [data-testid="stPopoverBody"] strong,[data-testid="stPopoverBody"] b{color:var(--ink,#f2f4f5) !important;}
@@ -103,15 +105,15 @@ button[data-variant="segmented_control"][aria-checked="true"]{background:var(--t
 .gx-sub{font-size:19px;line-height:1.5;color:var(--ink2,#c4cad1);max-width:60ch;margin:0 0 26px;}
 .gx-kpis{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 26px;}
 .gx-kpi{flex:1 1 220px;min-width:min(200px,100%);}
-.gx-kpi .v{font-size:clamp(34px,4vw,48px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--ink,#f2f4f5);font-variant-numeric:tabular-nums;}
+.gx-kpi .v{font-size:clamp(34px,4vw,48px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--gx-stat,#ffd166);font-variant-numeric:tabular-nums;}
 .gx-kpi .u{font-size:17px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:6px;letter-spacing:0;}
 .gx-kpi .l{font-size:14px;color:var(--muted,#9aa3ad);margin-top:8px;font-weight:600;}
-.gx-kpi.good .v{color:var(--teal-ink,#00cc99);}
+.gx-kpi.good .v{color:var(--gx-stat,#ffd166);}
 .gx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px;margin:6px 0 22px;}
 .gx-card{background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:16px;padding:20px 22px;}
 .gx-card h4{margin:0 0 8px;font-size:18px;font-weight:750;color:var(--ink,#f2f4f5);letter-spacing:-.01em;}
 .gx-card p{margin:0;font-size:15.5px;line-height:1.5;color:var(--ink2,#c4cad1);}
-.gx-card .n{font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--ink,#f2f4f5);font-variant-numeric:tabular-nums;margin-top:14px;}
+.gx-card .n{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--gx-stat,#ffd166);font-variant-numeric:tabular-nums;margin-top:14px;}
 .gx-card .n span{font-size:15px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:4px;letter-spacing:0;}
 .gx-card .meta{font-size:13.5px;color:var(--muted,#9aa3ad);margin-top:10px;font-weight:600;}
 .gx-card .k{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);font-weight:700;margin:0 0 8px;}
@@ -146,8 +148,22 @@ background-color:#0d0f12;background-size:cover;background-position:center;border
 </style>"""
 
 
+STAT_DARK, STAT_LIGHT = "#ffd166", "#8a6400"  # key numbers; the light step keeps ≥ 4.5:1 on white
+
+
 def inject() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
+    stat = STAT_LIGHT if st.session_state.get("light_mode") else STAT_DARK
+    st.markdown(f"<style>:root{{--gx-stat:{stat};}}</style>", unsafe_allow_html=True)
+
+
+_STAT_RE = re.compile(r"(?<![\w\-/.])([−+\-]?\d[\d,]*(?:\.\d+)?\s?(?:%|×))")
+
+
+def marks(html_text: str) -> str:
+    """Key statistics inside a sentence (percentages, «3.7×») in the stat colour, bold and a little bigger.
+    Use on text that is already escaped: it adds spans only around the matched figures."""
+    return _STAT_RE.sub(r'<span class="gx-num">\1</span>', html_text)
 
 
 def photo_band(inner: str, slug: str) -> str:
@@ -187,7 +203,7 @@ def hero(eyebrow: str, line: str, sub: str = "", photo: str = "") -> None:
 
 def explain(term: str, text: str) -> None:
     """First time an idea appears: one plain sentence, so the page makes sense without a voice-over."""
-    _raw(f'<p class="gx-explain"><b>{i18n.tr(term)}</b> {i18n.tr(text, label=False)}</p>')
+    _raw(f'<p class="gx-explain"><b>{i18n.tr(term)}</b> {marks(i18n.tr(text, label=False))}</p>')
 
 
 def roadmap_note(text: str) -> None:
@@ -217,8 +233,8 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
     unit, kicker = i18n.tr(unit), i18n.tr(kicker)
     k = f'<p class="k">{kicker}</p>' if kicker else ""
     n = f'<div class="n">{number} <span>{unit}</span></div>' if number else ""  # a real space: CSS margins can be overridden
-    m = f'<div class="meta">{meta}</div>' if meta else ""
-    b = f"<p>{body}</p>" if body else ""
+    m = f'<div class="meta">{marks(meta)}</div>' if meta else ""
+    b = f"<p>{marks(body)}</p>" if body else ""
     return f'<div class="gx-card {kind}">{k}<h4>{title}</h4>{b}{n}{m}</div>'
 
 

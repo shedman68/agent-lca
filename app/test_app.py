@@ -6,6 +6,7 @@ the same files the app reads.
 """
 from __future__ import annotations
 
+import re
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
@@ -678,7 +679,11 @@ class StoryTests(unittest.TestCase):
         contract = {"bg", "card", "card2", "line", "ink", "ink2", "muted", "teal", "teal-ink",
                     "pink", "pink-bg", "teal-bg", "on-teal"}
         used = set(re.findall(r"var\(--([a-z0-9-]+)", ui.CSS))
-        self.assertTrue(used <= contract, sorted(used - contract))
+        own = {v for v in used if v.startswith("gx-")}  # ui.py's own variables, set by ui.inject()
+        self.assertTrue(used - own <= contract, sorted(used - own - contract))
+        import inspect
+        for v in own:
+            self.assertIn(f"--{v}:", inspect.getsource(ui.inject))
 
     def test_photo_heroes_name_files_and_keep_the_glow(self):
         """Hero photos are referenced by the agreed file names. A missing file still paints the teal glow."""
@@ -899,7 +904,7 @@ class ReviewFixesTests(unittest.TestCase):
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120)
         at.run()
         page = _open(at, "where-you-stand")
-        blob = " ".join(h.proto.body for h in page.get("html"))
+        blob = re.sub(r'</?span[^>]*>', "", " ".join(h.proto.body for h in page.get("html")))
         self.assertIn(f"Per kWh, Frankfurt emits {ratio:.1f}× more CO₂ than Zurich", blob)
         kwh = float(data.energy_totals()["kwh_mid"])
         self.assertIn(f"{kwh / 1000:,.0f} MWh of electricity a year", blob)
@@ -1021,7 +1026,7 @@ class StoryShareLinesTests(unittest.TestCase):
         rk = data.impact_by("resource", "co2", "mid").set_index("resource_id")["share"]["dp-dev"]
         at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
         page = _open(at, "where-you-stand")
-        blob = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        blob = re.sub(r'</?span[^>]*>', "", " ".join(getattr(h.proto, "body", "") for h in page.get("html")))
         self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO₂.", blob)
         self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO₂", blob)
 
@@ -1040,3 +1045,14 @@ class StoryKeysScriptTests(unittest.TestCase):
         self.assertIn("try {", js)                       # a cross-origin parent must not stop the script
         for key in ("ArrowRight", "ArrowLeft", "PageDown", "PageUp", "' '"):
             self.assertIn(key, js)
+
+
+class StatMarksTests(unittest.TestCase):
+    def test_percentages_and_ratios_marked_ids_and_dates_not(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+        self.assertIn('<span class="gx-num">8.7 %</span>', ui.marks("used 8.7 % of the time"))
+        self.assertIn('<span class="gx-num">3.7×</span>', ui.marks("emits 3.7× more"))
+        for plain in ("T-1251", "2026-03-01", "24/7", "step 2", "CHF 26,316"):
+            self.assertEqual(ui.marks(plain), plain)
