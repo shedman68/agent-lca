@@ -22,7 +22,7 @@ A cache read skips most of the compute that fresh input needs.
 
 > **Update 22.11.2026 01:39Z (Rashed's Claude, on Rashed's request as lead):** one row added to `V6-tokens.csv`:
 > Rashed's build session from 12:15Z to 01:39Z (272.3 M in, of which 268.3 M cache reads, 0.63 M out, Opus 5.5,
-> measured from the session's own transcript with the same method). `own_ai.py` rerun unchanged. New total in
+> measured from the session's own transcript with the same method; a self-count, not re-measured by Vinzenz). `own_ai.py` rerun unchanged. New total in
 > `V6-result.csv`: **775 M in (753 M cache) · 2.0 M out · 1.13 / 13.2 / 190.7 kWh · 0.24 / 3.59 / 60.8 kg CO₂**
 > (low / mid / high). The package saves that in about 12 hours (mid). Still not counted: Rashed's chief-of-staff
 > session after 12:07Z and his Friday VS Code session. The table below is the 14:15 state, kept for the record.

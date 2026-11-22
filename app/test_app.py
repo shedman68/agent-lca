@@ -949,8 +949,8 @@ class PresenterModeTests(unittest.TestCase):
         import story
         at = self._app()
         self.assertFalse(at.exception, at.exception)
-        expected_url = {"about": "", "connect": "connect", "where-you-stand": "where-you-stand", "your-plan": "your-plan",
-                        "stay-on-track": "stay-on-track"}
+        page_title = {"about": "About AgentLCA", "connect": "Connect", "where-you-stand": "Where you stand",
+                      "your-plan": "Your plan", "stay-on-track": "Stay on track"}
         seen = []
         for n in range(1, story.TOTAL + 1):
             self.assertEqual(at.session_state["story_beat"], n)
@@ -959,6 +959,11 @@ class PresenterModeTests(unittest.TestCase):
             self.assertIn(f"{n} / {story.TOTAL}", html)
             seen.append(n)
             b = story.beat(n)
+            titles = [t.value for t in at.title]
+            if b.page == "contact":
+                self.assertIn("gx-talk", html, f"beat {n} should show the Let's talk page")
+            else:
+                self.assertIn(page_title[b.page], titles, f"beat {n} should be on page {b.page!r}")
             if n == 6:
                 self.assertTrue(at.session_state["connected"])
             if n in (11, 12):

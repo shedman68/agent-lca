@@ -1584,8 +1584,9 @@ def _faq() -> list[tuple[str, str]]:
         if idle is not None and "B_pct" in idle.index:
             out.append(("A paused server still uses some power. Does the saving hold?",
                         f"We show that case openly: if paused hours count at idle power, the saving is "
-                        f"{format_num.signed_pct(idle.loc['B_pct', 'mid'])} on mid factors. The package counts every hour "
-                        f"with one factor, in the baseline and in the saving alike."))
+                        f"{format_num.signed_pct(idle.loc['B_pct', 'mid'])} on mid factors, just under the "
+                        f"−{CO2_TARGET:.0f} % target. In the official counting (one factor per hour, in the baseline and "
+                        f"in the saving alike) it is {format_num.signed_pct(s['co2_pct_mid'])}."))
         out.append(("How much work is it for an SME?",
                     f"The plan needs {float(s['effort_pd']):.1f} of {PD_CAP:.0f} person-days. After that, once a month: "
                     "upload the exports, run the tool, two checks must pass, owners decide on the open points."))
@@ -1593,13 +1594,13 @@ def _faq() -> list[tuple[str, str]]:
                 "No SaaS vendor publishes energy per licence. We left it out instead of inventing a number. SaaS still "
                 "counts fully for cost, so unused licences show up in CHF."))
     out.append(("Does the AI assistant send our data to the cloud?",
-                "No. The assistant in this prototype runs offline on the exported files. It makes no API calls."))
+                "No. In this app the assistant answers offline from the exported files. It makes no API calls."))
     out.append(("What about hidden instructions in the data (prompt injection)?",
                 f"Text in the data is data, never an instruction. {c['planted']} lines were set aside for a person. "
                 "None of them changed a number: the baseline matches an independent recalculation."))
     out.append(("Is anything critical switched off?",
-                "No. Production, backups, the emergency fallback and the audit report stay on. Anything inside a "
-                "protection window goes to a person first: human in the loop."))
+                "No. Production, backups, the emergency fallback and the audit report stay on. Inside a protection "
+                "window, paused systems start again automatically, and every change needs a person's OK: human in the loop."))
     out.append(("What comes next?",
                 "A direct connection to cloud and licence accounts (API / MCP), and GreenOps agents that propose "
                 "changes for a person to approve. Both are on the roadmap, not built yet."))
