@@ -1274,11 +1274,11 @@ def page_stand() -> None:
         hot = st.container(key="beat_stand_hotspot")
         hot.html(ui.card("Development data platform in Frankfurt, running 24/7", str(f1), _qty(hs["dev"]["kg"]) + r_find,
                          "kg CO₂ a year saved",
-                         (f"{dev_share} · " if dev_share else "")
+                         (f"{dev_share}{r_line} · " if dev_share else "")
                          + f"CHF {hs['dev']['chf']:,.0f} a year saved · pause when idle, starts automatically "
                            "before training days",
                          kind="accent spot" if st.session_state.get(ui.STORY_KEY) else "accent",
-                         kicker="Hotspot 1", data_body=True))
+                         kicker="Hotspot 1", data_body=True, ref=r_find))
         ui.grid([
             ui.card("Production platform at full size all week", "Fewer machines in quiet hours. Never switched off.",
                        _qty(hs["prod"]["kg"]) + r_find, "kg CO₂ a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
@@ -1347,7 +1347,7 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
         st.html(f'<p class="gx-sub" style="font-size:16px;margin:2px 0 22px">CO₂ {line}</p>')
     cap_chf = PD_CAP * data.PD_CHF
     ui.kpis([
-        (f"{result['effort_chf']:,.0f}", f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
+        (f"{result['effort_chf']:,.0f}" + _ref(_plan_sources(), "Optimisations and package"), f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
                                                                     f"(1 person-day = CHF {data.PD_CHF:,.0f})"),
     ], good={0} if result["effort_chf"] <= cap_chf else set())
     cards_box = st.container(key="beat_plan_cards")
@@ -1388,7 +1388,8 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
         chf_part = f"CHF {float(r['savings_cost_chf_per_year']):,.0f} a year · " if has_kg else ""
         cards.append(ui.card(
             str(r["description"]), "",
-            _qty(kg) if has_kg else f"{float(r['savings_cost_chf_per_year']):,.0f}",
+            (_qty(kg) if has_kg else f"{float(r['savings_cost_chf_per_year']):,.0f}")
+            + _ref(_plan_sources(), "Optimisations and package"),
             "kg CO₂ a year" if has_kg else "CHF a year",
             f"{chf_part}{float(r['effort_person_days']):.1f} person-days · {i18n.tr('Owner')}: {ui.esc(r['responsible_role'])}",
             kind="spot" if is_spot else "",
@@ -1414,7 +1415,8 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
                 "Training days restart paused machines. Night jobs and month-end keep production at full size. "
                 "The test environment stays unchanged 1–31 March 2026 (T-1204): release freeze and acceptance test. Backups stay.",
                 kind="pink", kicker="Not touched"),
-        ui.card("Contradictions flagged", contra, kind="pink", kicker="Sources disagree"),
+        ui.card("Contradictions flagged", contra, kind="pink", kicker="Sources disagree",
+                ref=_ref(_plan_sources(), "Contradictions")),
         ui.card("Needs your OK", "Production in quiet hours: Head of Consulting with the Head of Finance. "
                 "Licence cuts: Head of Finance.",
                 kind="pink", kicker="Human in the loop"),
