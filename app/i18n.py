@@ -203,6 +203,8 @@ DE: dict[str, str] = {
     "her company data.": "die Daten ihrer Firma.",
     "The GreenOps tool does the rest:": "Das GreenOps-Tool macht den Rest:",
     "Calculation of": "Berechnung von",
+    "files received": "Dateien empfangen",
+    "Working": "Arbeite",
     "lifecycle.": "Lebenszyklus.",
     "cost.": "Kosten.",
     "CARBON COST": "CO₂-KOSTEN",

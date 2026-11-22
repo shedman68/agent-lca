@@ -1172,3 +1172,24 @@ class AboutChapterOrderTests(unittest.TestCase):
         steps = [int(m) for h in html for m in re.findall(r'<p class="k">Step (\d)</p>', h)]
         self.assertEqual(steps, sorted(steps))
         self.assertEqual(steps, [1, 2, 3, 4, 5])
+
+
+class ConnectDemoAnimationTests(unittest.TestCase):
+    def test_upload_sim_and_agent_terminal_use_real_files_and_numbers(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        from streamlit.testing.v1 import AppTest
+        c, e = data.connect_stats(), data.energy_totals()
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "connect")
+        page = next(b for b in page.button if "ALTYCA-case.json" in b.label).click().run()
+        html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        self.assertIn('class="gx-upsim"', html)
+        self.assertEqual(html.count('class="chip"'), c["core"])
+        self.assertIn(f"+{c['extra']} extra", html)
+        self.assertIn(f"{c['files']} files received", html)
+        self.assertIn('class="gx-term gx-agent"', html)
+        self.assertIn("analyse ALTYCA-case.json", html)
+        flat = re.sub(r"<[^>]+>", "", html).replace("&nbsp;", " ").replace("\\xa0", " ")
+        self.assertIn(f"CHF {e['cost_chf']:,.0f} = CARBON COST: {e['co2_mid'] / 1000:.1f} t CO₂", flat)
