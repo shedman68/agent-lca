@@ -802,8 +802,11 @@ class CopyConnectRoadmapTests(unittest.TestCase):
         at.run()
         page = _open(at, "connect")
         blob = " ".join(h.proto.body for h in page.get("html"))
-        self.assertIn("connects</i><i>integrates</i><i>uploads</i>", blob)
-        self.assertIn("<br>her company data.<br><em>The tool does the rest.</em>", blob)
+        self.assertIn("<i>connects</i><i>integrates</i><i>uploads</i>", blob)
+        self.assertIn("<br>her company data.<br><em>The GreenOps tool does the rest:</em>", blob)
+        self.assertIn("<i>decide</i><i>visualise</i>", blob)
+        self.assertIn("validate · clean · analyse · compare · map · connect · calculate · simulate · model · optimise · "
+                      "visualise · decide", blob)  # static line for reduced motion
         md = " ".join(m.value for m in page.markdown)
         self.assertIn("direct connection to your cloud and licence accounts (API / MCP). Not built yet.", md)
         self.assertIn("Roadmap · not built yet", md)

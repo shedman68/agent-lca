@@ -201,7 +201,7 @@ DE: dict[str, str] = {
     "Optimisations found in ": "Optimierungen gefunden an ",
     "An IT manager ": "Eine IT-Leiterin ",
     "her company data.": "die Daten ihrer Firma.",
-    "The tool does the rest.": "Das Tool macht den Rest.",
+    "The GreenOps tool does the rest:": "Das GreenOps-Tool macht den Rest:",
     " locations.": " Orten.",
     "What we did not touch, and why": "Was wir nicht anfassen, und warum",
     "Next: GreenOps agents": "Als Nächstes: GreenOps-Agenten",

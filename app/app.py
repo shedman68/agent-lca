@@ -1065,10 +1065,12 @@ def page_connect() -> None:
     _story_top(1)
     st.title("Connect")
     with st.container(key="beat_connect_hero"):
-        # The verb rolls down: uploads → integrates → connects (CSS only; without motion it shows «connects»).
-        verb = ('<span class="gx-rot" aria-label="connects"><span class="w" aria-hidden="true">'
-                f'<i>{i18n.tr("connects")}</i><i>{i18n.tr("integrates")}</i><i>{i18n.tr("uploads")}</i></span></span>')
-        ui.hero("", f"An IT manager {verb}<br>her company data.<br><em>The tool does the rest.</em>", photo="connect")
+        # Line 1 rolls uploads → integrates → connects once; line 3 loops through what the tool does (CSS only).
+        verb = ui.roller(["uploads", "integrates", "connects"], "verb", step_s=0.9, loop=False)
+        does = ui.roller(["validate", "clean", "analyse", "compare", "map", "connect", "calculate", "simulate", "model",
+                          "optimise", "visualise", "decide"], "does", step_s=1.1)
+        ui.hero("", f"An IT manager {verb}<br>her company data.<br><span class=\"gx-does\"><em>The GreenOps tool does the "
+                    f"rest:</em><br><em>{does}</em></span>", photo="connect")
     run = st.container(key="beat_connect_run")
     run.__enter__()
     up = st.file_uploader("Upload your exports here (CSV or JSON lines)", accept_multiple_files=True,
