@@ -933,7 +933,7 @@ class ReviewFixesGermanTests(unittest.TestCase):
 
 
 class PresenterModeTests(unittest.TestCase):
-    """Story mode = presenter mode: 20 beats, forward and back, never an exception."""
+    """Story mode = presenter mode: 18 beats, forward and back, never an exception."""
 
     def _app(self):
         from streamlit.testing.v1 import AppTest
@@ -965,23 +965,28 @@ class PresenterModeTests(unittest.TestCase):
                 self.assertIn("gx-talk", html, f"beat {n} should show the Let's talk page")
             else:
                 self.assertIn(page_title[b.page], titles, f"beat {n} should be on page {b.page!r}")
-            if n == 6:
+            if n == 1:  # merged opening: headline + org chart (humans, agents, tools, flow) + LCA, one block
+                for part in ("gx-org", "Rashed Kabir", "Vinzenz Müller", "Hakim Kadriju", "Grok · QA &amp; Deploy",
+                             "Wo/Man make the decisions.", "Man-made agents do the leg work with real verified data.",
+                             "Linear", "How the ALTYCA case flowed", "ALTYCA data · 28 files", "We know it from pharma."):
+                    self.assertIn(part, html, f"beat 1: {part}")
+            if n == 4:
                 self.assertTrue(at.session_state["connected"])
             self.assertIn(f".st-key-beat_{b.anchor}", html, f"beat {n} spotlights its block")
-            if n == 10:  # merged: gauges on mid + low / mid / high strip, one key press
+            if n == 8:  # merged: gauges on mid + low / mid / high strip, one key press
                 self.assertEqual(at.session_state["factor_level_label"], "Mid factors")
                 for part in ("Low −49.6 %", "Mid −43.0 %", "High −42.2 %", "target −40 %", "gxLitMid"):
-                    self.assertIn(part, html, f"beat 10: {part}")
-            if n == 11:  # «Hard case»: idle power + budget only
+                    self.assertIn(part, html, f"beat 8: {part}")
+            if n == 9:  # «Hard case»: idle power + budget only
                 self.assertEqual(b.title, "Hard case")
                 self.assertIn("if paused servers count at idle power: −39.2 %", html)
                 self.assertNotIn("CO₂ Low factors", html)
-            if n == 13:
+            if n == 11:
                 self.assertEqual(at.session_state["plan_sort"], "cost")
-            if n == 14:
+            if n == 12:
                 self.assertEqual(at.session_state["plan_sort"], "both")
-                self.assertTrue(at.get("vega_lite_chart"), "beat 14 shows the CO₂ & Cost map")
-            if n == 16:  # merged: monthly file check + T-1251 refusal, one key press
+                self.assertTrue(at.get("vega_lite_chart"), "beat 12 shows the CO₂ & Cost map")
+            if n == 14:  # merged: monthly file check + T-1251 refusal, one key press
                 shown = " ".join(m.value for m in at.markdown)
                 self.assertIn("Refused.", shown)
                 self.assertIn("Human in the loop", shown)
@@ -1000,10 +1005,10 @@ class PresenterModeTests(unittest.TestCase):
         import sys
         sys.path.insert(0, str(ROOT / "app"))
         import story
-        self.assertEqual(story.TOTAL, 20)
-        self.assertEqual(story.HIGHLIGHT, {12: "first", 13: "licences"})
-        self.assertEqual([b.n for b in story.BEATS], list(range(1, 21)))
-        self.assertEqual([b.n for b in story.BEATS if story.ASK_KEY in b.state], [16])
+        self.assertEqual(story.TOTAL, 18)
+        self.assertEqual(story.HIGHLIGHT, {10: "first", 11: "licences"})
+        self.assertEqual([b.n for b in story.BEATS], list(range(1, 19)))
+        self.assertEqual([b.n for b in story.BEATS if story.ASK_KEY in b.state], [14])
         # Story mode off: Your plan keeps the full robustness line and shows no strip.
         from streamlit.testing.v1 import AppTest
         at = _open(AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run(), "your-plan")

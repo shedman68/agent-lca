@@ -1095,6 +1095,28 @@ BASEL_LINE = ("Built for ALTYCA × Basel 2037: an approach every Basel SME can a
 _ABOUT_SRC = [DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py")]
 
 
+# How we worked (About, beat 1): who decides, which agent does what, how they talk. Source: AGENTS.md (team, ownership,
+# tools, Slack protocol, Notion board, Stop hook, trap-reviewer) and README «AI tools». Linear was not used: roadmap.
+ORG = [
+    ("Rashed Kabir", "Product", "Leads, reviews every pull request, merges", [
+        ("Claude · chief of staff", "claude", "Plans, reviews, writes pitch and cue cards", "Claude chat · Slack"),
+        ("Claude Code · build", "claude", "Baseline, plan, app, docs", "GitHub pull requests · Slack #agent-updates"),
+        ("Grok · QA & Deploy", "grok", "Builds and tests the app (Cursor); never merges", "GitHub draft pull requests"),
+    ]),
+    ("Vinzenz Müller", "Energy and Environment", "Decides the factors", [
+        ("Claude · factors", "claude", "Energy and grid factors with sources; our own AI footprint",
+         "GitHub pull requests · board notes"),
+    ]),
+    ("Hakim Kadriju", "Data", "Decides the findings", [
+        ("Claude Code · analysis", "claude", "Findings, hotspots, cross-checks",
+         "GitHub pull requests · Slack #agent-updates"),
+    ]),
+]
+ORG_GATE = "Every change: trap guard → a fresh reviewer agent → MATCH and TRAP GUARD → a human merges"
+ORG_TOOLS = [("GitHub", "one pull request per task", False), ("Slack #agent-updates", "status, never orders", False),
+             ("Notion", "task board", False), ("Linear", "next, not used yet", True)]
+
+
 def page_about() -> None:
     """The opening of the pitch (no slides): brand story first, then the promise, then the chapters."""
     _story_top(0)
@@ -1102,25 +1124,26 @@ def page_about() -> None:
     if not out_ready():
         return
     s = data.package_summary()
-    with st.container(key="beat_hook"):
-        # The last word rolls: lifecycle ⇄ cost (CSS only; without motion both words show).
+    # One block for the opening (Rashed, 22.11.): headline, the team as an org chart of humans and agents
+    # («Agent» in the name), and «LCA» with the lifecycle ring. Story mode spotlights it as one beat.
+    with st.container(key="beat_intro"):
         # Both words roll in step: «Everything has a lifecycle.» ⇄ «Electricity has a cost.» (Electricity in yellow).
         first = ui.roller(["Everything", "Electricity"], "about1", step_s=1.8, classes=["", "gx-y"])
         word = ui.roller(["lifecycle.", "cost."], "about", step_s=1.8)
         ui.hero("", f"{first} has a <em>{word}</em>",
                 "We measure the use phase of cloud, servers, AI and SaaS.",
                 photo="about")
-    with st.container(key="beat_team"):
-        ui.team(TEAM)
-    with st.container(key="beat_why"):
-        left, right = st.columns([1.05, 1], vertical_alignment="center")
+        c = data.connect_stats() or {}
+        flow = [f"ALTYCA data · {c['files']} files" if c.get("files") else "ALTYCA data",
+                "Baseline · Claude Code", "Factors · Vinzenz's Claude", "Findings · Hakim's Claude Code",
+                "Plan and app · Claude Code, Grok", "Checks", "Rashed merges → live app"]
+        st.html(ui.org_chart(ORG, ORG_GATE, ORG_TOOLS, flow))
+        # Ring left, card right: in story mode the Back / Next bar sits bottom right.
+        left, right = st.columns([1, 1.05], vertical_alignment="top")
         with left:
-            ui.grid([
-                ui.card("Agent", "Man-made agents do the leg work with real verified data. Wo/Man make the decisions.", kicker="Why the name"),
-                ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"),
-            ])
-        with right:
             ui._raw(visuals.lifecycle(light=bool(st.session_state.get("light_mode", False))))
+        with right:
+            st.html(ui.card("LCA", "Life-cycle assessment. We know it from pharma.", kicker="Why the name"))
     with st.container(key="beat_promise"):
         if s is not None:
             r_pkg = _ref(_ABOUT_SRC, "Package figures")
