@@ -47,11 +47,18 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-term p.ok.result{font-size:22px;color:#f2f4f5;margin-top:16px;padding-top:14px;border-top:1px solid var(--line,#262b33);}
+.gx-term p.ok.result .gx-num{font-size:1.15em;}
+.gx-term p.ok.result .lbl{color:#00cc99;letter-spacing:.04em;}
+@media (max-width:720px){.gx-term p.ok.result{font-size:16px;}}
+.gx-rot .gx-rot-static{display:none;}
+@media (prefers-reduced-motion:reduce){.gx-rot{height:auto !important;overflow:visible !important;}.gx-rot .w{display:none !important;}.gx-rot .gx-rot-static{display:inline !important;}}
+.gx-does{font-size:.8em;display:inline-block;line-height:1.15;}
+.gx-in{margin-top:6px;font-size:14px;font-weight:700;color:var(--teal,#00cc99) !important;text-decoration:none;border:1px solid var(--teal,#00cc99);border-radius:999px;padding:4px 12px;}
+.gx-in:hover{background:var(--teal,#00cc99);color:var(--on-teal,#0d0f12) !important;}
 .gx-rot{display:inline-block;height:1.12em;overflow:hidden;vertical-align:bottom;color:inherit;}
 .gx-rot .w{display:block;transform:translateY(0);}
 .gx-rot .w i{display:block;height:1.12em;line-height:1.12em;font-style:normal;}
-@media (prefers-reduced-motion:no-preference){.gx-rot .w{animation:gxRoll 2.6s cubic-bezier(.6,0,.2,1) .3s both;}}
-@keyframes gxRoll{0%,22%{transform:translateY(-2.24em);}45%,68%{transform:translateY(-1.12em);}100%{transform:translateY(0);}}
 .st-key-beat_track_top [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stMarkdownContainer"] p::before{content:"› ";color:#00cc99;font-weight:800;}
 .st-key-beat_track_top [data-testid="stChatInput"],.st-key-beat_track_top [data-testid="stChatInput"] > div{background:#0a0c0f !important;border-color:var(--line,#262b33) !important;}
 .st-key-beat_track_top [data-testid="stChatInput"] textarea{color:#f2f4f5 !important;background:transparent !important;}
@@ -75,7 +82,7 @@ CSS = """<style>
 .gx-callout{box-shadow:0 12px 40px rgba(0,0,0,.45);border-color:var(--teal,#00cc99) !important;padding:16px 18px !important;}
 .gx-callout p{font-size:15px !important;}
 @media (max-width:720px){.st-key-beat_plan_map [data-testid="stElementContainer"]:has(.gx-callout){position:static;width:auto;}}
-.gx-num{color:var(--gx-stat,#ffd166);font-weight:800;font-size:1.12em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.gx-num{color:var(--gx-stat,#ffd166) !important;font-weight:800;font-size:1.12em;font-variant-numeric:tabular-nums;white-space:nowrap;}
 [data-testid="stPopoverBody"]{background:var(--card,#16191e) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33) !important;}
 [data-testid="stPopoverBody"] p,[data-testid="stPopoverBody"] li,[data-testid="stPopoverBody"] span{color:var(--ink2,#c4cad1) !important;}
 [data-testid="stPopoverBody"] strong,[data-testid="stPopoverBody"] b{color:var(--ink,#f2f4f5) !important;}
@@ -300,18 +307,49 @@ def _avatar(name: str) -> str:
     return f'<div class="gx-avatar gx-initials" aria-hidden="true">{esc(initials)}</div>'
 
 
-def team(members: list[tuple[str, str]]) -> None:
-    """Three equal team cards: round photo (or initials), name, role underneath."""
-    cells = "".join(f'<div class="gx-person">{_avatar(n)}<b>{esc(n)}</b><span>{i18n.tr(r)}</span></div>'
-                    for n, r in members)
-    _raw(f'<div class="gx-team">{cells}</div>')
+def team(members: list[tuple], links: bool = False) -> None:
+    """Three equal team cards: round photo (or initials), full name, role underneath; optional LinkedIn link.
+    The photo file is named after the first name (app/static/team/rashed.jpeg …)."""
+    cells = []
+    for m in members:
+        name, role = m[0], m[1]
+        url = m[2] if len(m) > 2 else ""
+        link = (f'<a class="gx-in" href="{esc(url)}" target="_blank" rel="noopener">LinkedIn</a>'
+                if links and url else "")
+        cells.append(f'<div class="gx-person">{_avatar(name.split()[0])}<b>{esc(name)}</b>'
+                     f'<span>{i18n.tr(role)}</span>{link}</div>')
+    _raw(f'<div class="gx-team">{"".join(cells)}</div>')
 
 
-def terminal(title: str, lines: list[tuple[str, str]], done: str) -> str:
+def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True) -> str:
+    """Words that roll down one after another (CSS only). loop=False stops on the last word.
+    Without motion the words show as one static line, so nothing is hidden."""
+    n = len(words)
+    stack = "".join(f"<i>{esc(i18n.tr(w))}</i>" for w in reversed(words))  # last word on top: the text moves down
+    frames = []
+    for i in range(n):
+        a, b = 100 * i / n, 100 * (i + 0.72) / n
+        off = (n - 1 - i) * 1.12
+        frames.append(f"{a:.2f}%,{b:.2f}%{{transform:translateY(-{off:.2f}em)}}")
+    if not loop:
+        frames.append("100%{transform:translateY(0)}")
+    total = step_s * n
+    it = "infinite" if loop else "1"
+    # Without motion: a loop shows every word; a one-off roll shows only where it ends.
+    static = " · ".join(esc(i18n.tr(w)) for w in words) if loop else esc(i18n.tr(words[-1]))
+    return (f'<span class="gx-rot gx-rot-{key}" aria-label="{static}"><span class="w" aria-hidden="true">{stack}</span>'
+            f'<span class="gx-rot-static">{static}</span></span>'
+            f"<style>@keyframes gxRoll{key}{{{''.join(frames)}}}"
+            f"@media (prefers-reduced-motion:no-preference){{.gx-rot-{key} .w{{transform:translateY(-{(n - 1) * 1.12:.2f}em);"
+            f"animation:gxRoll{key} {total:.1f}s cubic-bezier(.6,0,.2,1) .3s {it} both}}}}</style>")
+
+
+def terminal(title: str, lines: list[tuple[str, str]], done: str, done_html: str = "") -> str:
     """A small terminal block: one «> step  detail» line each, a done line at the end. Big mono type, few words."""
     rows = "".join(f'<p><span class="pr">&gt;</span> <b>{esc(i18n.tr(k))}</b> {esc(v)}</p>' for k, v in lines)
     return (f'<div class="gx-term gx-check"><div class="bar"><i></i><i></i><i></i><span>{esc(title)}</span></div>'
-            f'<div class="body">{rows}<p class="ok"><span class="pr">✓</span> {esc(i18n.tr(done))}</p></div></div>')
+            f'<div class="body">{rows}<p class="ok{" result" if done_html else ""}"><span class="pr">✓</span> '
+            f'{done_html or esc(i18n.tr(done))}</p></div></div>')
 
 
 def activity_log(title: str, rows: list[tuple[str, str, str]], summary: str) -> str:
