@@ -931,6 +931,10 @@ def _story_top(step: int) -> None:
     ui.story_bar(step, len(STORY) - 1, STORY[step][2])
 
 
+# A page's Next button may say what happens next instead of the next page's name (Rashed, 22.11.).
+_NEXT_LABEL = {1: ".json file analysis"}
+
+
 def _story_nav(step: int) -> None:
     """Back / Next for presenting. Free navigation in the sidebar always works too."""
     if st.session_state.get(ui.STORY_KEY):
@@ -938,7 +942,8 @@ def _story_nav(step: int) -> None:
     left, _, right = st.columns([1, 2, 1])
     if step > 0 and left.button(f"← {STORY[step - 1][2]}", key=f"back_{step}", width="stretch"):
         st.switch_page(PAGES[STORY[step - 1][0]])
-    if step < len(STORY) - 1 and right.button(f"{STORY[step + 1][2]} →", key=f"next_{step}", type="primary",
+    nxt = _NEXT_LABEL.get(step, STORY[step + 1][2]) if step < len(STORY) - 1 else ""
+    if step < len(STORY) - 1 and right.button(f"{nxt} →", key=f"next_{step}", type="primary",
                                               width="stretch"):
         st.switch_page(PAGES[STORY[step + 1][0]])
 
