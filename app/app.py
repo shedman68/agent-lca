@@ -32,7 +32,7 @@ import importlib  # noqa: E402
 
 
 def _fresh(mod):
-    """Reload a local module when its file changed since it was loaded.
+    """Reload a local module once on first sight and again whenever its file changed.
 
     Streamlit reruns app.py after an update but can keep the old copies of the modules it imports (seen on
     Streamlit Cloud: new app.py called ui.sources, the old ui had none). reload() re-executes the module in
@@ -41,13 +41,16 @@ def _fresh(mod):
         t = Path(mod.__file__).stat().st_mtime
     except (OSError, TypeError, AttributeError):
         return mod
-    seen = getattr(mod, "_gx_mtime", None)
-    if seen is not None and seen != t:
+    seen = getattr(mod, "_gx_loaded_mtime", None)
+    # seen is None: a copy loaded before this code existed (the marker name is new, so copies marked by
+    # older code count as unseen too) or a fresh process. Reload it once: a fresh
+    # process just re-runs the module; a server that was never rebooted gets the current file.
+    if seen != t:
         try:
             importlib.reload(mod)
         except Exception:  # a half-written file during an update: keep the loaded copy, try again next run
             return mod
-    mod._gx_mtime = t
+    mod._gx_loaded_mtime = t
     return mod
 
 

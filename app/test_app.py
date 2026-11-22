@@ -6,6 +6,7 @@ the same files the app reads.
 """
 from __future__ import annotations
 
+import importlib
 import re
 import unittest
 from contextlib import contextmanager
@@ -1226,3 +1227,37 @@ class SourcesFooterTests(unittest.TestCase):
         md = " ".join(m.value for m in page.markdown)
         self.assertIn("Your data is not sent to an outside AI service.", md)
         self.assertNotIn("API calls", md)
+
+
+class StaleModuleReloadTests(unittest.TestCase):
+    """The live server kept old copies of app modules after an update (AttributeError: ui.sources).
+    _fresh() in app.py must reload a copy it has never marked, including copies marked by older code."""
+
+    def _fresh(self):
+        import ast
+        src = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
+        fn = next(n for n in ast.parse(src).body if isinstance(n, ast.FunctionDef) and n.name == "_fresh")
+        ns = {"importlib": importlib, "Path": Path}
+        exec(compile(ast.Module(body=[fn], type_ignores=[]), "app.py", "exec"), ns)
+        return ns["_fresh"]
+
+    def test_unmarked_old_copy_is_reloaded(self):
+        import sys
+        import tempfile
+        fresh = self._fresh()
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "gx_stale_probe.py"
+            f.write_text("VALUE = 'old'\n")
+            sys.path.insert(0, d)
+            try:
+                mod = importlib.import_module("gx_stale_probe")
+                f.write_text("VALUE = 'new'  # v2\n")  # the update lands (new size: no stale .pyc), old copy stays loaded
+                mod._gx_mtime = f.stat().st_mtime  # then the older reload code (#94) marked the OLD copy as current
+                fresh(mod)
+                self.assertEqual(mod.VALUE, "new")
+                mod.VALUE = "kept"                 # unchanged file: no second reload
+                fresh(mod)
+                self.assertEqual(mod.VALUE, "kept")
+            finally:
+                sys.path.remove(d)
+                sys.modules.pop("gx_stale_probe", None)
