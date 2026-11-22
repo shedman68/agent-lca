@@ -1021,3 +1021,19 @@ class StoryShareLinesTests(unittest.TestCase):
         blob = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
         self.assertIn(f"Germany: {cc * 100:.0f} % of the cost, {ck * 100:.0f} % of the CO2.", blob)
         self.assertIn(f"{rc * 100:.0f} % of the cost · {rk * 100:.0f} % of the CO2", blob)
+
+
+class StoryKeysScriptTests(unittest.TestCase):
+    """Streamlit Cloud runs the app inside a frame: the key listener must live in the app's own window."""
+
+    def test_listener_attaches_to_own_window_and_never_needs_the_parent(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import story
+        js = story.keys_js(3, "why", True)
+        self.assertIn("const doc = document;", js)
+        self.assertIn("attach(window);", js)
+        self.assertNotIn("window.parent.document", js)  # the old bug: listened on the outer page only
+        self.assertIn("try {", js)                       # a cross-origin parent must not stop the script
+        for key in ("ArrowRight", "ArrowLeft", "PageDown", "PageUp", "' '"):
+            self.assertIn(key, js)

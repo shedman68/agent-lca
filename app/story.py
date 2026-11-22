@@ -162,23 +162,33 @@ def keys_js(n: int, anchor: str, on_page: bool) -> str:
     scroll = "true" if on_page else "false"
     return f"""<script>
 (function(){{
-  const doc = window.parent && window.parent.document ? window.parent.document : document;
-  const win = doc.defaultView || window;
-  if (!win.__gxStoryKeys) {{
-    win.__gxStoryKeys = true;
-    doc.addEventListener('keydown', function(e) {{
-      const t = e.target; const tag = (t && t.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || (t && t.isContentEditable)) return;
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-      let sel = null;
-      if (['ArrowRight', 'PageDown', ' ', 'Spacebar'].includes(e.key)) sel = '.st-key-story_next button';
-      if (['ArrowLeft', 'PageUp'].includes(e.key)) sel = '.st-key-story_prev button';
-      if (!sel) return;
-      const b = doc.querySelector(sel);
-      if (!b || b.disabled) return;
-      e.preventDefault(); b.click();
-    }}, true);
-  }}
+  // The app document is this one: st.html(unsafe_allow_javascript=True) runs in the page, not in an iframe.
+  // On Streamlit Cloud the whole app sits inside a frame of the streamlit.app page, so window.parent is NOT
+  // the app. Listen here, and also on the parent when the browser allows it (same origin), so a key works
+  // wherever the focus is. Buttons are always looked up in this document.
+  const doc = document;
+  const handler = function(e) {{
+    const t = e.target; const tag = (t && t.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    let sel = null;
+    if (['ArrowRight', 'PageDown', ' ', 'Spacebar'].includes(e.key)) sel = '.st-key-story_next button';
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) sel = '.st-key-story_prev button';
+    if (!sel) return;
+    const b = doc.querySelector(sel);
+    if (!b || b.disabled) return;
+    e.preventDefault(); e.stopPropagation(); b.click();
+  }};
+  const attach = function(target) {{
+    try {{
+      if (!target || target.__gxStoryKeys) return;
+      target.__gxStoryKeys = true;
+      target.addEventListener('keydown', handler, true);
+    }} catch (err) {{ /* cross-origin parent: not allowed, the app document still listens */ }}
+  }};
+  attach(window);
+  try {{ if (window.parent && window.parent !== window) attach(window.parent); }} catch (err) {{}}
+  if (!doc.activeElement || doc.activeElement === doc.body) {{ try {{ window.focus(); }} catch (err) {{}} }}
   if ({scroll}) {{
     let tries = 0;
     const go = function() {{
