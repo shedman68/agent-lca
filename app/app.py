@@ -931,6 +931,40 @@ def _story_top(step: int) -> None:
     ui.story_bar(step, len(STORY) - 1, STORY[step][2])
 
 
+DATA_SRC = ("ALTYCA sample data", "sprintd Basel 2026, «Green AI & Data» case: 13 core exports + 15 extra files in data/ "
+            "(cloud and hoster invoices, AI usage, SaaS, servers, tickets, monthly ECB exchange rates)")
+
+
+def _factor_src(key: str, what: str) -> tuple[str, str] | None:
+    """One reference line for a factor: what it is and its source, from factors/factors.csv (first source, shortened)."""
+    fac = data.factors_table()
+    if fac is None or "key" not in fac.columns:
+        return None
+    hit = fac[fac["key"].astype(str).eq(key)]
+    if hit.empty:
+        return None
+    src = str(hit.iloc[0].get("source", "") or "")
+    first = src.split(" | ")[0].strip()
+    first = re.sub(r"^(mid|low|high):\s*", "", first)
+    if len(first) > 170:
+        first = first[:167].rsplit(" ", 1)[0] + " …"
+    return (what, f"{first} (factors/factors.csv, {key})")
+
+
+def _sources(*items) -> None:
+    ui.sources([i for i in items if i])
+
+
+def _grid_sources():
+    return (_factor_src("grid_CH", "Grid CO₂ per kWh, Switzerland"), _factor_src("grid_DE", "Grid CO₂ per kWh, Germany"),
+            _factor_src("grid_IE", "Grid CO₂ per kWh, Ireland"), _factor_src("pue_default", "Data-centre overhead (PUE)"))
+
+
+def _energy_sources():
+    return (_factor_src("node_hour", "Energy per data-platform node-hour"), _factor_src("vcpu_hour", "Energy per vCPU-hour"),
+            _factor_src("gpu_hour", "Energy per GPU-hour"), _factor_src("tokens_1000", "Energy per 1,000 AI tokens"))
+
+
 # A page's Next button may say what happens next instead of the next page's name (Rashed, 22.11.).
 _NEXT_LABEL = {1: ".json file analysis"}
 
@@ -1070,6 +1104,8 @@ def page_about() -> None:
             "electricity and CO₂ hide in many systems, providers and three currencies, in data centres in Zurich, "
             "Frankfurt and Dublin, while the decisions are made in Basel.\n\n"
             f"**Why it matters.** {BASEL_LINE}")
+    _sources(DATA_SRC, ("Package figures", "measures/package_summary.csv, built from the data by measures/measures.py"),
+             *_grid_sources())
     _story_nav(0)
 
 
@@ -1133,6 +1169,10 @@ def page_connect() -> None:
         st.markdown("Files counted in `data/` and `data/extra/`; rows, currencies and sources from `out/fact_costs.csv`; "
                     "corrections from `out/quality_log.csv`; cross-checks from `out/contradiction_checks.csv`. "
                     "Built by `pipeline/pipeline.py`; the baseline matches an independent recalculation (MATCH).")
+    _sources(DATA_SRC, ("Files, rows and corrections", "data/ and data/extra/ (file list), out/fact_costs.csv, out/quality_log.csv, "
+                                                  "out/contradiction_checks.csv"),
+             ("Spend → carbon cost", "out/fact_costs.csv, built by pipeline/pipeline.py; checked by an independent "
+                                    "recalculation (pipeline/verify_baseline.py: MATCH)"), *_grid_sources())
     _story_nav(1)
 
 
@@ -1207,6 +1247,9 @@ def page_stand() -> None:
         with tab_b:
             page_findings(embedded=True)
     ui.bridge("Next: a plan that cuts these, without touching what must keep running.")
+    _sources(DATA_SRC, ("Cost, energy and CO₂ per line", "out/fact_costs.csv, built by pipeline/pipeline.py"),
+             ("Findings and hotspots", "out/findings.csv, built by analysis/findings.py"), *_grid_sources(),
+             *_energy_sources())
     _story_nav(2)
 
 
@@ -1335,6 +1378,10 @@ def page_plan() -> None:
     ui.explain("Low, mid, high:", "every factor is a range. The plan must pass on all three.")
     page_package(embedded=True, middle=_plan_middle)
     ui.bridge("Next: how the tool keeps helping once the plan runs.")
+    _sources(DATA_SRC, ("Optimisations and package", "measures/measures.csv and measures/package_summary.csv"),
+             ("Idle-power sensitivity", "factors/kb/V2-idle-impact.csv (Vinzenz, V2)"),
+             ("Contradictions", "analysis/kb/reconciliation_checks.csv"), *_grid_sources(), *_energy_sources(),
+             _factor_src("node_hour_idle", "Energy per idle node-hour"))
     _story_nav(3)
 
 
@@ -1513,6 +1560,12 @@ def page_track() -> None:
             "</ul></div>")
     close.__exit__(None, None, None)
     ui.bridge("Next: let's talk.")
+    _sources(DATA_SRC, ("Next year", "out/fact_costs.csv (baseline year repeated) and measures/package_summary.csv"),
+             ("File check and prompt injections", "out/quality_log.csv, docs/protected.csv, analysis/kb/reconciliation_checks.csv"),
+             ("Our own AI use", "factors/kb/V6-tokens.csv → factors/kb/V6-result.csv (Vinzenz, V6; own session logs)"),
+             _factor_src("tokens_in_1000_large", "Energy per 1,000 input tokens, large model"),
+             _factor_src("tokens_out_1000_large", "Energy per 1,000 output tokens, large model"),
+             _factor_src("cache_read_share", "Cache reads vs fresh input"), *_grid_sources())
     _story_nav(4)
 
 
@@ -1578,6 +1631,7 @@ def page_behind() -> None:
             "independent recalculation and the trap check passes (checked on every build).\n\n"
             "**Built by a team of three with AI agents** (Claude Code, Grok, Cursor). Their own energy use is counted in "
             "«Next year & our AI energy».")
+    _sources(DATA_SRC, ("All factors with low / mid / high and sources", "factors/factors.csv and factors/sources.md"))
     _story_nav(5)
 
 
@@ -1620,7 +1674,8 @@ def _faq() -> list[tuple[str, str]]:
                 "No SaaS vendor publishes energy per licence. We left it out instead of inventing a number. SaaS still "
                 "counts fully for cost, so unused licences show up in CHF."))
     out.append(("Does the AI assistant send our data to the cloud?",
-                "No. In this app the assistant answers offline from the exported files. It makes no API calls."))
+                "No. The assistant works inside this app and only reads your exported files. "
+                "Your data is not sent to an outside AI service."))
     out.append(("What about hidden instructions in the data (prompt injection)?",
                 f"Text in the data is data, never an instruction. {c['planted']} lines were set aside for a person. "
                 "None of them changed a number: the baseline matches an independent recalculation."))
@@ -1645,6 +1700,8 @@ def page_contact() -> None:
     for q, a in _faq():
         with st.expander(q):
             st.markdown(a)
+    _sources(DATA_SRC, ("FAQ figures", "measures/package_summary.csv, factors/kb/V2-idle-impact.csv, factors/factors.csv"),
+             _factor_src("grid_CH", "Grid CO₂ per kWh, Switzerland"), _factor_src("grid_DE", "Grid CO₂ per kWh, Germany"))
 
 
 _funcs = [page_about, page_connect, page_stand, page_plan, page_track, page_behind]

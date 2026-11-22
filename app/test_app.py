@@ -1193,3 +1193,31 @@ class ConnectDemoAnimationTests(unittest.TestCase):
         self.assertIn("analyse ALTYCA-case.json", html)
         flat = re.sub(r"<[^>]+>", "", html).replace("&nbsp;", " ").replace("\\xa0", " ")
         self.assertIn(f"CHF {e['cost_chf']:,.0f} = CARBON COST: {e['co2_mid'] / 1000:.1f} t CO₂", flat)
+
+
+class SourcesFooterTests(unittest.TestCase):
+    def test_every_story_page_ends_with_sources_from_factors(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        from streamlit.testing.v1 import AppTest
+        fac = data.factors_table().set_index("key")
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        for url in ("", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers", "contact"):
+            page = _open(at, url)
+            html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+            self.assertIn('class="gx-sources"', html, url)
+            self.assertIn("ALTYCA sample data", html, url)
+        page = _open(at, "where-you-stand")
+        html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        self.assertIn("(factors/factors.csv, grid_CH)", html)
+        import html as _h
+        self.assertIn(_h.escape(str(fac.loc["grid_CH", "source"]).split(" | ")[0][5:40]), html)  # the real source text
+
+    def test_faq_offline_answer_is_plain(self):
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "contact")
+        md = " ".join(m.value for m in page.markdown)
+        self.assertIn("Your data is not sent to an outside AI service.", md)
+        self.assertNotIn("API calls", md)
