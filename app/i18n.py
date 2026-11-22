@@ -220,10 +220,8 @@ DE: dict[str, str] = {
     "By department": "Nach Abteilung",
     "Everything has a <em>lifecycle.</em>": "Alles hat einen <em>Lebenszyklus.</em>",
     "Our story": "Unsere Geschichte",
-    "Product Lead": "Produktleitung",
-    "Energy and Environment Lead": "Leitung Energie und Umwelt",
-    "Data Lead": "Leitung Daten",
-    "with AI agents (Claude, Grok)": "mit KI-Agenten (Claude, Grok)",
+    "Product": "Produkt",
+    "Energy and Environment": "Energie und Umwelt",
     "Why the name": "Warum der Name",
     "· cost −": "· Kosten −",
     "` from `pipeline": "` aus `pipeline",
@@ -237,7 +235,7 @@ LABEL_ONLY = {" of ", "All ", "Cost", "From ", "Range ", "target ", "Resource ",
               "Effort", "CO₂ per year", "CO₂ saved", "Cost saved", "Energy saved, mid",
               # R9: short page names, translated only where they are our labels
               "Where you stand", "Your plan", "Stay on track", "Behind the numbers", "Without the plan",
-              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name", "Data", "Know the limits", "Product Lead", "Energy and Environment Lead", "Data Lead", "Sort"}
+              "With the plan", "Who it is for", "Story mode", "What the plan does", "Owner", "Our story", "Why the name", "Data", "Know the limits", "Product", "Energy and Environment", "Sort"}
 _ORDER = sorted(DE, key=len, reverse=True)
 _ORDER_SAFE = [p_ for p_ in _ORDER if p_ not in LABEL_ONLY]
 

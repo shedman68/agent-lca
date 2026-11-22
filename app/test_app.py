@@ -1020,6 +1020,9 @@ class TeamPhotoTests(unittest.TestCase):
                 Image.new("RGB", (3000, 2000), (40, 120, 90)).save(Path(d) / "rashed.jpg", quality=95)
                 html = ui._avatar("Rashed")
                 self.assertLess(len(html), 140_000)  # shrunk to 400 px, page stays light
+                Image.new("RGBA", (900, 300), (200, 120, 60, 255)).save(Path(d) / "claude.png")
+                logo = ui._avatar("Claude")
+                self.assertIn('class="gx-avatar gx-logo" src="data:image/png;base64,', logo)  # logos are not cropped
                 self.assertIn('<img class="gx-avatar" src="data:image/jpeg;base64,', html)
                 self.assertNotIn("gx-initials", html)
 

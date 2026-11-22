@@ -97,7 +97,9 @@ CSS = """<style>
 .gx-term .pr{color:#00cc99;font-weight:700;margin-right:6px;}
 .gx-term p.ok{color:#00cc99;font-weight:700;margin:12px 0 0;}
 @media (max-width:720px){.gx-term p{font-size:15px;}.gx-term p b{min-width:0;margin-right:4px;}.gx-term .body{padding:12px 14px;}}
-.gx-team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin:8px 0 4px;}
+.gx-team{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin:8px 0 4px;}
+@media (max-width:1100px){.gx-team{grid-template-columns:repeat(3,minmax(0,1fr));}}
+.gx-avatar.gx-logo{object-fit:contain;background:#ffffff;padding:14px;}
 .gx-person{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 12px 20px;
   background:var(--card,#16191e);border:1px solid var(--line,#262b33);border-radius:18px;}
 .gx-person b{font-size:19px;color:var(--ink,#f2f4f5);margin-top:6px;}
@@ -281,28 +283,39 @@ TEAM_DIR = Path(__file__).resolve().parent / "static" / "team"
 
 
 @st.cache_data(show_spinner=False)
-def _photo_b64(path_str: str, mtime: float) -> str | None:
-    """Any size photo → 400 px square JPEG (centre crop), base64. None when the file cannot be read."""
+def _photo_b64(path_str: str, mtime: float) -> tuple[str, str, bool] | None:
+    """Any size image → (base64, mime, is_logo). Photos: 400 px centre crop, JPEG. Images with transparency are
+    treated as logos: fitted whole (no crop) on a transparent 400 px square, PNG."""
     try:
         import io
         from PIL import Image, ImageOps
-        img = ImageOps.exif_transpose(Image.open(path_str)).convert("RGB")
-        img = ImageOps.fit(img, (400, 400))
+        img = ImageOps.exif_transpose(Image.open(path_str))
+        has_alpha = img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info)
         buf = io.BytesIO()
+        if has_alpha:
+            img = img.convert("RGBA")
+            img.thumbnail((300, 300))
+            canvas = Image.new("RGBA", (400, 400), (0, 0, 0, 0))
+            canvas.paste(img, ((400 - img.width) // 2, (400 - img.height) // 2), img)
+            canvas.save(buf, "PNG", optimize=True)
+            return base64.b64encode(buf.getvalue()).decode(), "image/png", True
+        img = ImageOps.fit(img.convert("RGB"), (400, 400))
         img.save(buf, "JPEG", quality=82, optimize=True)
-        return base64.b64encode(buf.getvalue()).decode()
+        return base64.b64encode(buf.getvalue()).decode(), "image/jpeg", False
     except Exception:
         return None
 
 
 def _avatar(name: str) -> str:
-    """Round photo from app/static/team/<name>.jpg|.jpeg|.png (any size, shrunk here). No usable file: initials."""
+    """Round photo or logo from app/static/team/<name>.jpg|.jpeg|.png (any size, shrunk here). None: initials."""
     for ext in ("jpg", "jpeg", "png", "JPG", "JPEG", "PNG"):
         path = TEAM_DIR / f"{name.lower()}.{ext}"
         if path.is_file():
-            b64 = _photo_b64(str(path), path.stat().st_mtime)
-            if b64:
-                return f'<img class="gx-avatar" src="data:image/jpeg;base64,{b64}" alt="{esc(name)}">'
+            got = _photo_b64(str(path), path.stat().st_mtime)
+            if got:
+                b64, mime, logo = got
+                cls = "gx-avatar gx-logo" if logo else "gx-avatar"
+                return f'<img class="{cls}" src="data:{mime};base64,{b64}" alt="{esc(name)}">'
     initials = "".join(w[0] for w in name.split()[:2]).upper()
     return f'<div class="gx-avatar gx-initials" aria-hidden="true">{esc(initials)}</div>'
 
