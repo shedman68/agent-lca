@@ -48,6 +48,22 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-card .n.has-pop{position:relative;cursor:help;display:inline-block;}
+.gx-pop{display:none;position:absolute;z-index:20;right:calc(100% + 34px);top:-40px;width:330px;background:#0a0c0f;
+  border:1px solid var(--teal,#00cc99);border-radius:14px;padding:14px 16px;box-shadow:0 16px 40px rgba(0,0,0,.5);
+  font-size:14px;font-weight:500;letter-spacing:0;color:var(--ink2,#c4cad1);text-align:left;}
+.gx-pop .tt{margin:0 0 10px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#f2f4f5;}
+.gx-pop .bar{display:flex;height:16px;border-radius:8px;overflow:hidden;margin:0 0 12px;}
+.gx-pop .bar i{display:block;height:100%;}
+.gx-pop ul{list-style:none;margin:0;padding:0;}
+.gx-pop li{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:14px;color:#f2f4f5;}
+.gx-pop li b{width:12px;height:12px;border-radius:3px;flex:0 0 auto;}
+.gx-pop li span{margin-left:auto;color:#c4cad1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.gx-pop .nt{margin:8px 0 0;font-size:12.5px;color:#9aa3ad;line-height:1.4;}
+.gx-card .n.has-pop:hover .gx-pop,.gx-card .n.has-pop:focus-within .gx-pop{display:block;}
+@media (max-width:1700px){.gx-pop{right:auto;left:0;top:auto;bottom:calc(100% + 12px);}}
+@media (max-width:720px){.gx-pop{position:static;width:auto;margin:12px 0 0;}.gx-card .n.has-pop{display:block;}}
+.gx-pop li{width:100%;}
 .gx-best{display:block;margin-top:10px;padding:8px 10px;border:2px solid #ff5d73;border-radius:10px;}
 .gx-partners{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:4px 0 14px;}
 .gx-partner{width:auto;max-width:220px;object-fit:contain;background:#ffffff;border-radius:12px;padding:8px 12px;}
@@ -282,14 +298,15 @@ def kpis(items: list[tuple[str, str, str]], good: set[int] | None = None) -> Non
 
 
 def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str = "", kind: str = "",
-         kicker: str = "", data_title: bool = False, data_body: bool = False) -> str:
+         kicker: str = "", data_title: bool = False, data_body: bool = False, pop: str = "") -> str:
     """Our own title, body, unit and kicker are translated here. Text from the data files is escaped and kept
     as stored: set data_title / data_body, and pass meta already built (data parts through esc())."""
     title = esc(title) if data_title else i18n.tr(title)
     body = esc(body) if data_body else i18n.tr(body, label=False)
     unit, kicker = i18n.tr(unit), i18n.tr(kicker)
     k = f'<p class="k">{kicker}</p>' if kicker else ""
-    n = f'<div class="n">{number} <span>{unit}</span></div>' if number else ""  # a real space: CSS margins can be overridden
+    n = (f'<div class="n{" has-pop" if pop else ""}">{number} <span>{unit}</span>{pop}</div>'
+         if number else "")  # a real space: CSS margins can be overridden; pop = optional hover pop-out
     m = f'<div class="meta">{marks(meta)}</div>' if meta else ""
     b = f"<p>{marks(body)}</p>" if body else ""
     return f'<div class="gx-card {kind}">{k}<h4>{title}</h4>{b}{n}{m}</div>'
@@ -430,6 +447,19 @@ def confetti(n: int = 70) -> str:
         bits.append(f'<i style="left:{left}%;background:{colours[i % len(colours)]};width:{w}px;height:{h}px;'
                     f'animation-delay:{delay:.2f}s;animation-duration:{dur:.2f}s;transform:rotate({rot}deg)"></i>')
     return f'<div class="gx-confetti" aria-hidden="true">{"".join(bits)}</div>'
+
+
+def breakdown_pop(title: str, parts: list[tuple[str, float]], unit: str, note: str = "") -> str:
+    """A pop-out with one horizontal stacked bar (one colour per part) and a legend. Values are passed in."""
+    colours = ["#00cc99", "#9ec0dc", "#ffd166", "#f84aa7", "#c4cad1"]
+    total = sum(v for _, v in parts) or 1.0
+    seg = "".join(f'<i style="width:{100 * v / total:.2f}%;background:{colours[i % len(colours)]}"></i>'
+                  for i, (_, v) in enumerate(parts))
+    leg = "".join(f'<li><b style="background:{colours[i % len(colours)]}"></b>{esc(i18n.tr(n))}'
+                  f'<span>{v:,.2f} {esc(unit)} · {100 * v / total:.0f} %</span></li>' for i, (n, v) in enumerate(parts))
+    nt = f'<p class="nt">{esc(i18n.tr(note, label=False))}</p>' if note else ""
+    return (f'<div class="gx-pop" role="tooltip"><p class="tt">{esc(i18n.tr(title))}</p>'
+            f'<div class="bar">{seg}</div><ul>{leg}</ul>{nt}</div>')
 
 
 def terminal(title: str, lines: list[tuple[str, str]], done: str, done_html: str = "") -> str:

@@ -1462,11 +1462,21 @@ def page_track() -> None:
     if tot is not None and not tot.empty and s is not None:
         t = tot.iloc[0]
         hours = float(t["co2_kg_mid"]) / float(s["co2_mid"]) * 8760 if float(s["co2_mid"]) else None
+        # Breakdown by person / tool from the same file (factors/kb/V6-result.csv): Claude Code per person, Grok via Cursor.
+        who = res[~res["person"].astype(str).str.upper().eq("TOTAL")].copy()
+        who["v"] = pd.to_numeric(who["co2_kg_mid"], errors="coerce").fillna(0.0)
+        who = who.sort_values("v", ascending=False)
+        parts = [(("Grok (Cursor)" if str(p_) == "Grok" else f"Claude Code · {p_}"), float(v_))
+                 for p_, v_ in zip(who["person"], who["v"])]
+        pop = ui.breakdown_pop("Who used it, by tool", parts, "kg",
+                               "Mid factors, counted so far. The logs show tokens per session, not what they were for, "
+                               "so there is no split by activity.")
         cards.append(ui.card("Our own AI use this weekend", "Building this with AI agents, counted so far.",
                              f"{float(t['co2_kg_mid']):,.1f}", "kg CO₂",
                              f"Range {float(t['co2_kg_low']):,.1f}–{float(t['co2_kg_high']):,.1f} kg · "
                              f"{float(t['kwh_mid']):,.1f} kWh"
-                             + (f" · the plan saves that in about {hours:,.0f} hours" if hours else ""), kicker="Our own footprint"))
+                             + (f" · the plan saves that in about {hours:,.0f} hours" if hours else ""),
+                             kicker="Our own footprint", kind="gx-ownai", pop=pop))
     shift = data.job_shift()
     if shift is not None and "reduction_pct" in shift:
         red = pd.to_numeric(shift["reduction_pct"], errors="coerce").dropna()

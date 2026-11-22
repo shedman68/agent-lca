@@ -1130,3 +1130,24 @@ class ContactPageTests(unittest.TestCase):
         html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
         self.assertIn('class="gx-nextyear"', html)
         self.assertIn("Roadmap items: GreenOps agents", " ".join(x.value for x in page.subheader))
+
+
+class OwnAiBreakdownTests(unittest.TestCase):
+    def test_pop_out_parts_come_from_v6_and_add_up(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "app"))
+        import data
+        r = data.own_ai_result()
+        total = float(r[r["person"].astype(str).str.upper().eq("TOTAL")]["co2_kg_mid"].iloc[0])
+        parts = r[~r["person"].astype(str).str.upper().eq("TOTAL")]
+        self.assertAlmostEqual(float(parts["co2_kg_mid"].sum()), total, places=3)
+        from streamlit.testing.v1 import AppTest
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "stay-on-track")
+        html = " ".join(getattr(h.proto, "body", "") for h in page.get("html"))
+        self.assertIn('class="gx-pop"', html)
+        self.assertIn("Grok (Cursor)", html)
+        for p_ in parts["person"]:
+            if p_ != "Grok":
+                self.assertIn(f"Claude Code · {p_}", html)
+        self.assertIn("no split by activity", html)
