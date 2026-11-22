@@ -451,20 +451,38 @@ _ORG_CSS = """<style>
 .gx-org .track ol{position:relative;display:flex;justify-content:space-between;list-style:none;margin:0;padding:0;}
 .gx-org .track li{display:flex;flex-direction:column;align-items:center;gap:9px;width:0;white-space:nowrap;font-size:13px;color:var(--muted,#9aa3ad);}
 .gx-org .track li i{display:block;width:7px;height:7px;margin-top:3px;border-radius:50%;background:var(--muted,#9aa3ad);opacity:.6;}
+.gx-org .track li.end{gap:6px;}
+.gx-org .track li.end:first-child{align-items:flex-start;text-align:left;}
+.gx-org .track li.end:last-child{align-items:flex-end;text-align:right;}
+.gx-org .track li.end:first-child i{margin-left:-11px;} .gx-org .track li.end:last-child i{margin-right:-11px;}
+.gx-org .track li.end i{width:22px;height:22px;margin-top:-5px;border-radius:50%;opacity:1;background:var(--card,#16191e);
+  border:2px solid #f6c445;box-shadow:0 0 0 4px rgba(246,196,69,.12);}
+.gx-org .track li.end i::after{content:"";display:block;width:8px;height:8px;margin:5px auto 0;border-radius:50%;background:#f6c445;}
+.gx-org .track li.end b{font-size:13px;font-weight:600;color:var(--ink,#f2f4f5);} .gx-org .track li.end small{font-size:11.5px;color:#f6c445;margin-top:-6px;}
+.gx-org .loop{display:block;width:100%;height:26px;margin:2px 0 0;}
+.gx-org .loopk{margin:-14px 0 0;text-align:center;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);}
 .gx-org .via{margin:22px 0 0;text-align:center;font-size:12.5px;color:var(--muted,#9aa3ad);}
 .gx-org .via b{font-weight:500;color:var(--ink,#f2f4f5);} .gx-org .via em{font-style:normal;opacity:.6;}
 @keyframes gxRide{0%{left:0;opacity:0;}4%{opacity:1;}92%{opacity:1;}100%{left:100%;opacity:0;}}
 @keyframes gxNode{0%,6%{color:var(--ink,#f2f4f5);}14%,100%{color:var(--muted,#9aa3ad);}}
+@keyframes gxEnd{0%,6%{box-shadow:0 0 0 6px rgba(246,196,69,.35),0 0 18px #f6c445;}14%,100%{box-shadow:0 0 0 4px rgba(246,196,69,.12);}}
 @keyframes gxNodeDot{0%,6%{background:#00cc99;opacity:1;box-shadow:0 0 10px #00cc99;}14%,100%{background:var(--muted,#9aa3ad);opacity:.6;box-shadow:none;}}
 @media (prefers-reduced-motion:no-preference){
   .gx-org .track .dot{animation:gxRide 8s linear infinite;}
   .gx-org .track li{animation:gxNode 8s linear infinite;} .gx-org .track li i{animation:gxNodeDot 8s linear infinite;}
+  .gx-org .track li.end i{animation:gxEnd 8s linear infinite;}
 }
 @media (max-width:720px){.gx-org .row{flex-direction:column;gap:22px;} .gx-org img.wire{height:22px;}
   .gx-org .ags{gap:6px;} .gx-org .ag{padding:7px 6px;gap:5px;} .gx-org .ag b{font-size:11.5px;}
   .gx-org .ag .gx-avatar{width:18px;height:18px;min-width:18px;}
   .gx-org .ags{justify-content:center;} .gx-org .ag:only-child{flex:0 1 auto;padding:7px 18px;}
-  .gx-org .track li{font-size:10.5px;} .gx-org .track{margin:22px 14px 6px;}}
+  .gx-org .track{margin:18px 0 6px 6px;} .gx-org .track .dot{display:none;}
+  .gx-org .track .ln{left:10px;right:auto;top:8px;bottom:8px;width:1px;height:auto;}
+  .gx-org .track ol{flex-direction:column;gap:12px;}
+  .gx-org .track li,.gx-org .track li.end:first-child,.gx-org .track li.end:last-child{flex-direction:row;align-items:center;width:auto;
+    gap:12px;font-size:13px;text-align:left;}
+  .gx-org .track li i{margin:0 7px;} .gx-org .track li.end i,.gx-org .track li.end:first-child i,.gx-org .track li.end:last-child i{margin:0;}
+  .gx-org .track li.end small{margin:0;} .gx-org .loop,.gx-org .loopk{display:none;}}
 </style>"""
 
 
@@ -484,7 +502,8 @@ def _wire(k: int, light: bool = False) -> str:
     return f'<img class="wire" alt="" aria-hidden="true" src="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}">'
 
 
-def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next: str = "", light: bool = False) -> str:
+def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next: str = "", light: bool = False,
+              ends: tuple | None = None, loop: str = "") -> str:
     """Team and agents as one quiet org chart: people on top (photo, name, role), their agents underneath as small pills
     (logo + one or two words), thin lines with a light pulse between them, and one track for the ALTYCA case: a dot
     travels along it and lights each step as it passes (CSS only; still under reduced motion).
@@ -496,15 +515,29 @@ def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next:
         grps.append(f'<div class="grp" style="flex:{len(agents)} 1 0">'
                     f'<div class="hum">{_avatar(name.split()[0])}<b>{esc(name)}</b><span>{esc(i18n.tr(role))}</span></div>'
                     f'{_wire(len(agents), light)}<div class="ags">{pills}</div></div>')
-    n = len(flow)
-    steps = "".join(f'<li style="animation-delay:{8 * i / max(n - 1, 1) * .92:.2f}s"><i style="animation-delay:'
-                    f'{8 * i / max(n - 1, 1) * .92:.2f}s"></i>{esc(i18n.tr(x))}</li>' for i, x in enumerate(flow))
+    # ends: ((who, what), (who, what)) – the customer at both ends of the track (e.g. the IT manager: uploads data,
+    # gets the optimisations back); drawn as people (yellow), the steps in between as dots.
+    items = ([("end",) + tuple(ends[0])] if ends else []) + [("step", x, "") for x in flow] + ([("end",) + tuple(ends[1])] if ends else [])
+    n = len(items)
+    li = []
+    for i, (kind, label, sub) in enumerate(items):
+        d = f"{8 * i / max(n - 1, 1) * .92:.2f}s"
+        body = (f'<b>{esc(i18n.tr(label))}</b><small>{esc(i18n.tr(sub))}</small>' if kind == "end" else esc(i18n.tr(label)))
+        li.append(f'<li class="{"end" if kind == "end" else ""}" style="animation-delay:{d}"><i style="animation-delay:{d}"></i>{body}</li>')
+    steps = "".join(li)
+    arc = ""
+    if loop:
+        stroke = "#0d0f12" if light else "#ffffff"
+        svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 26" preserveAspectRatio="none"><path d="M98 2 C98 24 2 24 2 2" '
+               f'fill="none" stroke="{stroke}" stroke-opacity=".22" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/></svg>')
+        arc = (f'<img class="loop" alt="" aria-hidden="true" src="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}">'
+               f'<p class="loopk">{esc(i18n.tr(loop))}</p>')
     via = " · ".join(f"<b>{esc(t)}</b>" for t in tools) + (f" · <em>{esc(tool_next)}</em>" if tool_next else "")
     return (_ORG_CSS + f'<div class="gx-org{" lt" if light else ""}">'
             f'<p class="lb">{esc(i18n.tr("Wo/Man make the decisions"))}</p>'
             f'<div class="row">{"".join(grps)}</div>'
             f'<p class="lb ag-lb">{esc(i18n.tr("Man-made agents do the leg work with real verified data"))}</p>'
-            f'<div class="track"><div class="ln"></div><div class="dot"></div><ol>{steps}</ol></div>'
+            f'<div class="track"><div class="ln"></div><div class="dot"></div><ol>{steps}</ol></div>{arc}'
             f'<p class="via">{esc(i18n.tr("Talking via"))} {via}</p></div>')
 
 
