@@ -1014,7 +1014,9 @@ def page_about() -> None:
         return
     s = data.package_summary()
     with st.container(key="beat_hook"):
-        ui.hero("", "Everything has a <em>lifecycle.</em>",
+        # The last word rolls: lifecycle ⇄ cost (CSS only; without motion both words show).
+        word = ui.roller(["lifecycle.", "cost."], "about", step_s=1.8)
+        ui.hero("", f"Everything has a <em>{word}</em>",
                 "We measure the use phase of cloud, servers, AI and SaaS.",
                 photo="about")
     with st.container(key="beat_team"):
