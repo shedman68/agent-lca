@@ -22,7 +22,7 @@ import format_num  # noqa: E402
 import data  # noqa: E402
 import i18n  # noqa: E402
 import plan_sort  # noqa: E402  (order of the optimisation cards)
-import story  # noqa: E402  (presenter mode: 21 beats, one key)
+import story  # noqa: E402  (presenter mode: 20 beats, one key)
 import register  # noqa: E402
 import theme  # noqa: E402  (global look: Grok)
 import ui  # noqa: E402  (page components)
