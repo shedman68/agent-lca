@@ -48,6 +48,7 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-rot .w i.gx-y{color:var(--gx-stat,#ffd166) !important;}
 .gx-sources{border-top:1px solid var(--line,#262b33);margin:36px 0 8px;padding-top:14px;}
 .gx-sources .tt{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--muted,#9aa3ad);margin:0 0 6px;}
 .gx-sources ol{margin:0;padding-left:20px;}
@@ -134,9 +135,9 @@ CSS = """<style>
 .gx-in{margin-top:8px;display:inline-flex;line-height:0;border-radius:7px;transition:transform .15s ease;}
 .gx-in img{display:block;width:30px;height:30px;}
 .gx-in:hover{transform:scale(1.08);}
-.gx-rot{display:inline-block;height:1.12em;overflow:hidden;vertical-align:bottom;color:inherit;}
+.gx-rot{display:inline-block;height:1.22em;overflow:hidden;vertical-align:bottom;color:inherit;margin-bottom:-.1em;}
 .gx-rot .w{display:block;transform:translateY(0);}
-.gx-rot .w i{display:block;height:1.12em;line-height:1.12em;font-style:normal;}
+.gx-rot .w i{display:block;height:1.4em;line-height:1.22em;font-style:normal;}
 .st-key-beat_track_top [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stMarkdownContainer"] p::before{content:"› ";color:#00cc99;font-weight:800;}
 .st-key-beat_track_top [data-testid="stChatInput"],.st-key-beat_track_top [data-testid="stChatInput"] > div{background:#0a0c0f !important;border-color:var(--line,#262b33) !important;}
 .st-key-beat_track_top [data-testid="stChatInput"] textarea{color:#f2f4f5 !important;background:transparent !important;}
@@ -425,15 +426,17 @@ def team(members: list[tuple], links: bool = False) -> None:
     _raw(f'<div class="gx-team">{"".join(cells)}</div>')
 
 
-def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True) -> str:
+def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True, classes: list[str] | None = None) -> str:
     """Words that roll down one after another (CSS only). loop=False stops on the last word.
     Without motion the words show as one static line, so nothing is hidden."""
     n = len(words)
-    stack = "".join(f"<i>{esc(i18n.tr(w))}</i>" for w in reversed(words))  # last word on top: the text moves down
+    cls = classes or [""] * n
+    stack = "".join(f'<i class="{c}">{esc(i18n.tr(w))}</i>' if c else f"<i>{esc(i18n.tr(w))}</i>"
+                    for w, c in reversed(list(zip(words, cls))))  # last word on top: the text moves down
     frames = []
     for i in range(n):
         a, b = 100 * i / n, 100 * (i + 0.72) / n
-        off = (n - 1 - i) * 1.12
+        off = (n - 1 - i) * 1.4
         frames.append(f"{a:.2f}%,{b:.2f}%{{transform:translateY(-{off:.2f}em)}}")
     if not loop:
         frames.append("100%{transform:translateY(0)}")
@@ -444,7 +447,7 @@ def roller(words: list[str], key: str, step_s: float = 1.1, loop: bool = True) -
     return (f'<span class="gx-rot gx-rot-{key}" aria-label="{static}"><span class="w" aria-hidden="true">{stack}</span>'
             f'<span class="gx-rot-static">{static}</span></span>'
             f"<style>@keyframes gxRoll{key}{{{''.join(frames)}}}"
-            f"@media (prefers-reduced-motion:no-preference){{.gx-rot-{key} .w{{transform:translateY(-{(n - 1) * 1.12:.2f}em);"
+            f"@media (prefers-reduced-motion:no-preference){{.gx-rot-{key} .w{{transform:translateY(-{(n - 1) * 1.4:.2f}em);"
             f"animation:gxRoll{key} {total:.1f}s cubic-bezier(.6,0,.2,1) .3s {it} both}}}}</style>")
 
 
