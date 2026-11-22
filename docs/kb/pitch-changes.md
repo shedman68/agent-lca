@@ -123,3 +123,5 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 74 app tests OK (incl. a walk through all 20 beats forward and back, each on its page, and checks of the two merged beats) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 20 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
+
+STATUS: FINAL 2026-11-22 11:00 UTC main @ 1745c8c
