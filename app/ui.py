@@ -46,6 +46,14 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+/* R10 item 2: popover buttons ("How … was calculated") and inline code chips readable in dark and light mode */
+[data-testid="stPopover"] button,[data-testid="stPopoverButton"],[data-testid="stPopover"] > div > button{
+  background:var(--card,#16191e) !important;color:var(--ink,#f2f4f5) !important;border:1px solid var(--line,#262b33) !important;}
+[data-testid="stPopover"] button p,[data-testid="stPopover"] button span,[data-testid="stPopover"] button div{color:var(--ink,#f2f4f5) !important;}
+[data-testid="stPopover"] button svg{fill:var(--ink,#f2f4f5) !important;color:var(--ink,#f2f4f5) !important;}
+.stApp code,[data-testid="stSidebar"] code,[data-testid="stCaptionContainer"] code{
+  background:var(--card2,#1c2026) !important;color:var(--ink2,#c4cad1) !important;border:1px solid var(--line,#262b33);
+  border-radius:6px;padding:1px 6px;}
 .gx-eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--teal-ink,#00cc99);margin:0 0 10px;}
 .gx-hero{font-size:clamp(30px,4.4vw,52px);line-height:1.08;font-weight:800;letter-spacing:-.035em;color:var(--ink,#f2f4f5);margin:0 0 14px;max-width:22ch;}
 .gx-hero em{font-style:normal;color:var(--teal-ink,#00cc99);}
@@ -64,6 +72,10 @@ CSS = """<style>
 .gx-card .n span{font-size:15px;font-weight:700;color:var(--muted,#9aa3ad);margin-left:4px;letter-spacing:0;}
 .gx-card .meta{font-size:13.5px;color:var(--muted,#9aa3ad);margin-top:10px;font-weight:600;}
 .gx-card .k{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);font-weight:700;margin:0 0 8px;}
+.gx-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px;margin:6px 0 6px;}
+.gx-team .gx-card{padding:14px 18px;}
+.gx-team .gx-card h4{font-size:17px;margin:0 0 2px;}
+.gx-team .gx-card p{font-size:14.5px;color:var(--muted,#9aa3ad);}
 .gx-card.accent{border-color:var(--teal,#00cc99);}
 .gx-card.pink{border-color:var(--pink,#f84aa7);background:var(--pink-bg,#2a1421);}
 .gx-card.pink h4{color:var(--pink,#f84aa7);}
@@ -89,7 +101,7 @@ background-color:#0d0f12;background-size:cover;background-position:center;border
 .gx-photo .gx-hero em,.gx-photo .gx-eyebrow{color:#00cc99;}
 .gx-photo .gx-sub{color:#d5dbe1;}
 .gx-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-@media (max-width:720px){.gx-sub{font-size:17px;}.gx-photo{padding:22px 16px 4px;min-height:180px;}}
+@media (max-width:720px){.gx-sub{font-size:17px;}.gx-photo{padding:22px 16px 4px;min-height:180px;box-shadow:inset 0 0 0 2000px rgba(13,15,18,.35);}}
 </style>"""
 
 
@@ -145,7 +157,7 @@ def kpis(items: list[tuple[str, str, str]], good: set[int] | None = None) -> Non
     """At most three or four key numbers: (value, unit, label)."""
     good = good or set()
     cells = "".join(
-        f'<div class="gx-kpi{" good" if i in good else ""}"><div class="v">{v}<span class="u">{u}</span></div>'
+        f'<div class="gx-kpi{" good" if i in good else ""}"><div class="v">{v} <span class="u">{u}</span></div>'
         f'<div class="l">{i18n.tr(lbl)}</div></div>' for i, (v, u, lbl) in enumerate(items))
     _raw(f'<div class="gx-kpis">{cells}</div>')
 
@@ -158,7 +170,7 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
     body = esc(body) if data_body else i18n.tr(body, label=False)
     unit, kicker = i18n.tr(unit), i18n.tr(kicker)
     k = f'<p class="k">{kicker}</p>' if kicker else ""
-    n = f'<div class="n">{number}<span>{unit}</span></div>' if number else ""
+    n = f'<div class="n">{number} <span>{unit}</span></div>' if number else ""  # a real space: CSS margins can be overridden
     m = f'<div class="meta">{meta}</div>' if meta else ""
     b = f"<p>{body}</p>" if body else ""
     return f'<div class="gx-card {kind}">{k}<h4>{title}</h4>{b}{n}{m}</div>'
@@ -166,6 +178,11 @@ def card(title: str, body: str = "", number: str = "", unit: str = "", meta: str
 
 def grid(cards: list[str]) -> None:
     _raw(f'<div class="gx-grid">{"".join(cards)}</div>')
+
+
+def team(members: list[tuple[str, str]]) -> None:
+    """Small equal-weight name cards: name in bold, role underneath. No photos."""
+    _raw(f'<div class="gx-team">{"".join(card(n, r) for n, r in members)}</div>')
 
 
 def story_bar(step: int, total: int, label: str) -> None:

@@ -579,3 +579,14 @@ def connect_stats() -> dict:
             "rows": int(len(f)), "sources": int(f["source"].nunique()) if "source" in f else None,
             "flags": flags, "planted": traps, "contradictions": int(len(c)) if c is not None else None,
             "extra_kinds": extra_kinds, "extra_more": extra_more}
+
+
+def idle_impact() -> pd.DataFrame | None:
+    """factors/kb/V2-idle-impact.csv (Vinzenz): package CO2 % under the official counting and idle-power variants."""
+    path = ROOT / "factors" / "kb" / "V2-idle-impact.csv"
+    if not path.exists():
+        return None
+    try:
+        return pd.read_csv(path, index_col=0)
+    except (OSError, ValueError):
+        return None

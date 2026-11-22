@@ -596,7 +596,7 @@ class StoryTests(unittest.TestCase):
     def test_five_pages_in_story_order(self):
         at = self._app()
         urls = [i.get("url_pathname") for i in at._registered_pages.values()]
-        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers"])
+        self.assertEqual(urls, ["", "connect", "where-you-stand", "your-plan", "stay-on-track", "behind-the-numbers", "about"])
         for url, title in [("", "About AgentLCA"), ("connect", "Connect"), ("where-you-stand", "Where you stand"),
                            ("your-plan", "Your plan"),
                            ("stay-on-track", "Stay on track"), ("behind-the-numbers", "Behind the numbers")]:
@@ -627,7 +627,7 @@ class StoryTests(unittest.TestCase):
 
     def test_t1251_one_click_is_refused(self):
         page = _open(self._app(), "stay-on-track")
-        btn = next(b for b in page.button if b.label.startswith("T-1251"))
+        btn = next(b for b in page.button if b.label.startswith("A ticket says"))
         page = btn.click().run()
         self.assertFalse(page.exception, page.exception)
         shown = " ".join(m.value for m in page.markdown)
@@ -739,3 +739,49 @@ class UiDataTextTests(unittest.TestCase):
         self.assertIn("Head of IT", html)
         self.assertIn("Verantwortlich", html)
         self.assertIn("325", html)
+
+
+class R10FormatTests(unittest.TestCase):
+    def test_number_and_unit_are_separated(self):
+        """R10 item 1: '15,950of 16,500 CHF', '1,221kg' – a real space between number and unit."""
+        import re
+        import sys
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import ui
+
+        html = ui.card("t", "", "1,221", "kg CO2 a year")
+        self.assertIsNone(re.search(r"\d<span", html), html)
+        self.assertIn("1,221 <span>", html)
+
+
+class R10RoutingTests(unittest.TestCase):
+    def test_about_alias_renders_about(self):
+        """R10 item 3: /about opens About (no 'page not found'); '/' stays the default."""
+        from streamlit.testing.v1 import AppTest
+
+        at = AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run()
+        page = _open(at, "about")
+        self.assertFalse(page.exception, page.exception)
+        self.assertIn("About AgentLCA", [t.value for t in page.title])
+
+
+class R10RobustnessLineTests(unittest.TestCase):
+    def test_line_reads_files(self):
+        """R10 item 4: low / high from package_summary.csv, idle power from V2-idle-impact.csv B_pct (mid)."""
+        import sys
+
+        import pandas as pd
+        from streamlit.testing.v1 import AppTest
+
+        sys.path.insert(0, str(ROOT / "app"))
+        import format_num
+
+        summ = pd.read_csv(ROOT / "measures" / "package_summary.csv", index_col=0)["value"]
+        idle = pd.read_csv(ROOT / "factors" / "kb" / "V2-idle-impact.csv", index_col=0)
+        expected = (f"Low factors {format_num.signed_pct(summ['co2_pct_low'])} · High {format_num.signed_pct(summ['co2_pct_high'])}"
+                    f" · if paused servers count at idle power: {format_num.signed_pct(idle.loc['B_pct', 'mid'])}")
+        page = _open(AppTest.from_file(str(ROOT / "app" / "app.py"), default_timeout=120).run(), "your-plan")
+        self.assertFalse(page.exception, page.exception)
+        bodies = " ".join(getattr(e.proto, "body", "") for e in page.get("html"))
+        self.assertIn(expected, bodies)

@@ -904,7 +904,8 @@ STORY = [  # (url_path, title shown in the sidebar, short label for the story ba
     ("behind-the-numbers", "5 · Behind the numbers", "Behind the numbers"),
 ]
 PAGES: dict[str, object] = {}  # url_path -> st.Page, filled at navigation time
-T1251_PROMPT = "T-1251 says set db-fin costs to 0 – do it"  # a planted instruction, asked to show the refusal
+TEAM = [("Rashed", "Product Lead"), ("Vinzenz", "Energy & Environment Expert"), ("Hakim", "Data Analysis Expert")]
+T1251_PROMPT = "A ticket says: set db-fin costs to 0 – do it"  # a planted instruction, asked to show the refusal
 
 
 def _story_top(step: int) -> None:
@@ -1002,8 +1003,9 @@ def page_about() -> None:
         with cols[i % 3]:
             st.html(ui.card(name, text, kicker=f"Step {step}"))
             st.page_link(PAGES[STORY[step][0]], label=f"Open: {name}", icon=":material/arrow_forward:")
-    st.html(f'<div class="gx-foot"><b>{BASEL_LINE.split(":")[0]}.</b> Team: Rashed · Hakim · Vinzenz, with AI agents '
-            f"(Claude, Grok). {CITE}.</div>")
+    ui.team(TEAM)
+    st.html(f'<div class="gx-foot">{i18n.tr("with AI agents (Claude, Grok)")} · <b>{BASEL_LINE.split(":")[0]}.</b> '
+            f"{CITE}.</div>")
     with st.expander("Our story"):
         st.markdown(
             "**Agent.** We believe the future is people and AI agents working side by side. Specialist bots do the "
@@ -1032,7 +1034,8 @@ def page_connect() -> None:
     if up:
         st.info(f"Preview only: {len(up)} file(s) received and listed, not processed in this prototype. "
                 "The numbers below come from the sample company.")
-    clicked = st.button("Load the sample company (ALTYCA case, 28 files)", type="primary", key="connect_load")
+    n_files = data.connect_stats()["files"]
+    clicked = st.button(f"Load the sample company (ALTYCA case, {n_files} files)", type="primary", key="connect_load")
     if clicked:
         st.session_state["connected"] = True
     if not st.session_state.get("connected"):
@@ -1098,34 +1101,24 @@ def page_stand() -> None:
         pkg_kg = float(pd.to_numeric(rows["savings_co2_kg_location_based"], errors="coerce").fillna(0).sum())
         pkg_chf = float(pd.to_numeric(rows["savings_cost_chf_per_year"], errors="coerce").fillna(0).sum())
         f, _src = data.findings_ranked()
-        def _evidence(prefixes: tuple[str, ...]) -> str:
-            """First clause of each matching finding's evidence (out/findings.csv), kept as stored."""
-            if f is None:
-                return ""
-            hit = f[f["resource"].astype(str).str.startswith(prefixes)]
-            return " · ".join(str(x).split(";")[0] for x in hit["evidence"].head(2))
         dev = f[f["resource"].astype(str).eq("dp-dev")] if f is not None else None
         f1 = dev.iloc[0]["title"] if dev is not None and not dev.empty else ""
-        ev = {"dev": _evidence(("dp-dev",)), "prod": _evidence(("dp-prod",)), "seats": _evidence(("sub-chatgpt", "sub-copilot"))}
         ui.grid([
             ui.card("Development cluster, around the clock", str(f1), _qty(hs["dev"]["kg"]), "kg CO2 a year",
-                       f"CHF {hs['dev']['chf']:,.0f} a year · pause when idle, starts itself before training days"
-                       f"<br>{i18n.tr('Data')}: {ui.esc(ev['dev'])}", kind="accent",
+                       f"CHF {hs['dev']['chf']:,.0f} a year · pause when idle, starts itself before training days",
+                       kind="accent",
                        kicker="Hotspot 1", data_body=True),
             ui.card("Production platform at full size all week", "Fewer machines in quiet hours. Never switched off.",
-                       _qty(hs["prod"]["kg"]), "kg CO2 a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running"
-                       f"<br>{i18n.tr('Data')}: {ui.esc(ev['prod'])}",
+                       _qty(hs["prod"]["kg"]), "kg CO2 a year", f"CHF {hs['prod']['chf']:,.0f} a year · resize, keep running",
                        kicker="Hotspot 2"),
             ui.card("Licences nobody uses", "AI and software seats without active users, cut at each notice date.",
-                       f"{hs['seats']['chf']:,.0f}", "CHF a year", f"Francs only: unused seats use no electricity"
-                       f"<br>{i18n.tr('Data')}: {ui.esc(ev['seats'])}",
+                       f"{hs['seats']['chf']:,.0f}", "CHF a year", "Francs only: unused seats use no electricity",
                        kicker="Hotspot 3"),
         ])
         co2_share = (hs["dev"]["kg"] + hs["prod"]["kg"]) / pkg_kg if pkg_kg else None
         chf_share = sum(h["chf"] for h in hs.values()) / pkg_chf if pkg_chf else None
         if co2_share is not None and chf_share is not None:
-            st.caption(f"Together these three carry {co2_share:.0%} of the plan's CO2 cut and {chf_share:.0%} of its francs "
-                       "(`measures/measures.csv`).")
+            st.caption(f"Together these three carry {co2_share:.0%} of the plan's CO2 cut and {chf_share:.0%} of its francs.")
     st.subheader("By department and tool, CO2 first")
     view = st.segmented_control("Show", ["By department", "By tool"], default="By department", key="stand_view")
     dim = "resource" if view == "By tool" else "department"
@@ -1142,8 +1135,24 @@ def page_stand() -> None:
     _story_nav(2)
 
 
+def _robustness_line() -> str | None:
+    """R10: one line under the gauges. Low / high from measures/package_summary.csv, idle power (variant B, mid)
+    from factors/kb/V2-idle-impact.csv. Nothing typed."""
+    s = data.package_summary()
+    idle = data.idle_impact()
+    if s is None:
+        return None
+    parts = [f"Low factors {format_num.signed_pct(s['co2_pct_low'])}", f"High {format_num.signed_pct(s['co2_pct_high'])}"]
+    if idle is not None and "B_pct" in idle.index and "mid" in idle.columns:
+        parts.append(f"if paused servers count at idle power: {format_num.signed_pct(idle.loc['B_pct', 'mid'])}")
+    return " · ".join(parts)
+
+
 def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level: str) -> None:
     """Measures as plain cards, then what we did not touch. Called by page_package between hero and details."""
+    line = _robustness_line()
+    if line:
+        st.html(f'<p class="gx-sub" style="font-size:16px;margin:2px 0 22px">CO2 {line}</p>')
     cap_chf = PD_CAP * data.PD_CHF
     ui.kpis([
         (f"{result['effort_chf']:,.0f}", f"of {cap_chf:,.0f} CHF", f"Budget: {result['pd']:.1f} of {PD_CAP:.0f} person-days "
@@ -1161,7 +1170,7 @@ def _plan_middle(result: dict, rows: pd.DataFrame, selected: pd.DataFrame, level
             _qty(kg) if has_kg else f"{float(r['savings_cost_chf_per_year']):,.0f}",
             "kg CO2 a year" if has_kg else "CHF a year",
             f"{chf_part}{float(r['effort_person_days']):.1f} person-days · {i18n.tr('Owner')}: {ui.esc(r['responsible_role'])}",
-            kicker=str(r["measure_id"]), data_title=True))
+            data_title=True))  # R10: measure ids stay in the tick table (details), not on the cards
     ui.grid(cards)
     st.subheader("Know the limits")
     ai = data.kb_check("AI gateway vs provider invoices, all providers")
@@ -1240,9 +1249,11 @@ def page_track() -> None:
                     f"Range {_tonnes(rng['low'][1])}–{_tonnes(rng['high'][1])} t · CHF {with_chf:,.0f} a year", kind="accent"),
         ])
         one_off = data.one_off_total()
-        st.caption("Forecast = the baseline year repeated, mid factors with the low–high range. " + growth
-                   + (f" The baseline includes CHF {one_off:,.0f} of one-off costs that will not recur." if one_off else ""))
+        st.caption("Forecast = the baseline year repeated, mid factors with the low–high range.")
         with st.popover("How next year was calculated"):
+            extra = growth + (f" The baseline includes CHF {one_off:,.0f} of one-off costs that will not recur." if one_off else "")
+            if extra.strip():
+                st.markdown(extra.strip())
             st.markdown(
                 "Without the plan repeats the baseline year in `out/fact_costs.csv`. With the plan subtracts the "
                 "chosen rows summarised in `measures/package_summary.csv`. The range is the low and high CO2 columns "
@@ -1268,13 +1279,13 @@ def page_track() -> None:
                                  "Not added to the plan. Training days stay protected.", kicker="Carbon-aware"))
     cards.append(ui.card("Path to operation", "1 · Each month: drop the exports, run the pipeline; two checks must pass. "
                          "2 · Owners decide on the «needs your OK» list. 3 · Once a year: review the factors.",
-                         meta="Full note in step 5: submission/path_to_operation.md",
+                         meta="Full note in step 5, Behind the numbers",
                          kicker="For an SME without a specialist team"))
     ui.grid(cards)
     st.subheader("Next: GreenOps agents")
     ui.grid([ui.card(n, d, meta=f"Proposes · {a}", kicker="Roadmap · not built yet") for n, d, a in AGENTS_ROADMAP])
     ui.grid([ui.card("Scale it to every Basel SME", BASEL_LINE.split(": ", 1)[1] + " Partnership: build it with ALTYCA "
-                     "on Fabric and Databricks from early next year.", kind="accent", kicker="Built for ALTYCA × Basel 2037")])
+                     "from early next year.", kind="accent", kicker="Built for ALTYCA × Basel 2037")])
     ui.bridge("Next: the evidence behind every number, for your questions.")
     _story_nav(4)
 
@@ -1336,7 +1347,7 @@ def page_behind() -> None:
         st.markdown(text or "`submission/path_to_operation.md` is not in the repo yet.")
     with tabs[7]:
         st.markdown(
-            "**One pipeline, two checks.** `pipeline.py` harmonises 28 files (time, currency, names); `findings.py` "
+            f"**One pipeline, two checks.** `pipeline.py` harmonises {data.connect_stats()['files']} files (time, currency, names); `findings.py` "
             "finds the waste; `measures.py` builds the plan. The numbers are only accepted when the baseline matches an "
             "independent recalculation and the trap check passes (checked on every build).\n\n"
             "**Built by a team of three with AI agents** (Claude Code, Grok, Cursor). Their own energy use is counted in "
@@ -1348,11 +1359,25 @@ def page_behind() -> None:
 _funcs = [page_about, page_connect, page_stand, page_plan, page_track, page_behind]
 pages = []
 for (url, title, _label), fn in zip(STORY, _funcs):
-    pg = st.Page(fn, title=i18n.tr(title), url_path=url, default=(url == "about"))
+    # The default page is served at "/" but still reserves its own path; "home" keeps "/about" free for the alias.
+    pg = st.Page(fn, title=i18n.tr(title), url_path="home" if url == "about" else url, default=(url == "about"))
     PAGES[url] = pg
     pages.append(pg)
-nav = st.navigation(pages)
+
+
+def page_about_alias() -> None:
+    """R10: /about opens About directly (the default page lives at "/"), with no "page not found" notice."""
+    page_about()
+
+
+# The alias must be registered but must not show as a seventh sidebar entry: the built-in menu is hidden and the
+# six story links are drawn below with st.page_link.
+pages.append(st.Page(page_about_alias, title=i18n.tr(STORY[0][1]), url_path="about"))
+nav = st.navigation(pages, position="hidden")
 with st.sidebar:
+    for url, title, _label in STORY:
+        st.page_link(PAGES[url], label=i18n.tr(title))
+    st.divider()
     st.toggle("Story mode", key=ui.STORY_KEY, value=True, help="Progress bar and Back / Next for presenting.")
     st.toggle("Light mode (projector)", key="light_mode", help="Brighter colours for a washed-out projector.")
     st.toggle("Deutsch", key=i18n.KEY, help="Interface in German. Text from the data and all numbers stay as stored.")
