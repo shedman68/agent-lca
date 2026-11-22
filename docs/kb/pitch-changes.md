@@ -29,7 +29,7 @@
 | 21 | **Own AI is now 3.6 kg CO₂** (was 2.4 kg), «the plan saves that in about 12 hours»; pop-out «Who used it, by tool»: Claude Code · Rashed 2.36 kg (66 %), Hakim 0.79 kg (22 %), Vinzenz 0.31 kg (9 %), Grok (Cursor) 0.13 kg (4 %) |
 | 22 | Close card with ALTYCA × Basel 2037 logos, three short lines |
 | 23 | New «Let's talk?» contact page (confetti, LinkedIn, FAQ) – the last beat |
-| all | Every page now ends with a «Sources» footer: the data files behind its numbers and each factor with its published source (e.g. VSE/strom.ch for the Swiss grid, Ember/Our World in Data for Germany and Ireland, Boavizta for server energy). For a source question in Q&A: «every number has its source at the bottom of the page». |
+| all | Pages that show statistics or calculations (About package figures, Connect after loading, Where you stand, Your plan, Stay on track, Behind the numbers) end with a «Sources» footer; «Let’s talk?» has none. It lists the data files behind the numbers and each factor with its published source (e.g. VSE/strom.ch for the Swiss grid, Ember/Our World in Data for Germany and Ireland, Boavizta for server energy). For a source question in Q&A: «every calculated number has its source at the bottom of its page». |
 | 23 | LinkedIn buttons are now small LinkedIn «in» icons; FAQ answer 6 reworded (see FAQ) |
 | – | Not beats: Connect Next button «.json file analysis →» (normal mode only); sidebar » reopens a collapsed sidebar; About step cards in order on phones |
 
@@ -106,4 +106,4 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 66 app tests OK (incl. a walk through all 23 beats forward and back, each on its page) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 23 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
-STATUS: FINAL 2026-11-22 03:26 UTC main @ 48dd8b2
+STATUS: FINAL 2026-11-22 03:37 UTC main @ 198c978
