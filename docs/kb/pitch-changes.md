@@ -1,7 +1,7 @@
 # Pitch changes – source of truth for the script and cue cards
 
 - **For:** Rashed's other Claude session (pitch script + cue cards) · **Written by:** Rashed's Claude (build session)
-- **App state:** `main` with #80 to #92 merged (app commit `ca434a4`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
+- **App state:** `main` with #80 to #93 merged (app commit `48dd8b2`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
 - **Rule:** every number below is what the app shows, read from `out/`, `measures/` and `factors/` by the app itself. Nothing here is typed by hand. If the script needs a number that is not on this page, it is not on screen: leave it out or ask.
 
 ## Read first – for the scheduled run and any agent updating the script or cue cards
@@ -18,7 +18,7 @@
 **Changed tonight (22.11., after the first version of the script) – check these beats first**
 | Beat | Change |
 |---|---|
-| 1 | Headline word rolls: «Everything has a lifecycle. ⇄ cost.» |
+| 1 | Headline rolls: «Everything has a lifecycle.» ⇄ «Electricity has a cost.» (Electricity in yellow) |
 | 2, 23 | Team: full names; roles Product · Energy and Environment · Data; Claude – Singularity; **Grok – QA & Deploy** |
 | 3 | Agent line: «Man-made agents do the leg work with real verified data. Wo/Man make the decisions.» · a light travels round the lifecycle ring; last phase is now «End of use / life» |
 | 5 | Connect headline: «An IT manager uploads → integrates → connects her company data. The GreenOps tool does the rest: validate … decide» |
@@ -54,7 +54,7 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 
 | # | Page | Shows | Does by itself | Exact on-screen wording | Numbers on screen |
 |---|---|---|---|---|---|
-| 1 | 0 · About | Opening photo band | last word rolls in a loop: lifecycle. ⇄ cost. | «Everything has a lifecycle. / cost.» (the green word alternates) / «We measure the use phase of cloud, servers, AI and SaaS.» | – |
+| 1 | 0 · About | Opening photo band | first and last word roll together in a loop | «Everything has a lifecycle.» ⇄ «Electricity has a cost.» («Everything» white, «Electricity» yellow, «lifecycle.» / «cost.» green) / «We measure the use phase of cloud, servers, AI and SaaS.» | – |
 | 2 | 0 · About | Team: five round cards | – | Rashed Kabir · Product · Vinzenz Müller · Energy and Environment · Hakim Kadriju · Data · Claude · Singularity · Grok · QA & Deploy | – |
 | 3 | 0 · About | «Why the name» cards + lifecycle ring | a light travels round the ring in a loop: Materials → Build → Use · today → End of use / life; each label lights up as it passes | Agent: «Man-made agents do the leg work with real verified data. Wo/Man make the decisions.» · LCA: «Life-cycle assessment. We know it from pharma.» · Ring: Materials · Build · Use · today · End of use / life · «Digital footprint of an SME» | – |
 | 4 | 0 · About | Promise (three key figures) | numbers rise in | «CO₂ per year, mid factors» · «Cost per year · CHF 134,306 saved» · «of 15 person-days · To implement» · «Nothing critical is switched off. For IT, management and finance of Basel SMEs.» · «Person-day: one person's working day. The case allows 15.» | −43.0 % · −28.6 % · CHF 134,306 · 14.5 of 15 person-days |
@@ -106,4 +106,4 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 66 app tests OK (incl. a walk through all 23 beats forward and back, each on its page) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 23 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
-STATUS: FINAL 2026-11-22 03:16 UTC main @ ca434a4
+STATUS: FINAL 2026-11-22 03:26 UTC main @ 48dd8b2
