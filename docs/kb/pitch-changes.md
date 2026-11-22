@@ -1,7 +1,7 @@
 # Pitch changes – source of truth for the script and cue cards
 
 - **For:** Rashed's other Claude session (pitch script + cue cards) · **Written by:** Rashed's Claude (build session)
-- **App state:** `main` with #80 to #86 merged (app commit `554444a`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
+- **App state:** `main` with #80 to #87 merged (app commit `a175371`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
 - **Rule:** every number below is what the app shows, read from `out/`, `measures/` and `factors/` by the app itself. Nothing here is typed by hand. If the script needs a number that is not on this page, it is not on screen: leave it out or ask.
 
 ## How to present
@@ -11,6 +11,7 @@
 - Each beat **spotlights** one block (the rest dims), scrolls it into view and does the action itself. Nobody clicks inside the app.
 - A refresh keeps the beat (it is in the URL, e.g. `?story=1&beat=7`). Click once into the page before the first key.
 - With Story mode **off**, each page has its own Back / Next buttons at the bottom; on Connect the Next button reads «.json file analysis →» (it opens Where you stand).
+- If the sidebar is collapsed, the green » next to the leaf (top left) opens it again.
 - **Behind the numbers** (sidebar step 5) is not a beat: for Q&A only. **Let's talk · Contact** is in the sidebar footer.
 
 ## The 23 beats
@@ -19,7 +20,7 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 | # | Page | Shows | Does by itself | Exact on-screen wording | Numbers on screen |
 |---|---|---|---|---|---|
 | 1 | 0 · About | Opening photo band | last word rolls in a loop: lifecycle. ⇄ cost. | «Everything has a lifecycle. / cost.» (the green word alternates) / «We measure the use phase of cloud, servers, AI and SaaS.» | – |
-| 2 | 0 · About | Team: five round cards | – | Rashed Kabir · Product · Vinzenz Müller · Energy and Environment · Hakim Kadriju · Data · Claude · Singularity · Grok · Singularity | – |
+| 2 | 0 · About | Team: five round cards | – | Rashed Kabir · Product · Vinzenz Müller · Energy and Environment · Hakim Kadriju · Data · Claude · Singularity · Grok · QA & Deploy | – |
 | 3 | 0 · About | «Why the name» cards + lifecycle ring | a light travels round the ring in a loop: Materials → Build → Use · today → End of use / life; each label lights up as it passes | Agent: «Man-made agents do the leg work with real verified data. Wo/Man make the decisions.» · LCA: «Life-cycle assessment. We know it from pharma.» · Ring: Materials · Build · Use · today · End of use / life · «Digital footprint of an SME» | – |
 | 4 | 0 · About | Promise (three key figures) | numbers rise in | «CO₂ per year, mid factors» · «Cost per year · CHF 134,306 saved» · «of 15 person-days · To implement» · «Nothing critical is switched off. For IT, management and finance of Basel SMEs.» · «Person-day: one person's working day. The case allows 15.» | −43.0 % · −28.6 % · CHF 134,306 · 14.5 of 15 person-days |
 | 5 | 1 · Connect | Headline in the photo band | first verb rolls once: uploads → integrates → connects; last line loops through 12 verbs | «An IT manager uploads → integrates → connects / her company data. / The GreenOps tool does the rest: validate · clean · analyse · compare · map · connect · calculate · simulate · model · optimise · visualise · decide» | – |
@@ -48,7 +49,7 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 
 **Removed from the app (do not say or show):** «Load the sample company», «Three places give most of the savings», «Ask the data. It refuses what it must.», «Next: the full lifecycle», «Next: GreenOps agents» (now «Roadmap items: GreenOps agents»), the old 21-beat numbering, «with AI agents (Claude, Grok)» line, team roles «… Lead», «CHF 470,289 · 6.2 t CO₂» after the «Overall picture ready» headline, «measure(s)» (now «optimisation(s)»), «CO2» (now «CO₂»).
 
-**Team (exact):** Rashed Kabir · Product · Vinzenz Müller · Energy and Environment · Hakim Kadriju · Data · Claude · Singularity · Grok · Singularity. LinkedIn: https://www.linkedin.com/in/rkab/ · https://www.linkedin.com/in/vinzenzmueller/ · https://www.linkedin.com/in/hakimkadriju/
+**Team (exact):** Rashed Kabir · Product · Vinzenz Müller · Energy and Environment · Hakim Kadriju · Data · Claude · Singularity · Grok · QA & Deploy. LinkedIn: https://www.linkedin.com/in/rkab/ · https://www.linkedin.com/in/vinzenzmueller/ · https://www.linkedin.com/in/hakimkadriju/
 
 ## What the prototype does with other data (for Q&A)
 - **Upload box:** files are listed, not processed («Preview only: … not processed in this prototype. The numbers below come from the sample company.»). Do not claim live upload analysis.
@@ -70,4 +71,4 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 66 app tests OK (incl. a walk through all 23 beats forward and back, each on its page) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 23 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
-STATUS: FINAL 2026-11-22 02:18 UTC main @ 554444a
+STATUS: FINAL 2026-11-22 02:24 UTC main @ a175371
