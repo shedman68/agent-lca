@@ -1102,8 +1102,12 @@ ORG = [
     ("Vinzenz Müller", "Energy and Environment", [("Factors", "claude")]),
     ("Hakim Kadriju", "Data", [("Analysis", "claude")]),
 ]
-ORG_FLOW = ["Data", "Baseline", "Factors", "Findings", "Plan", "Checks", "Human OK", "Live"]
-ORG_TOOLS = ["GitHub", "Slack", "Notion"]
+# Kept simple for the opening (Rashed, 22.11.): the SME's IT manager puts data in (as in the next scene), our agents analyse,
+# a human reviews, the IT manager gets the optimisations. The detailed steps are shown on the pages that follow.
+ORG_FLOW = ["Agents analyse", "Humans review"]
+ORG_ENDS = (("Example: IT manager", "Data ingestion"), ("IT manager", "Insights in minutes"))
+ORG_TOOLS = ["GitHub"]
+ORG_ROLL = ["Slack", "Notion", "Linear", "Jira"]  # rolling word (Rashed, 22.11.): Slack and Notion used this weekend; Linear, Jira next
 
 
 def page_about() -> None:
@@ -1122,7 +1126,8 @@ def page_about() -> None:
         ui.hero("", f"{first} has a <em>{word}</em>",
                 "We measure the use phase of cloud, servers, AI and SaaS.",
                 photo="about")
-        ui._raw(ui.org_chart(ORG, ORG_FLOW, ORG_TOOLS, "Linear next", light=bool(st.session_state.get("light_mode", False))))
+        ui._raw(ui.org_chart(ORG, ORG_FLOW, ORG_TOOLS, light=bool(st.session_state.get("light_mode", False)),
+                             ends=ORG_ENDS, agents_step="Agents analyse", humans_step="Humans review", roll=ORG_ROLL))
         # Ring left, card right: in story mode the Back / Next bar sits bottom right.
         left, right = st.columns([1, 1.05], vertical_alignment="top")
         with left:
