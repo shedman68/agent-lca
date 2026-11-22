@@ -47,6 +47,11 @@ def esc(text) -> str:
     return _html.escape(str(text))
 
 CSS = """<style>
+.gx-rot{display:inline-block;height:1.12em;overflow:hidden;vertical-align:bottom;color:inherit;}
+.gx-rot .w{display:block;transform:translateY(0);}
+.gx-rot .w i{display:block;height:1.12em;line-height:1.12em;font-style:normal;}
+@media (prefers-reduced-motion:no-preference){.gx-rot .w{animation:gxRoll 2.6s cubic-bezier(.6,0,.2,1) .3s both;}}
+@keyframes gxRoll{0%,22%{transform:translateY(-2.24em);}45%,68%{transform:translateY(-1.12em);}100%{transform:translateY(0);}}
 .st-key-beat_track_top [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stMarkdownContainer"] p::before{content:"› ";color:#00cc99;font-weight:800;}
 .st-key-beat_track_top [data-testid="stChatInput"],.st-key-beat_track_top [data-testid="stChatInput"] > div{background:#0a0c0f !important;border-color:var(--line,#262b33) !important;}
 .st-key-beat_track_top [data-testid="stChatInput"] textarea{color:#f2f4f5 !important;background:transparent !important;}

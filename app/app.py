@@ -1062,8 +1062,10 @@ def page_connect() -> None:
     _story_top(1)
     st.title("Connect")
     with st.container(key="beat_connect_hero"):
-        ui.hero("", "An IT manager uploads her company's exports. <em>The tool does the rest.</em>", photo="connect")
-        ui.explain("Exports:", "the files your providers already give you.")
+        # The verb rolls down: uploads → integrates → connects (CSS only; without motion it shows «connects»).
+        verb = ('<span class="gx-rot" aria-label="connects"><span class="w" aria-hidden="true">'
+                f'<i>{i18n.tr("connects")}</i><i>{i18n.tr("integrates")}</i><i>{i18n.tr("uploads")}</i></span></span>')
+        ui.hero("", f"An IT manager {verb}<br>her company data.<br><em>The tool does the rest.</em>", photo="connect")
     run = st.container(key="beat_connect_run")
     run.__enter__()
     up = st.file_uploader("Upload your exports here (CSV or JSON lines)", accept_multiple_files=True,
