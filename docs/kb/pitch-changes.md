@@ -4,6 +4,39 @@
 - **App state:** `main` with #80 to #90 merged (app commit `3e5ec90`), 22.11.2026. Live app: https://agent-lca-greenops.streamlit.app/ (redeploys from `main`; if it still shows an older version, ⋮ → Reboot app).
 - **Rule:** every number below is what the app shows, read from `out/`, `measures/` and `factors/` by the app itself. Nothing here is typed by hand. If the script needs a number that is not on this page, it is not on screen: leave it out or ask.
 
+## Read first – for the scheduled run and any agent updating the script or cue cards
+**Your job:** rewrite the pitch script and the cue cards so that they match this file exactly. This file is the source of truth; the app on `main` is what it describes. If an older script, cue card or Slack message disagrees with this file, this file wins.
+
+**Is it final?** Only if the very last line of this file starts with `STATUS: FINAL`. If that line has a newer time or sha than in your last run, something changed: redo the comparison below. If the line is missing, wait.
+
+**What to produce**
+1. **Script:** one spoken passage per beat, in beat order (1–23), for a 5-minute live demo + 3 minutes Q&A. Simple English for German-speaking listeners: short sentences, no idioms, a few known buzzwords. Use the app's terms exactly: «optimisation(s)» (British spelling), «CO₂», «location-based», «prompt injection», «Human in the loop».
+2. **Cue cards:** one per beat: beat number and page · the one sentence to say · the number(s) to stress (copied from the «Numbers on screen» column) · who speaks. Roles: Rashed Kabir – Product · Vinzenz Müller – Energy and Environment · Hakim Kadriju – Data. (Claude – Singularity and Grok – QA & Deploy are team cards in the app, not speakers.)
+3. **Q&A sheet:** from the FAQ section and «What the prototype does with other data» below.
+4. **A change list** at the end of your output: every line you changed, every old number you removed, every number you could not find in this file.
+
+**Changed tonight (22.11., after the first version of the script) – check these beats first**
+| Beat | Change |
+|---|---|
+| 1 | Headline word rolls: «Everything has a lifecycle. ⇄ cost.» |
+| 2, 23 | Team: full names; roles Product · Energy and Environment · Data; Claude – Singularity; **Grok – QA & Deploy** |
+| 3 | Agent line: «Man-made agents do the leg work with real verified data. Wo/Man make the decisions.» · a light travels round the lifecycle ring; last phase is now «End of use / life» |
+| 5 | Connect headline: «An IT manager uploads → integrates → connects her company data. The GreenOps tool does the rest: validate … decide» |
+| 6 | **Demo:** simulated upload (13 file names + «+15 extra», «28 files received ✓») then an agent terminal (`> analyse ALTYCA-case.json`, «✻ Working…», steps, result «✓ Calculation of SPEND: CHF 470,289 = CARBON COST: 6.2 t CO₂»). ≈4.5 s; runs in story mode and when the button is clicked in normal mode |
+| 7 | «Optimisations found in 3 locations.» · 36 MWh |
+| 16 | CO₂ & Cost map: red box around the M1 dot and around «Best of both: M1 Pause the development data platform outside working hours» |
+| 20 | Animated next-year chart (6.2 t → 3.5 t) + «Roadmap items: GreenOps agents» in the same beat |
+| 21 | **Own AI is now 3.6 kg CO₂** (was 2.4 kg), «the plan saves that in about 12 hours»; pop-out «Who used it, by tool»: Claude Code · Rashed 2.36 kg (66 %), Hakim 0.79 kg (22 %), Vinzenz 0.31 kg (9 %), Grok (Cursor) 0.13 kg (4 %) |
+| 22 | Close card with ALTYCA × Basel 2037 logos, three short lines |
+| 23 | New «Let's talk?» contact page (confetti, LinkedIn, FAQ) – the last beat |
+| – | Not beats: Connect Next button «.json file analysis →» (normal mode only); sidebar » reopens a collapsed sidebar; About step cards in order on phones |
+
+**Do not say or put on a card**
+- That the upload box analyses new files live (it only lists them; the beat-6 upload is a demo of the flow with the sample company).
+- A split of our own AI use by activity (Analysis / Development / Other): the logs do not have it.
+- Old values: «2.4 kg» own AI, «21 beats», «Singularity» for Grok, «Three places give most of the savings», «Load the sample company», «Next: the full lifecycle», «measure(s)», «CO2».
+- Any number that is not in this file.
+
 ## How to present
 - Open the app with **`?story=1`** (or switch on **Story mode** in the sidebar). Beat 1 starts on About.
 - **Next beat:** → (ArrowRight), Space or PageDown (a clicker sends these). **Back:** ← (ArrowLeft) or PageUp.
@@ -71,4 +104,4 @@ Screenshots (1920×1080, story mode, dark): `docs/kb/screenshots/story/beat-01.p
 ## Checks at this state
 66 app tests OK (incl. a walk through all 23 beats forward and back, each on its page) · `verify_baseline.py`: MATCH · `trap_guard.py`: TRAP GUARD: PASS · all 23 beats loaded in Chromium at 1920×1080 and 390 px with no exception, no warning, no horizontal scroll · fresh-context trap-reviewer: no wrong numbers; its wording fixes are in #80.
 
-STATUS: FINAL 2026-11-22 02:37 UTC main @ 3e5ec90
+STATUS: FINAL 2026-11-22 02:42 UTC main @ 3e5ec90
