@@ -459,6 +459,10 @@ _ORG_CSS = """<style>
   border:2px solid #f6c445;box-shadow:0 0 0 4px rgba(246,196,69,.12);}
 .gx-org .track li.end i::after{content:"";display:block;width:8px;height:8px;margin:5px auto 0;border-radius:50%;background:#f6c445;}
 .gx-org .track li.end b{font-size:13px;font-weight:600;color:var(--ink,#f2f4f5);} .gx-org .track li.end small{font-size:11.5px;color:#f6c445;margin-top:-6px;}
+.gx-org .track.fun{margin-top:62px;}
+.gx-org img.funnel{position:absolute;left:0;top:-46px;width:100%;height:46px;}
+.gx-org .faces{display:flex;margin-top:-2px;} .gx-org .faces .gx-avatar{width:22px;height:22px;min-width:22px;margin:0 -4px;border:2px solid var(--bg,#0d0f12);}
+.gx-org .via .gx-rot{vertical-align:-0.3em;margin-bottom:0;}
 .gx-org .loop{display:block;width:100%;height:26px;margin:2px 0 0;}
 .gx-org .loopk{margin:-14px 0 0;text-align:center;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#9aa3ad);}
 .gx-org .via{margin:22px 0 0;text-align:center;font-size:12.5px;color:var(--muted,#9aa3ad);}
@@ -482,7 +486,8 @@ _ORG_CSS = """<style>
   .gx-org .track li,.gx-org .track li.end:first-child,.gx-org .track li.end:last-child{flex-direction:row;align-items:center;width:auto;
     gap:12px;font-size:13px;text-align:left;}
   .gx-org .track li i{margin:0 7px;} .gx-org .track li.end i,.gx-org .track li.end:first-child i,.gx-org .track li.end:last-child i{margin:0;}
-  .gx-org .track li.end small{margin:0;} .gx-org .loop,.gx-org .loopk{display:none;}}
+  .gx-org .track li.end small{margin:0;} .gx-org .loop,.gx-org .loopk,.gx-org img.funnel{display:none;}
+  .gx-org .track.fun{margin-top:18px;}}
 </style>"""
 
 
@@ -502,8 +507,23 @@ def _wire(k: int, light: bool = False) -> str:
     return f'<img class="wire" alt="" aria-hidden="true" src="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}">'
 
 
+def _funnel(target: float, sources: list[float], light: bool = False) -> str:
+    """Lines from the agents row (x in % of the track) down into one step of the track, with a light pulse (SVG image)."""
+    col = "#0d0f12" if light else "#ffffff"
+    d = [f"M{x:.2f} 0 C{x:.2f} 26 {target:.2f} 20 {target:.2f} 46" for x in sources]
+    css = ("<style>path{fill:none;vector-effect:non-scaling-stroke}.b{stroke:" + col + ";stroke-opacity:.16;stroke-width:1}"
+           ".p{stroke:#00cc99;stroke-width:2;stroke-linecap:round;stroke-dasharray:6 140;opacity:0}"
+           "@keyframes m{0%{stroke-dashoffset:6;opacity:0}12%,75%{opacity:1}100%{stroke-dashoffset:-140;opacity:0}}"
+           "@media (prefers-reduced-motion:no-preference){.p{animation:m 2.6s cubic-bezier(.4,0,.2,1) infinite}}</style>")
+    paths = "".join(f'<path class="b" d="{x}"/>' for x in d) + "".join(
+        f'<path class="p" d="{x}" style="animation-delay:{.3 * i:.2f}s"/>' for i, x in enumerate(d))
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 46" preserveAspectRatio="none">{css}{paths}</svg>'
+    return f'<img class="funnel" alt="" aria-hidden="true" src="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}">'
+
+
 def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next: str = "", light: bool = False,
-              ends: tuple | None = None, loop: str = "") -> str:
+              ends: tuple | None = None, loop: str = "", agents_step: str = "", humans_step: str = "",
+              roll: list[str] | None = None) -> str:
     """Team and agents as one quiet org chart: people on top (photo, name, role), their agents underneath as small pills
     (logo + one or two words), thin lines with a light pulse between them, and one track for the ALTYCA case: a dot
     travels along it and lights each step as it passes (CSS only; still under reduced motion).
@@ -523,6 +543,8 @@ def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next:
     for i, (kind, label, sub) in enumerate(items):
         d = f"{8 * i / max(n - 1, 1) * .92:.2f}s"
         body = (f'<b>{esc(i18n.tr(label))}</b><small>{esc(i18n.tr(sub))}</small>' if kind == "end" else esc(i18n.tr(label)))
+        if kind == "step" and humans_step and label == humans_step:  # the three people, small, under «Humans review»
+            body += '<span class="faces">' + "".join(_avatar(p[0].split()[0]) for p in people) + "</span>"
         li.append(f'<li class="{"end" if kind == "end" else ""}" style="animation-delay:{d}"><i style="animation-delay:{d}"></i>{body}</li>')
     steps = "".join(li)
     arc = ""
@@ -533,11 +555,22 @@ def org_chart(people: list[tuple], flow: list[str], tools: list[str], tool_next:
         arc = (f'<img class="loop" alt="" aria-hidden="true" src="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}">'
                f'<p class="loopk">{esc(i18n.tr(loop))}</p>')
     via = " · ".join(f"<b>{esc(t)}</b>" for t in tools) + (f" · <em>{esc(tool_next)}</em>" if tool_next else "")
+    if roll:  # one word that rolls through the tools (CSS only)
+        via += (" · " if via else "") + "<b>" + roller(roll, "orgvia", step_s=1.3) + "</b>"
+    # Lines from the agents row into «Agents analyse»: pill centres and the step, in % of the track width.
+    fun = ""
+    if agents_step and agents_step in flow:
+        n_ag = sum(len(a) for _, _, a in people)
+        pos = flow.index(agents_step) + (1 if ends else 0)  # index on the track (the IT manager is step 0)
+        target = 100 * pos / max(n - 1, 1)
+        src = [100 * (i + .5) / n_ag for i in range(n_ag)]
+        src = [max(0.0, min(100.0, (x - 3.2) / 93.6 * 100)) for x in src]  # the track sits 28 px in from each side
+        fun = _funnel(target, src, light)
     return (_ORG_CSS + f'<div class="gx-org{" lt" if light else ""}">'
             f'<p class="lb">{esc(i18n.tr("Wo/Man make the decisions"))}</p>'
             f'<div class="row">{"".join(grps)}</div>'
             f'<p class="lb ag-lb">{esc(i18n.tr("Man-made agents do the leg work with real verified data"))}</p>'
-            f'<div class="track"><div class="ln"></div><div class="dot"></div><ol>{steps}</ol></div>{arc}'
+            f'<div class="track{" fun" if fun else ""}">{fun}<div class="ln"></div><div class="dot"></div><ol>{steps}</ol></div>{arc}'
             f'<p class="via">{esc(i18n.tr("Talking via"))} {via}</p></div>')
 
 
