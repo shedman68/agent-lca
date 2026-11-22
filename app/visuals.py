@@ -95,3 +95,51 @@ def basel_map(shares: dict[str, float], light: bool = False) -> str:
     alt = "Share of CO₂ by data-centre country: " + ", ".join(f"{_CITY[c]} {v * 100:.0f} %" for c, v in shares.items()
                                                                if c in _CITY)
     return _img(svg, alt, "900px")
+
+
+def next_year_chart(labels: list[str], without_t: list[float], with_t: list[float], light: bool = False,
+                    note: str = "") -> str:
+    """Cumulative t CO₂ over the next 12 months, without and with the plan. Lines draw themselves (CSS in the SVG,
+    off under reduced motion); the gap between them fills in after. Values are passed in, nothing is computed here."""
+    ink, muted, line = ("#0d0f12", "#4b5560", "#d4d9df") if light else (INK, MUTED, LINE)
+    grey = "#8b95a1" if not light else "#6b7480"
+    stat = "#8a6400" if light else "#ffd166"
+    w, h, l, r, t, b = 900, 360, 70, 150, 30, 50
+    top = max(without_t) * 1.08 if without_t and max(without_t) > 0 else 1.0
+    n = len(labels)
+    X = lambda i: l + (w - l - r) * (i / max(1, n - 1))
+    Y = lambda v: t + (h - t - b) * (1 - v / top)
+    pts = lambda vals: " ".join(f"{X(i):.1f},{Y(v):.1f}" for i, v in enumerate(vals))
+    area = (f"M {X(0):.1f},{Y(without_t[0]):.1f} " + " ".join(f"L {X(i):.1f},{Y(v):.1f}" for i, v in enumerate(without_t))
+            + " " + " ".join(f"L {X(i):.1f},{Y(v):.1f}" for i, v in reversed(list(enumerate(with_t)))) + " Z")
+    grid = "".join(f'<line x1="{l}" x2="{w - r}" y1="{Y(v):.1f}" y2="{Y(v):.1f}" stroke="{line}" stroke-width="1"/>'
+                   f'<text x="{l - 10}" y="{Y(v) + 5:.1f}" text-anchor="end" font-family="{FONT}" font-size="14" fill="{muted}">{v:g} t</text>'
+                   for v in _ticks(top))
+    xl = "".join(f'<text x="{X(i):.1f}" y="{h - b + 26}" text-anchor="middle" font-family="{FONT}" font-size="14" '
+                 f'fill="{muted}">{lab}</text>' for i, lab in enumerate(labels))
+    end = n - 1
+    ends = (f'<text class="lab" x="{X(end) + 12:.1f}" y="{Y(without_t[end]) + 6:.1f}" font-family="{FONT}" font-size="22" '
+            f'font-weight="800" fill="{stat}">{without_t[end]:.1f} t</text>'
+            f'<text class="lab" x="{X(end) + 12:.1f}" y="{Y(without_t[end]) + 26:.1f}" font-family="{FONT}" font-size="14" '
+            f'font-weight="700" fill="{grey}">without the plan</text>'
+            f'<text class="lab" x="{X(end) + 12:.1f}" y="{Y(with_t[end]) + 6:.1f}" font-family="{FONT}" font-size="22" '
+            f'font-weight="800" fill="{stat}">{with_t[end]:.1f} t</text>'
+            f'<text class="lab" x="{X(end) + 12:.1f}" y="{Y(with_t[end]) + 26:.1f}" font-family="{FONT}" font-size="14" '
+            f'font-weight="700" fill="{TEAL}">with the plan</text>')
+    css = ("<style>.ln{stroke-dasharray:2000;stroke-dashoffset:0;animation:draw 2.2s cubic-bezier(.4,.1,.2,1) both}"
+           ".gap{animation:fade .8s ease-out 1.6s both}.lab{animation:fade .6s ease-out 2s both}"
+           "@keyframes draw{from{stroke-dashoffset:2000}}@keyframes fade{from{opacity:0}}"
+           "@media (prefers-reduced-motion:reduce){.ln,.gap,.lab{animation:none}}</style>")
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" role="img">{css}{grid}{xl}'
+           f'<path class="gap" d="{area}" fill="{TEAL}" fill-opacity=".14"/>'
+           f'<polyline class="ln" points="{pts(without_t)}" fill="none" stroke="{grey}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+           f'<polyline class="ln" points="{pts(with_t)}" fill="none" stroke="{TEAL}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'
+           f'{ends}<text x="{l}" y="{h - 6}" font-family="{FONT}" font-size="13" fill="{muted}">{note}</text></svg>')
+    alt = (f"Cumulative CO₂ next year: without the plan {without_t[-1]:.1f} t, with the plan {with_t[-1]:.1f} t."
+           if without_t and with_t else "Next year chart")
+    return _img(svg, alt, "900px")
+
+
+def _ticks(top: float) -> list[float]:
+    step = 1 if top <= 8 else 2 if top <= 16 else 5
+    return [float(v) for v in range(0, int(top) + 1, step)]

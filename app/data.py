@@ -241,6 +241,16 @@ def energy_totals() -> dict:
     return out
 
 
+def monthly_co2(level: str = "mid") -> pd.DataFrame | None:
+    """Baseline-year kg CO₂ per calendar month (out/fact_costs.csv), in baseline order (Sep … Aug)."""
+    f = facts_unallocated()
+    col = f"co2_kg_{level}"
+    if col not in f or "month" not in f:
+        return None
+    g = f.assign(m=f["month"].astype(str).str[:7], v=_num(f, col)).groupby("m")["v"].sum().sort_index()
+    return g.rename("co2_kg").reset_index().rename(columns={"m": "month"})
+
+
 @st.cache_data(show_spinner=False)
 def aligned_baseline() -> pd.DataFrame:
     """Baseline rows with department allocation and CO2 on the same line.
