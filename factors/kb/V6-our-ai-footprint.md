@@ -26,6 +26,15 @@ A cache read skips most of the compute that fresh input needs.
 > `V6-result.csv`: **775 M in (753 M cache) · 2.0 M out · 1.13 / 13.2 / 190.7 kWh · 0.24 / 3.59 / 60.8 kg CO₂**
 > (low / mid / high). The package saves that in about 12 hours (mid). Still not counted: Rashed's chief-of-staff
 > session after 12:07Z and his Friday VS Code session. The table below is the 14:15 state, kept for the record.
+>
+> **Update 22.11.2026 03:50Z (Rashed's Claude, on Rashed's request as lead):** one more row for the same build session,
+> 01:40Z to 03:50Z (120.2 M in, of which 118.4 M cache reads, 0.17 M out, 214 messages incl. 24 reviewer-subagent
+> messages, Opus 5.5; same method, self-count, not re-measured by Vinzenz). A recount of the previous window
+> (12:15Z–01:39Z) with the same script gave 715 messages / 266.2 M cache reads against the stored 722 / 268.3 M (0.8 %),
+> so the stored row was kept. Also fixed: the 01:39Z row's note had an unquoted comma, so `V6-tokens.csv` did not parse
+> (the stored result was not affected). `own_ai.py` rerun unchanged. New total in `V6-result.csv`:
+> **895 M in (872 M cache) · 2.2 M out · 1.26 / 15.0 / 219.8 kWh · 0.26 / 4.07 / 70.1 kg CO₂** (low / mid / high).
+> Rashed now 2.84 kg mid (70 % of the CO₂, 75 % of the tokens). The package saves that in about 13 hours (mid).
 
 ## Result – counted so far (as of ~14:15)
 | | Tokens in (of which cache reads) | Tokens out | kWh low / **mid** / high | kg CO2 low / **mid** / high |
